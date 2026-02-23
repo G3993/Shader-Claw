@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #09090f;
@@ -63,8 +63,8 @@ body {
 
 .brand .logo-wrap {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
 }
 
@@ -335,7 +335,7 @@ body {
   font-family: monospace;
   letter-spacing: 1px;
   text-transform: uppercase;
-  max-width: 130px;
+  max-width: 200px;
 }
 
 .control-row .val {
@@ -351,6 +351,56 @@ body {
   font-size: 11px;
   text-align: center;
   padding: 8px 0;
+}
+
+/* ===== MASK ROW ===== */
+.mask-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+}
+.mask-row label {
+  width: 40px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.mask-row select {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+.mask-mode-btns {
+  display: flex;
+  gap: 2px;
+}
+.mask-mode-btns button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mask-mode-btns button.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 /* ===== SECTION HEADERS ===== */
@@ -574,7 +624,7 @@ body {
   <div id="sidebar">
     <div class="brand">
       <div class="logo-wrap">
-        <img src="logo.png" alt="ShaderClaw" width="28" height="28" style="object-fit: contain;">
+        <img src="logo.png" alt="ShaderClaw" width="44" height="44" style="object-fit: contain;">
       </div>
       <div class="brand-text">SHADER<span>CLAW</span></div>
     </div>
@@ -624,7 +674,7 @@ body {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
               <span>Vector</span>
             </button>
-            <button class="import-tile" id="tile-text3d" title="Create 3D text">
+            <button class="import-tile" id="tile-text3d" title="Create 3D text" style="display:none">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,7 4,4 20,4 20,7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
               <span>3D Text</span>
             </button>
@@ -638,6 +688,14 @@ body {
             </button>
           </div>
           <div class="media-list" id="media-list"></div>
+          <div class="mask-row" id="mask-row" style="display:none">
+            <label>mask</label>
+            <select id="mask-select"><option value="">(none)</option></select>
+            <div class="mask-mode-btns">
+              <button class="mask-mode-btn active" data-mode="1">mul</button>
+              <button class="mask-mode-btn" data-mode="2">inv</button>
+            </div>
+          </div>
         </div>
 
         <!-- Parameters panel (below) -->
@@ -764,13 +822,38 @@ function buildFragmentShader(source) {
     'uniform float audioBass;',
     'uniform float audioMid;',
     'uniform float audioHigh;',
+    // Variable font texture (for Text shader effect 20)
+    'uniform sampler2D varFontTex;',
+    // Mask uniforms (global post-process mask)
+    'uniform sampler2D _maskTex;',
+    'uniform float _maskMode;',
     ...uniformLines,
     ''
   ];
   const header = headerParts.join('\n');
 
   const cleaned = parsed.glsl.replace(/#version\s+\d+.*/g, '');
-  return { frag: header + cleaned, parsed, headerLineCount: headerParts.length };
+
+  // Wrap shader main() to inject mask post-processing
+  let body = header + cleaned;
+  const mainRe = /void\s+main\s*\(\s*\)/;
+  if (mainRe.test(body)) {
+    body = body.replace(mainRe, 'void _shaderMain()');
+    body += `
+void main() {
+    _shaderMain();
+    if (_maskMode > 0.5) {
+        vec2 muv = gl_FragCoord.xy / RENDERSIZE.xy;
+        vec4 _m = texture2D(_maskTex, muv);
+        float _lum = dot(_m.rgb, vec3(0.299, 0.587, 0.114));
+        if (_maskMode > 1.5) _lum = 1.0 - _lum;
+        gl_FragColor.rgb *= _lum;
+    }
+}
+`;
+  }
+
+  return { frag: body, parsed, headerLineCount: headerParts.length };
 }
 
 const VERT_SHADER = `
@@ -788,6 +871,10 @@ void main() {
 const mediaInputs = [];
 let mediaIdCounter = 0;
 
+// Global mask state (persists across shader switches)
+let _maskMediaId = null;
+let _maskMode = 0; // 0=off, 1=multiply, 2=invert
+
 // Audio-reactive system
 let audioCtx = null;
 let audioAnalyser = null;
@@ -796,6 +883,79 @@ let audioFFTGLTexture = null;
 let audioFFTThreeTexture = null;
 let audioLevel = 0, audioBass = 0, audioMid = 0, audioHigh = 0;
 let activeAudioEntry = null;
+
+// Variable font texture system (for Text shader "Variable Font" effect)
+let _vfCanvas = null;
+let _vfCtx = null;
+let _vfGLTexture = null;
+let _vfLastMsg = '';
+let _vfWeight = 400;
+const _fontFamilies = [
+  '"Inter", "Segoe UI Variable", "SF Pro", sans-serif',
+  '"Times New Roman", "Times", Georgia, serif',
+  '"Libre Caslon Text", "Palatino Linotype", "Book Antiqua", serif',
+  '"Outfit", "Inter", "Segoe UI Variable", sans-serif',
+];
+
+function _getFontStack(inputValues) {
+  const idx = Math.round(inputValues['fontFamily'] || 0);
+  return _fontFamilies[idx] || _fontFamilies[0];
+}
+
+function updateVarFontTexture(gl, inputValues) {
+  // Build msg from character uniforms
+  const maxLen = 24;
+  let msg = '';
+  const msgLen = inputValues['msg_len'];
+  const len = (msgLen != null && msgLen > 0) ? Math.min(msgLen, maxLen) : 0;
+  for (let i = 0; i < len; i++) {
+    const code = inputValues['msg_' + i];
+    if (code == null || code === 26) msg += ' ';
+    else if (code >= 0 && code <= 25) msg += String.fromCharCode(65 + code);
+    else msg += ' ';
+  }
+  msg = msg.trim() || 'ETHEREA';
+
+  // Only re-render canvas if text, weight, or font changed
+  const fontStack = _getFontStack(inputValues);
+  const key = msg + '|' + _vfWeight + '|' + fontStack;
+  if (key === _vfLastMsg && _vfGLTexture) return;
+  _vfLastMsg = key;
+
+  if (!_vfCanvas) {
+    _vfCanvas = document.createElement('canvas');
+    _vfCanvas.width = 2048;
+    _vfCanvas.height = 512;
+    _vfCtx = _vfCanvas.getContext('2d');
+  }
+
+  const c = _vfCanvas;
+  const ctx = _vfCtx;
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.save();
+  // Flip vertically for GL coord system
+  ctx.translate(0, c.height);
+  ctx.scale(1, -1);
+  const w = Math.round(_vfWeight);
+  ctx.font = w + ' ' + Math.round(c.height * 0.35) + 'px ' + fontStack;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(msg, c.width / 2, c.height / 2);
+  ctx.restore();
+
+  if (!_vfGLTexture) {
+    _vfGLTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, _vfGLTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  } else {
+    gl.bindTexture(gl.TEXTURE_2D, _vfGLTexture);
+  }
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+}
 
 // Audio-reactive per-frame update (global scope — called from Renderer.render)
 function updateAudioUniforms(gl) {
@@ -1054,6 +1214,54 @@ class Renderer {
     if (amLoc) gl.uniform1f(amLoc, audioMid);
     const ahLoc = this._getLoc('audioHigh');
     if (ahLoc) gl.uniform1f(ahLoc, audioHigh);
+
+    // Variable font texture (for Text shader effect 20)
+    const vfLoc = this._getLoc('varFontTex');
+    if (vfLoc) {
+      updateVarFontTexture(gl, this.inputValues);
+      if (_vfGLTexture) {
+        gl.activeTexture(gl.TEXTURE0 + texUnit);
+        gl.bindTexture(gl.TEXTURE_2D, _vfGLTexture);
+        gl.uniform1i(vfLoc, texUnit);
+        texUnit++;
+      }
+    }
+
+    // Global mask texture
+    const _maskModeLoc = this._getLoc('_maskMode');
+    if (_maskModeLoc) gl.uniform1f(_maskModeLoc, _maskMode);
+    if (_maskMediaId && _maskMode > 0) {
+      const maskMedia = mediaInputs.find(m => String(m.id) === String(_maskMediaId));
+      if (maskMedia && maskMedia.glTexture) {
+        gl.activeTexture(gl.TEXTURE0 + texUnit);
+        gl.bindTexture(gl.TEXTURE_2D, maskMedia.glTexture);
+        if (maskMedia.type === 'video' && maskMedia.element && maskMedia.element.readyState >= 2) {
+          if (maskMedia._webcamFlip) {
+            if (!maskMedia._maskFlipCanvas) {
+              maskMedia._maskFlipCanvas = document.createElement('canvas');
+              maskMedia._maskFlipCtx = maskMedia._maskFlipCanvas.getContext('2d');
+            }
+            const v = maskMedia.element;
+            const fc = maskMedia._maskFlipCanvas;
+            if (fc.width !== v.videoWidth || fc.height !== v.videoHeight) {
+              fc.width = v.videoWidth || 640;
+              fc.height = v.videoHeight || 480;
+            }
+            const ctx2 = maskMedia._maskFlipCtx;
+            ctx2.save();
+            ctx2.translate(fc.width, 0);
+            ctx2.scale(-1, 1);
+            ctx2.drawImage(v, 0, 0);
+            ctx2.restore();
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fc);
+          } else {
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskMedia.element);
+          }
+        }
+        gl.uniform1i(this._getLoc('_maskTex'), texUnit);
+        texUnit++;
+      }
+    }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuf);
     gl.enableVertexAttribArray(0);
@@ -1367,7 +1575,6 @@ function generateControls(inputs, container, onChange) {
           micRec = new SpeechRec();
           micRec.continuous = true;
           micRec.interimResults = true;
-          micRec.lang = 'en-US';
           micRec.onresult = (event) => {
             let interim = '';
             let final = '';
@@ -1377,7 +1584,13 @@ function generateControls(inputs, container, onChange) {
             }
             const raw = (final || interim).trim();
             if (!raw) return;
-            const str = raw.toUpperCase().slice(-maxLen);
+            let str = raw.toUpperCase();
+            if (str.length > maxLen) {
+              // Cut to last maxLen chars, then skip to next full word
+              str = str.slice(-maxLen);
+              const sp = str.indexOf(' ');
+              if (sp > 0) str = str.slice(sp + 1);
+            }
             textInput.value = str;
             for (let i = 0; i < maxLen; i++) {
               values[inp.NAME + '_' + i] = charToCode(str[i]);
@@ -1576,6 +1789,7 @@ function hexToRgb(hex) {
 
       currentInputValues = generateControls(parsed.inputs, paramsBody, (vals) => {
         isfRenderer.inputValues = vals;
+        if ('fontFamily' in vals) setVarFontFamily(vals.fontFamily);
         autoBindTextures();
       });
       isfRenderer.inputValues = currentInputValues;
@@ -1813,6 +2027,7 @@ function hexToRgb(hex) {
     }),
 
     setVarFontWeight,
+    setVarFontFamily,
   };
 
   // --- Auto-compile on change ---
@@ -2195,7 +2410,56 @@ function hexToRgb(hex) {
         row.appendChild(select);
       }
     });
+
+    // Update mask dropdown
+    updateMaskUI();
   }
+
+  function updateMaskUI() {
+    const maskRow = document.getElementById('mask-row');
+    const maskSelect = document.getElementById('mask-select');
+    const compatibleMask = mediaInputs.filter(m => m.type === 'image' || m.type === 'video' || m.type === 'svg');
+    if (compatibleMask.length === 0) {
+      maskRow.style.display = 'none';
+      _maskMediaId = null;
+      _maskMode = 0;
+      return;
+    }
+    maskRow.style.display = '';
+    const prev = maskSelect.value;
+    maskSelect.innerHTML = '<option value="">(none)</option>';
+    compatibleMask.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = mediaTypeIcon(m.type) + ' ' + m.name;
+      maskSelect.appendChild(opt);
+    });
+    // Restore selection if still valid
+    if (prev && compatibleMask.some(m => String(m.id) === prev)) {
+      maskSelect.value = prev;
+    } else {
+      maskSelect.value = '';
+      _maskMediaId = null;
+      if (!maskSelect.value) _maskMode = 0;
+    }
+  }
+
+  // Wire up mask controls once DOM is ready
+  (function initMaskControls() {
+    const maskSelect = document.getElementById('mask-select');
+    const modeBtns = document.querySelectorAll('.mask-mode-btn');
+    maskSelect.addEventListener('change', () => {
+      _maskMediaId = maskSelect.value || null;
+      _maskMode = _maskMediaId ? parseInt(document.querySelector('.mask-mode-btn.active').dataset.mode) : 0;
+    });
+    modeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        _maskMode = _maskMediaId ? parseInt(btn.dataset.mode) : 0;
+      });
+    });
+  })();
 
   async function addMediaFromFile(file) {
     const type = detectMediaType(file);
@@ -2475,6 +2739,7 @@ function hexToRgb(hex) {
   let _varFontCtx = null;
   let _varFontText = '';
   let _varFontWeight = 400;
+  let _varFontFamilyIdx = 0;
 
   function _renderVarFontCanvas() {
     if (!_varFontCtx || !_varFontText) return;
@@ -2485,7 +2750,8 @@ function hexToRgb(hex) {
     ctx.translate(0, c.height);
     ctx.scale(1, -1);
     const w = Math.round(_varFontWeight);
-    ctx.font = `${w} ${Math.round(c.height * 0.35)}px "Inter", "Segoe UI Variable", "SF Pro", sans-serif`;
+    const stack = _fontFamilies[_varFontFamilyIdx] || _fontFamilies[0];
+    ctx.font = `${w} ${Math.round(c.height * 0.35)}px ${stack}`;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -2531,6 +2797,12 @@ function hexToRgb(hex) {
   // Update variable font weight externally (called from ISF parameter or API)
   function setVarFontWeight(w) {
     _varFontWeight = Math.max(100, Math.min(900, w));
+    _vfWeight = _varFontWeight; // Also update global var font texture weight
+    _renderVarFontCanvas();
+  }
+
+  function setVarFontFamily(idx) {
+    _varFontFamilyIdx = Math.round(idx) || 0;
     _renderVarFontCanvas();
   }
 
@@ -2653,7 +2925,6 @@ function hexToRgb(hex) {
     _micRecognition = new SpeechRecognition();
     _micRecognition.continuous = true;
     _micRecognition.interimResults = true;
-    _micRecognition.lang = 'en-US';
 
     _micRecognition.onresult = (event) => {
       let interim = '';

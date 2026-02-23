@@ -1,17 +1,19 @@
 /*{
   "CATEGORIES": ["Generator", "Text"],
-  "DESCRIPTION": "Unified text effects — 20 presets across 8 effect families with 3 bitmap fonts",
+  "DESCRIPTION": "Unified text effects — 21 presets across 9 effect families with 3 bitmap fonts + variable font",
   "INPUTS": [
-    { "NAME": "msg", "TYPE": "text", "DEFAULT": "ETHEREA", "MAX_LENGTH": 12 },
+    { "NAME": "msg", "TYPE": "text", "DEFAULT": " ETHEREA", "MAX_LENGTH": 24 },
     { "NAME": "effect", "TYPE": "long",
-      "VALUES": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+      "VALUES": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
       "LABELS": ["James","Wave","Cascade","Digifade","Digifade Glitch",
                  "Coil Wide","Coil Star","Coil Lemniscate","Coil Pulse",
                  "Flag Banner","Flag Origami","Flag Barber","Flag Newsprint",
                  "Bricks","Bricks Harlequin","Bricks Zebra",
-                 "Spacy","Spacy Bridge","Spacy Whitney","Spacy Recede"],
+                 "Spacy","Spacy Bridge","Spacy Whitney","Spacy Recede",
+                 "Variable Font"],
       "DEFAULT": 0 },
     { "NAME": "font", "TYPE": "long", "VALUES": [0,1,2], "LABELS": ["Block","Slim","Round"], "DEFAULT": 0 },
+    { "NAME": "fontFamily", "TYPE": "long", "VALUES": [0,1,2,3], "LABELS": ["Inter","Times New Roman","Libre Caslon","Outfit"], "DEFAULT": 0 },
     { "NAME": "speed", "TYPE": "float", "MIN": 0.1, "MAX": 3.0, "DEFAULT": 0.5 },
     { "NAME": "intensity", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
     { "NAME": "density", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
@@ -95,7 +97,19 @@ int getChar(int slot) {
     if (slot == 8)  return int(msg_8);
     if (slot == 9)  return int(msg_9);
     if (slot == 10) return int(msg_10);
-    return int(msg_11);
+    if (slot == 11) return int(msg_11);
+    if (slot == 12) return int(msg_12);
+    if (slot == 13) return int(msg_13);
+    if (slot == 14) return int(msg_14);
+    if (slot == 15) return int(msg_15);
+    if (slot == 16) return int(msg_16);
+    if (slot == 17) return int(msg_17);
+    if (slot == 18) return int(msg_18);
+    if (slot == 19) return int(msg_19);
+    if (slot == 20) return int(msg_20);
+    if (slot == 21) return int(msg_21);
+    if (slot == 22) return int(msg_22);
+    return int(msg_23);
 }
 
 int charCount() {
@@ -138,13 +152,13 @@ vec4 effectJames(vec2 uv) {
     vec3 textCol = vec3(0.0);
     float glowAccum = 0.0;
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 24; i++) {
         if (i >= numChars) break;
         int ch = getChar(i);
         if (ch == 26) continue;
 
         float phase = float(i) * 1.3 + TIME * speed * cycleSpeed;
-        int style = int(mod(floor(phase), 8.0));
+        int style = int(mod(floor(phase), 18.0));
         float bp = float(i) * 0.8 + TIME * speed * 2.5;
         float yOff = sin(bp) * 0.015 * bounce;
         float sp = 1.0 + sin(bp + 1.0) * 0.05 * bounce;
@@ -165,22 +179,49 @@ vec4 effectJames(vec2 uv) {
                 if (filled > 0.5) {
                     vec2 lp = fract(grid);
                     float inten = 1.0;
+                    // 0: solid block
                     if (style == 0) inten = 1.0;
+                    // 1: circle dots
                     else if (style == 1) inten = smoothstep(0.45, 0.35, length(lp - 0.5));
+                    // 2: outline
                     else if (style == 2) {
-                        // Outline: use cached data
                         float nb = pxFromData(data, gcol-1.0, grow)
                                  + pxFromData(data, gcol+1.0, grow)
                                  + pxFromData(data, gcol, grow-1.0)
                                  + pxFromData(data, gcol, grow+1.0);
                         inten = nb > 3.5 ? 0.0 : 1.0;
                     }
+                    // 3: horizontal stripes
                     else if (style == 3) inten = step(0.35, fract(lp.y * 3.0));
+                    // 4: diamond
                     else if (style == 4) { vec2 c = abs(lp - 0.5); inten = smoothstep(0.5, 0.4, c.x + c.y); }
+                    // 5: cross/plus
                     else if (style == 5) inten = max(smoothstep(0.42, 0.38, abs(lp.x-0.5)), smoothstep(0.42, 0.38, abs(lp.y-0.5)));
+                    // 6: vertical bars
                     else if (style == 6) inten = smoothstep(0.42, 0.35, abs(lp.x - 0.5));
-                    else { float d = length(lp - 0.5); inten = exp(-d*d*8.0) * 1.5; }
-                    if (style == 7) inten *= 1.3;
+                    // 7: soft glow blob
+                    else if (style == 7) { float d = length(lp - 0.5); inten = exp(-d*d*8.0) * 1.5; }
+                    // 8: diagonal hatching
+                    else if (style == 8) inten = step(0.4, fract((lp.x + lp.y) * 2.5));
+                    // 9: concentric rings
+                    else if (style == 9) inten = step(0.3, fract(length(lp - 0.5) * 4.0));
+                    // 10: square inset
+                    else if (style == 10) { vec2 c = abs(lp - 0.5); inten = smoothstep(0.45, 0.35, max(c.x, c.y)); }
+                    // 11: star / 4-point
+                    else if (style == 11) { vec2 c = abs(lp - 0.5); inten = smoothstep(0.35, 0.25, c.x * c.y * 8.0); }
+                    // 12: scanlines (thin horizontal)
+                    else if (style == 12) inten = step(0.5, fract(lp.y * 5.0));
+                    // 13: checker
+                    else if (style == 13) inten = mod(floor(lp.x * 2.0) + floor(lp.y * 2.0), 2.0);
+                    // 14: vertical gradient fade
+                    else if (style == 14) inten = lp.y;
+                    // 15: radial burst
+                    else if (style == 15) { float a = atan(lp.y - 0.5, lp.x - 0.5); inten = step(0.3, fract(a / PI * 3.0)); }
+                    // 16: corner dots (4 small circles)
+                    else if (style == 16) { float d = min(min(length(lp), length(lp - vec2(1.0, 0.0))), min(length(lp - vec2(0.0, 1.0)), length(lp - 1.0))); inten = smoothstep(0.35, 0.25, d); }
+                    // 17: X slash
+                    else { float d = min(abs(lp.x - lp.y), abs(lp.x - (1.0 - lp.y))); inten = smoothstep(0.2, 0.1, d); }
+
                     textCol = max(textCol, textColor.rgb * inten);
                     textMask = max(textMask, inten);
                 }
@@ -218,7 +259,7 @@ vec4 effectWave(vec2 uv) {
     float mainHit = 0.0, shadowHit = 0.0;
     vec2 so = vec2(0.005, -0.005);
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 24; i++) {
         if (i >= numChars) break;
         int ch = getChar(i);
         float phase = float(i) * frequency + TIME * speed;
@@ -613,6 +654,18 @@ vec4 effectSpacy(vec2 uv, int sub) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// EFFECT 20: VARIABLE FONT — canvas-rendered text via texture
+// ═══════════════════════════════════════════════════════════════════════
+
+vec4 effectVarFont(vec2 uv) {
+    vec4 tex = texture2D(varFontTex, uv);
+    float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+    vec3 col = transparentBg ? textColor.rgb : mix(bgColor.rgb, textColor.rgb, lum);
+    float alpha = transparentBg ? lum : 1.0;
+    return vec4(col, alpha);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // MAIN DISPATCHER
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -639,5 +692,7 @@ void main() {
     if (e == 16) { gl_FragColor = effectSpacy(uv, 0); return; }
     if (e == 17) { gl_FragColor = effectSpacy(uv, 1); return; }
     if (e == 18) { gl_FragColor = effectSpacy(uv, 2); return; }
+    if (e == 19) { gl_FragColor = effectSpacy(uv, 3); return; }
+    if (e == 20) { gl_FragColor = effectVarFont(uv); return; }
     gl_FragColor = effectSpacy(uv, 3);
 }
