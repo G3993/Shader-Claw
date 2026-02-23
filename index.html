@@ -124,6 +124,23 @@ body {
 .shader-item:hover { background: var(--panel-alt); }
 .shader-item.active { background: var(--accent-dim); border-left: 2px solid var(--accent); }
 
+.shader-item.active::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-right: 6px;
+  box-shadow: 0 0 4px var(--accent), 0 0 10px var(--accent);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.7; box-shadow: 0 0 3px var(--accent), 0 0 6px var(--accent); }
+  50% { opacity: 1; box-shadow: 0 0 6px var(--accent), 0 0 14px var(--accent); }
+}
+
 .shader-item .name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,13 +220,19 @@ body {
 #error-bar.show { display: block; }
 
 /* ===== FLOATING PARAMS PANEL ===== */
-#params-panel {
+#panels-container {
   position: absolute;
   top: 12px;
   left: 12px;
   z-index: 100;
-  min-width: 260px;
-  max-width: 360px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#params-panel {
+  width: 100%;
   background: rgba(17, 17, 25, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -371,17 +394,6 @@ body {
 
 .section-header:first-child { padding-top: 4px; }
 
-.section-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 10px 4px;
-}
-
-.section-header-row .section-header {
-  padding: 0;
-}
-
 .section-add-btn {
   background: none;
   border: 1px solid var(--border);
@@ -447,6 +459,51 @@ body {
 
 #media-file-input { display: none; }
 
+#inputs-panel {
+  width: 100%;
+  background: rgba(17, 17, 25, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+#inputs-panel .inputs-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(22, 22, 31, 0.6);
+}
+
+#inputs-panel .inputs-header .title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+#inputs-panel .media-list {
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#inputs-panel .media-list:empty {
+  padding: 8px 12px;
+}
+
+#inputs-panel .media-list:empty::after {
+  content: 'No media';
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
 /* Editor — hidden, kept functional for MCP */
 #editor-area {
   display: none;
@@ -475,7 +532,6 @@ body {
       <div class="status-light disconnected" id="status-light"></div>
     </div>
     <div id="shader-list"></div>
-    <input type="file" id="media-file-input" accept="image/*,video/*,.glb,.gltf" multiple>
   </div>
 
   <!-- MAIN -->
@@ -492,17 +548,30 @@ body {
       </div>
       <div id="error-bar"></div>
 
-      <!-- Floating parameter panel -->
-      <div id="params-panel">
-        <div id="params-header">
-          <span class="title">Parameters</span>
-          <div class="actions">
-            <button class="params-btn" id="params-collapse" title="Collapse">&#x25B2;</button>
-            <button class="params-btn" id="params-close" title="Close">&#x2715;</button>
+      <!-- Floating panels container -->
+      <div id="panels-container">
+        <!-- Inputs panel (top) -->
+        <div id="inputs-panel">
+          <div class="inputs-header">
+            <button class="section-add-btn" id="inputs-add-btn" title="Add media input">+</button>
+            <span class="title">Inputs</span>
           </div>
+          <div class="media-list" id="media-list"></div>
         </div>
-        <div id="params-body"></div>
+
+        <!-- Parameters panel (below) -->
+        <div id="params-panel">
+          <div id="params-header">
+            <span class="title">Parameters</span>
+            <div class="actions">
+              <button class="params-btn" id="params-collapse" title="Collapse">&#x25B2;</button>
+              <button class="params-btn" id="params-close" title="Close">&#x2715;</button>
+            </div>
+          </div>
+          <div id="params-body"></div>
+        </div>
       </div>
+      <input type="file" id="media-file-input" accept="image/*,video/*,.glb,.gltf" multiple>
     </div>
 
     <div id="editor-area">
@@ -848,7 +917,7 @@ class SceneRenderer {
   render() {
     if (!this.sceneDef || !this.renderer) return;
     const elapsed = (performance.now() - this.startTime) / 1000;
-    this.sceneDef.update(elapsed, this.inputValues);
+    this.sceneDef.update(elapsed, this.inputValues, this.media);
     this.renderer.render(this.sceneDef.scene, this.sceneDef.camera);
   }
 
@@ -1192,7 +1261,8 @@ function hexToRgb(hex) {
   }
 
   // Make params panel draggable
-  makeDraggable(paramsPanel, paramsHeader);
+  const panelsContainer = document.getElementById('panels-container');
+  makeDraggable(panelsContainer, paramsHeader);
 
   // CodeMirror editor
   const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
@@ -1265,8 +1335,10 @@ function hexToRgb(hex) {
       currentInputs = sceneDef.INPUTS || [];
       currentInputValues = generateControls(currentInputs, paramsBody, (vals) => {
         sceneRenderer.inputValues = vals;
+        autoBindTextures();
       });
       sceneRenderer.inputValues = currentInputValues;
+      autoBindTextures();
 
       if (currentInputs.length > 0) {
         paramsPanel.classList.add('visible');
@@ -1483,35 +1555,18 @@ function hexToRgb(hex) {
       shaders.forEach(addItem);
     }
     if (scenes.length > 0) {
-      addSectionHeader('Scenes');
+      addSectionHeader('3D Scenes');
       scenes.forEach(addItem);
     }
   } catch (e) {
     console.warn('Could not load shader manifest:', e);
   }
 
-  // --- INPUTS Section (Media) ---
+  // --- INPUTS Panel (Media) ---
   const mediaFileInput = document.getElementById('media-file-input');
-  const mediaListContainer = document.createElement('div');
-  mediaListContainer.id = 'media-list';
+  const mediaListContainer = document.getElementById('media-list');
 
-  // Add INPUTS section header with + button
-  const inputsSectionRow = document.createElement('div');
-  inputsSectionRow.className = 'section-header-row';
-  const inputsSectionLabel = document.createElement('div');
-  inputsSectionLabel.className = 'section-header';
-  inputsSectionLabel.textContent = 'Inputs';
-  const inputsAddBtn = document.createElement('button');
-  inputsAddBtn.className = 'section-add-btn';
-  inputsAddBtn.textContent = '+';
-  inputsAddBtn.title = 'Add media input';
-  inputsAddBtn.addEventListener('click', () => mediaFileInput.click());
-  inputsSectionRow.appendChild(inputsSectionLabel);
-  inputsSectionRow.appendChild(inputsAddBtn);
-
-  const list = document.getElementById('shader-list');
-  list.appendChild(inputsSectionRow);
-  list.appendChild(mediaListContainer);
+  document.getElementById('inputs-add-btn').addEventListener('click', () => mediaFileInput.click());
 
   function renderMediaList() {
     mediaListContainer.innerHTML = '';
@@ -1551,13 +1606,16 @@ function hexToRgb(hex) {
 
     imageInputs.forEach((inp, i) => {
       // Check if a specific media was selected via control UI
-      const selectedId = currentInputValues[inp.NAME];
+      let selectedId = currentInputValues[inp.NAME];
       let media = null;
       if (selectedId) {
         media = mediaInputs.find(m => String(m.id) === String(selectedId));
       }
+      // Auto-assign first compatible media if nothing selected
       if (!media && i < compatibleMedia.length) {
         media = compatibleMedia[i];
+        currentInputValues[inp.NAME] = media.id;
+        getActiveRenderer().inputValues = currentInputValues;
       }
       if (media && media.glTexture) {
         isfRenderer.textures[inp.NAME] = {
@@ -1570,11 +1628,65 @@ function hexToRgb(hex) {
 
     // Update SceneRenderer media
     sceneRenderer.media = mediaInputs.map(m => ({
+      id: m.id,
       name: m.name,
       type: m.type,
       threeTexture: m.threeTexture,
       threeModel: m.threeModel,
     }));
+
+    // Refresh the image dropdowns in params panel to reflect current media
+    const selects = paramsBody.querySelectorAll('.control-row select');
+    selects.forEach(select => {
+      const label = select.closest('.control-row')?.querySelector('label');
+      if (!label) return;
+      const inp = currentInputs.find(i => i.NAME === label.textContent && i.TYPE === 'image');
+      if (!inp) return;
+      // Rebuild options
+      select.innerHTML = '';
+      const noneOpt = document.createElement('option');
+      noneOpt.value = '';
+      noneOpt.textContent = '(none)';
+      select.appendChild(noneOpt);
+      compatibleMedia.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = mediaTypeIcon(m.type) + ' ' + m.name;
+        select.appendChild(opt);
+      });
+      const curVal = currentInputValues[inp.NAME];
+      if (curVal) select.value = curVal;
+    });
+
+    // Replace placeholder text with dropdown if media now exists
+    paramsBody.querySelectorAll('.control-row').forEach(row => {
+      const label = row.querySelector('label');
+      if (!label) return;
+      const inp = currentInputs.find(i => i.NAME === label.textContent && i.TYPE === 'image');
+      if (!inp) return;
+      const placeholder = row.querySelector('span[style]');
+      if (placeholder && compatibleMedia.length > 0) {
+        placeholder.remove();
+        const select = document.createElement('select');
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '(none)';
+        select.appendChild(noneOpt);
+        compatibleMedia.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = mediaTypeIcon(m.type) + ' ' + m.name;
+          select.appendChild(opt);
+        });
+        const curVal = currentInputValues[inp.NAME];
+        if (curVal) select.value = curVal;
+        select.addEventListener('change', () => {
+          currentInputValues[inp.NAME] = select.value || null;
+          getActiveRenderer().inputValues = currentInputValues;
+        });
+        row.appendChild(select);
+      }
+    });
   }
 
   async function addMediaFromFile(file) {
@@ -1668,9 +1780,8 @@ function hexToRgb(hex) {
     mediaFileInput.value = '';
   });
 
-  // --- Load default shader and start ---
-  loadSource(DEFAULT_SHADER);
-  isfRenderer.start();
+  // --- Load default scene and start ---
+  loadScene('scenes', 'spinning_cube.scene.js');
 
   // Handle canvas resize on panel resize
   const resizeObs = new ResizeObserver(() => {
