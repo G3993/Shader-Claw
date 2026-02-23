@@ -622,6 +622,141 @@ body {
 
 #remove-bg-btn.visible { display: flex; }
 
+/* ===== NDI ===== */
+.canvas-btn.ndi-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(230, 57, 70, 0.15);
+  box-shadow: 0 0 8px rgba(230, 57, 70, 0.3);
+}
+
+#ndi-source-picker {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#ndi-source-picker.visible { display: flex; }
+
+#ndi-source-picker .picker-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 280px;
+  max-width: 400px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+
+#ndi-source-picker .picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(22, 22, 31, 0.6);
+}
+
+#ndi-source-picker .picker-header .title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+#ndi-source-picker .picker-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#ndi-source-picker .picker-close:hover { color: var(--text); }
+
+#ndi-source-picker .picker-body {
+  padding: 6px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#ndi-source-picker .picker-body:empty::after {
+  content: 'Searching for NDI sources...';
+  display: block;
+  padding: 16px;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+}
+
+.ndi-source-item {
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+  color: var(--text);
+}
+
+.ndi-source-item:hover { background: var(--panel-alt); }
+
+.ndi-source-item .ndi-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+.ndi-source-item .ndi-src-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ndi-source-item .ndi-src-addr {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.ndi-refresh-btn {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 4px 8px 8px;
+  padding: 6px;
+  background: rgba(30, 30, 42, 0.6);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: inherit;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ndi-refresh-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+/* NDI output status badge */
+.ndi-status {
+  font-size: 8px;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* Editor — hidden, kept functional for MCP */
 #editor-area {
   display: none;
@@ -656,6 +791,7 @@ body {
         <button class="canvas-btn" id="remove-bg-btn" title="Remove shader background">&#x2715; BG</button>
         <button class="canvas-btn" id="params-toggle-btn" title="Toggle Parameters">&#x2699;</button>
         <button class="canvas-btn" id="play-btn" title="Play/Pause">&#9654;</button>
+        <button class="canvas-btn" id="ndi-send-btn" title="NDI Broadcast" style="position:relative;font-size:10px;font-weight:700;letter-spacing:0.5px;">NDI</button>
         <button class="canvas-btn" id="fs-btn" title="Fullscreen">&#x26F6;</button>
         <button class="canvas-btn" id="copy-btn" title="Copy Shader">&#x2398;</button>
         <button class="canvas-btn" id="download-btn" title="Save .fs">&#x2B73;</button>
@@ -698,6 +834,10 @@ body {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
               <span>Webcam</span>
             </button>
+            <button class="import-tile" id="tile-ndi" title="NDI input">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4"/><path d="M12 19v4"/><path d="M1 12h4"/><path d="M19 12h4"/><path d="M4.22 4.22l2.83 2.83"/><path d="M16.95 16.95l2.83 2.83"/><path d="M4.22 19.78l2.83-2.83"/><path d="M16.95 7.05l2.83-2.83"/></svg>
+              <span>NDI</span>
+            </button>
             <button class="import-tile" id="tile-mic" title="Live mic captions" style="display:none">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               <span>Mic</span>
@@ -735,6 +875,18 @@ body {
       <input type="file" id="model-file-input" accept=".glb,.gltf,.stl,.fbx,.obj" multiple style="display:none">
       <input type="file" id="sound-file-input" accept="audio/mpeg,audio/wav,audio/ogg,.mp3,.wav,.ogg" multiple style="display:none">
       <input type="file" id="vector-file-input" accept=".svg,image/svg+xml" style="display:none">
+
+      <!-- NDI Source Picker -->
+      <div id="ndi-source-picker">
+        <div class="picker-box">
+          <div class="picker-header">
+            <span class="title">NDI Sources</span>
+            <button class="picker-close" id="ndi-picker-close">&times;</button>
+          </div>
+          <div class="picker-body" id="ndi-picker-body"></div>
+          <button class="ndi-refresh-btn" id="ndi-refresh-btn">Refresh Sources</button>
+        </div>
+      </div>
     </div>
 
     <div id="editor-area">
@@ -1077,8 +1229,23 @@ function createGLTexture(gl, source) {
 class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
-    this.gl = canvas.getContext('webgl', { antialias: false, preserveDrawingBuffer: true });
-    if (!this.gl) throw new Error('WebGL not supported');
+    // Diagnostic: test WebGL on a throwaway canvas first
+    const testCanvas = document.createElement('canvas');
+    const diag = {
+      webgl2: !!testCanvas.getContext('webgl2'),
+      webgl: !!testCanvas.getContext('webgl'),
+      experimental: !!testCanvas.getContext('experimental-webgl'),
+      canvasSize: `${canvas.width}x${canvas.height}`,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      gpu: navigator.gpu ? 'WebGPU available' : 'no WebGPU',
+    };
+    console.log('[ShaderClaw WebGL Diagnostics]', JSON.stringify(diag, null, 2));
+    const opts = { antialias: false, preserveDrawingBuffer: true, powerPreference: 'low-power' };
+    this.gl = canvas.getContext('webgl2', opts) || canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
+    if (!this.gl) {
+      console.error('[ShaderClaw] All WebGL context attempts failed. Diagnostics:', diag);
+      throw new Error(`WebGL not supported. Diag: ${JSON.stringify(diag)}`);
+    }
     this.program = null;
     this.uniformLocs = {};
     this.inputValues = {};
@@ -1433,7 +1600,7 @@ class SceneRenderer {
 
   load(sceneDef) {
     this.cleanup();
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.resize();
     this.sceneDef = sceneDef.create(this.renderer, this.canvas, this.media);
@@ -3256,6 +3423,288 @@ function hexToRgb(hex) {
   resizeObs.observe(document.getElementById('preview'));
 
   // ============================================================
+  // NDI — state and helpers
+  // ============================================================
+
+  let ndiReceiveEntry = null;    // media entry for NDI receive
+  let ndiReceiveCanvas = null;   // offscreen canvas for NDI frames
+  let ndiReceiveCtx = null;
+  let ndiSendingActive = false;
+  let ndiSendAnimId = null;
+  let ndiSendFrameCount = 0;
+  let ndiSendWorker = null;
+  let ndiWsMsgId = 0;
+  const ndiPending = new Map();
+  const FRAME_TYPE_NDI_VIDEO = 0x01;
+  const FRAME_TYPE_CANVAS = 0x02;
+
+  // Send an NDI action to the server and get a response
+  function ndiRequest(ws, action, params = {}) {
+    return new Promise((resolve, reject) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        return reject(new Error('WebSocket not connected'));
+      }
+      const id = --ndiWsMsgId; // Use negative IDs to avoid collision with MCP bridge IDs
+      const timer = setTimeout(() => {
+        ndiPending.delete(id);
+        reject(new Error('NDI request timeout'));
+      }, 5000);
+      ndiPending.set(id, { resolve, reject, timer });
+      ws.send(JSON.stringify({ id, action, params }));
+    });
+  }
+
+  // Handle binary NDI video frame from server
+  function handleNdiVideoFrame(data) {
+    if (!ndiReceiveEntry) return;
+    const view = new DataView(data);
+    const width = view.getUint32(1, true);
+    const height = view.getUint32(5, true);
+    const pixels = new Uint8ClampedArray(data, 9);
+
+    // Ensure offscreen canvas matches frame dimensions
+    if (!ndiReceiveCanvas || ndiReceiveCanvas.width !== width || ndiReceiveCanvas.height !== height) {
+      ndiReceiveCanvas = document.createElement('canvas');
+      ndiReceiveCanvas.width = width;
+      ndiReceiveCanvas.height = height;
+      ndiReceiveCtx = ndiReceiveCanvas.getContext('2d');
+    }
+
+    // Draw frame data to canvas
+    const imageData = new ImageData(pixels, width, height);
+    ndiReceiveCtx.putImageData(imageData, 0, 0);
+
+    // Upload to GL texture
+    if (ndiReceiveEntry.glTexture) {
+      const gl = isfRenderer.gl;
+      gl.bindTexture(gl.TEXTURE_2D, ndiReceiveEntry.glTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ndiReceiveCanvas);
+    }
+
+    // Update THREE texture
+    if (ndiReceiveEntry.threeTexture) {
+      ndiReceiveEntry.threeTexture.needsUpdate = true;
+    }
+  }
+
+  // NDI Send — capture canvas via Worker (off main thread pixel extraction)
+  // Main thread: createImageBitmap (async, GPU-level) → transfer to Worker
+  // Worker: drawImage + getImageData + build message → transfer back
+  // Main thread: ws.send (minimal work)
+
+  function createNdiWorker() {
+    const code = `
+      let offscreen = null;
+      let ctx = null;
+
+      self.onmessage = (e) => {
+        const { bitmap, width, height } = e.data;
+
+        if (!offscreen || offscreen.width !== width || offscreen.height !== height) {
+          offscreen = new OffscreenCanvas(width, height);
+          ctx = offscreen.getContext('2d', { alpha: false });
+        }
+
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        bitmap.close();
+
+        // Build message: [0x02][width LE][height LE][RGBA pixels]
+        const msg = new Uint8Array(9 + imageData.data.length);
+        const view = new DataView(msg.buffer, 0, 9);
+        view.setUint8(0, 0x02);
+        view.setUint32(1, width, true);
+        view.setUint32(5, height, true);
+        msg.set(imageData.data, 9);
+
+        self.postMessage(msg.buffer, [msg.buffer]);
+      };
+    `;
+    const blob = new Blob([code], { type: 'application/javascript' });
+    return new Worker(URL.createObjectURL(blob));
+  }
+
+  function startNdiSend(ws) {
+    if (ndiSendingActive) return;
+    ndiSendingActive = true;
+    ndiSendFrameCount = 0;
+
+    const NDI_W = 960, NDI_H = 540;
+
+    // Spin up worker for off-thread pixel extraction
+    const worker = createNdiWorker();
+    ndiSendWorker = worker;
+
+    // Worker posts back ready-to-send frame buffers
+    worker.onmessage = (e) => {
+      if (!ndiSendingActive) return;
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      if (ws.bufferedAmount > 4 * 1024 * 1024) return; // back-pressure
+      ws.send(e.data);
+      ndiSendFrameCount++;
+    };
+
+    let lastCapture = 0;
+    let pending = false;
+
+    function captureLoop(timestamp) {
+      if (!ndiSendingActive) return;
+      ndiSendAnimId = requestAnimationFrame(captureLoop);
+
+      // Throttle to 30fps
+      if (timestamp - lastCapture < 33) return;
+      lastCapture = timestamp;
+
+      // Skip if previous frame still processing (no queue buildup)
+      if (pending) return;
+
+      // Re-acquire canvas each frame — survives shader/mode switches
+      const canvas = getActiveCanvas();
+      if (!canvas) return;
+      pending = true;
+
+      // Async bitmap creation — GPU-level, doesn't block main thread
+      createImageBitmap(canvas, { resizeWidth: NDI_W, resizeHeight: NDI_H })
+        .then(bitmap => {
+          pending = false;
+          if (!ndiSendingActive) { bitmap.close(); return; }
+          worker.postMessage({ bitmap, width: NDI_W, height: NDI_H }, [bitmap]);
+        })
+        .catch(() => { pending = false; });
+    }
+
+    ndiSendAnimId = requestAnimationFrame(captureLoop);
+  }
+
+  function stopNdiSend() {
+    ndiSendingActive = false;
+    if (ndiSendAnimId) {
+      cancelAnimationFrame(ndiSendAnimId);
+      ndiSendAnimId = null;
+    }
+    if (ndiSendWorker) {
+      ndiSendWorker.terminate();
+      ndiSendWorker = null;
+    }
+  }
+
+  // NDI Receive — add as media entry
+  async function addNdiReceiveEntry(sourceName, ws) {
+    // Remove existing NDI receive entry if any
+    if (ndiReceiveEntry) {
+      removeMedia(ndiReceiveEntry.id);
+      ndiReceiveEntry = null;
+    }
+
+    // Start receiving on server
+    await ndiRequest(ws, 'ndi_receive_start', { sourceName });
+
+    // Create media entry with a blank canvas as initial texture
+    ndiReceiveCanvas = document.createElement('canvas');
+    ndiReceiveCanvas.width = 1920;
+    ndiReceiveCanvas.height = 1080;
+    ndiReceiveCtx = ndiReceiveCanvas.getContext('2d');
+    ndiReceiveCtx.fillStyle = '#000';
+    ndiReceiveCtx.fillRect(0, 0, 1920, 1080);
+
+    const id = ++mediaIdCounter;
+    const entry = {
+      id,
+      name: 'NDI: ' + sourceName,
+      type: 'video',
+      element: ndiReceiveCanvas,
+      glTexture: createGLTexture(isfRenderer.gl, ndiReceiveCanvas),
+      threeTexture: new THREE.CanvasTexture(ndiReceiveCanvas),
+      threeModel: null,
+      _isNdi: true,
+    };
+    entry.threeTexture.needsUpdate = true;
+    ndiReceiveEntry = entry;
+
+    mediaInputs.push(entry);
+    renderMediaList();
+    autoBindTextures();
+    return entry;
+  }
+
+  // NDI Source Picker
+  const ndiPicker = document.getElementById('ndi-source-picker');
+  const ndiPickerBody = document.getElementById('ndi-picker-body');
+
+  document.getElementById('ndi-picker-close').addEventListener('click', () => {
+    ndiPicker.classList.remove('visible');
+  });
+
+  ndiPicker.addEventListener('click', (e) => {
+    if (e.target === ndiPicker) ndiPicker.classList.remove('visible');
+  });
+
+  async function refreshNdiSources(ws) {
+    ndiPickerBody.innerHTML = '<div style="padding:16px;color:var(--text-dim);font-size:11px;text-align:center">Searching...</div>';
+    try {
+      const resp = await ndiRequest(ws, 'ndi_find_sources');
+      const sources = resp.sources || [];
+      ndiPickerBody.innerHTML = '';
+      if (sources.length === 0) {
+        ndiPickerBody.innerHTML = '<div style="padding:16px;color:var(--text-dim);font-size:11px;text-align:center">No NDI sources found.<br>Make sure NDI sources are running on your network.</div>';
+        return;
+      }
+      sources.forEach(src => {
+        const item = document.createElement('div');
+        item.className = 'ndi-source-item';
+        item.innerHTML = `<span class="ndi-dot"></span><span class="ndi-src-name">${src.name}</span><span class="ndi-src-addr">${src.urlAddress || ''}</span>`;
+        item.addEventListener('click', async () => {
+          ndiPicker.classList.remove('visible');
+          try {
+            await addNdiReceiveEntry(src.name, ws);
+          } catch (e) {
+            console.warn('NDI receive failed:', e);
+          }
+        });
+        ndiPickerBody.appendChild(item);
+      });
+    } catch (e) {
+      ndiPickerBody.innerHTML = `<div style="padding:16px;color:var(--accent);font-size:11px;text-align:center">Error: ${e.message}</div>`;
+    }
+  }
+
+  // Override removeMedia to handle NDI cleanup
+  const _origRemoveMedia = removeMedia;
+  removeMedia = function(id) {
+    const entry = mediaInputs.find(m => m.id === id);
+    if (entry && entry._isNdi && ndiReceiveEntry === entry) {
+      ndiReceiveEntry = null;
+      // Tell server to stop receiving (fire and forget)
+      if (_ndiWs && _ndiWs.readyState === WebSocket.OPEN) {
+        _ndiWs.send(JSON.stringify({ id: --ndiWsMsgId, action: 'ndi_receive_stop', params: {} }));
+      }
+    }
+    _origRemoveMedia(id);
+  };
+
+  // NDI Send button
+  const ndiSendBtn = document.getElementById('ndi-send-btn');
+  let _ndiWs = null;
+
+  ndiSendBtn.addEventListener('click', async () => {
+    if (!_ndiWs || _ndiWs.readyState !== WebSocket.OPEN) return;
+    if (ndiSendingActive) {
+      // Stop sending
+      stopNdiSend();
+      await ndiRequest(_ndiWs, 'ndi_send_stop');
+      ndiSendBtn.classList.remove('ndi-active');
+      ndiSendBtn.title = 'NDI Broadcast';
+    } else {
+      // Start sending
+      const canvas = getActiveCanvas();
+      await ndiRequest(_ndiWs, 'ndi_send_start', { name: 'ShaderClaw', width: canvas.width, height: canvas.height });
+      startNdiSend(_ndiWs);
+      ndiSendBtn.classList.add('ndi-active');
+      ndiSendBtn.title = 'Stop NDI Broadcast';
+    }
+  });
+
+  // ============================================================
   // WebSocket Client — connects to MCP server bridge
   // ============================================================
 
@@ -3266,12 +3715,20 @@ function hexToRgb(hex) {
     function wsConnect() {
       const wsUrl = `ws://${location.host}`;
       ws = new WebSocket(wsUrl);
+      ws.binaryType = 'arraybuffer';
 
       ws.onopen = () => {
         if (reconnectTimer) { clearInterval(reconnectTimer); reconnectTimer = null; }
+        _ndiWs = ws;
       };
 
       ws.onclose = () => {
+        _ndiWs = null;
+        // Stop NDI send if WS drops
+        if (ndiSendingActive) {
+          stopNdiSend();
+          ndiSendBtn.classList.remove('ndi-active');
+        }
         if (!reconnectTimer) {
           reconnectTimer = setInterval(() => wsConnect(), 2000);
         }
@@ -3280,8 +3737,29 @@ function hexToRgb(hex) {
       ws.onerror = () => {};
 
       ws.onmessage = async (evt) => {
+        // Handle binary NDI video frames from server
+        if (evt.data instanceof ArrayBuffer) {
+          const arr = new Uint8Array(evt.data);
+          if (arr.length > 9 && arr[0] === FRAME_TYPE_NDI_VIDEO) {
+            handleNdiVideoFrame(evt.data);
+          }
+          return;
+        }
+
         let msg;
         try { msg = JSON.parse(evt.data); } catch { return; }
+
+        // Check if this is a response to an NDI request (negative IDs)
+        if (msg.id < 0) {
+          const entry = ndiPending.get(msg.id);
+          if (entry) {
+            clearTimeout(entry.timer);
+            ndiPending.delete(msg.id);
+            if (msg.error) entry.reject(new Error(msg.error));
+            else entry.resolve(msg.result);
+          }
+          return;
+        }
 
         const { id, action, params } = msg;
         let result = null;
@@ -3371,6 +3849,16 @@ function hexToRgb(hex) {
     }
 
     wsConnect();
+
+    // NDI tile — open source picker
+    document.getElementById('tile-ndi').addEventListener('click', () => {
+      ndiPicker.classList.add('visible');
+      refreshNdiSources(ws);
+    });
+
+    document.getElementById('ndi-refresh-btn').addEventListener('click', () => {
+      refreshNdiSources(ws);
+    });
   }
 
 })();

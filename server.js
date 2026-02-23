@@ -11,10 +11,11 @@ import { join, extname } from "path";
 import { WebSocketServer } from "ws";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import grandi from "grandi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const PORT = parseInt(process.env.SHADERCLAW_PORT || "7777", 10);
+const PORT = parseInt(process.env.PORT || process.env.SHADERCLAW_PORT || "7777", 10);
 
 const log = (...args) => process.stderr.write(`[ShaderClaw] ${args.join(" ")}\n`);
 
@@ -59,9 +60,18 @@ class BrowserBridge {
     this.ws = ws;
     log("Browser connected");
 
-    ws.on("message", (data) => {
+    ws.on("message", (data, isBinary) => {
+      // Skip binary frames (handled separately for NDI)
+      if (isBinary) return;
       try {
         const msg = JSON.parse(data.toString());
+
+        // Handle NDI action requests from browser
+        if (msg.action && msg.action.startsWith("ndi_")) {
+          this._handleNdiAction(ws, msg);
+          return;
+        }
+
         const entry = this.pending.get(msg.id);
         if (!entry) return;
 
@@ -94,6 +104,45 @@ class BrowserBridge {
     });
   }
 
+  async _handleNdiAction(ws, msg) {
+    const { id, action, params } = msg;
+    let result = null;
+    let error = null;
+
+    try {
+      switch (action) {
+        case "ndi_find_sources":
+          result = { sources: await ndiGetSources() };
+          break;
+        case "ndi_receive_start":
+          await ndiStartReceive(params.sourceName);
+          result = { ok: true, sourceName: params.sourceName };
+          break;
+        case "ndi_receive_stop":
+          ndiStopReceive();
+          result = { ok: true };
+          break;
+        case "ndi_send_start":
+          await ndiStartSend(params.name || "ShaderClaw", params.width || 1920, params.height || 1080);
+          result = { ok: true };
+          break;
+        case "ndi_send_stop":
+          ndiStopSend();
+          result = { ok: true };
+          break;
+        case "ndi_send_tally":
+          result = ndiGetTally();
+          break;
+        default:
+          error = `Unknown NDI action: ${action}`;
+      }
+    } catch (e) {
+      error = e.message;
+    }
+
+    ws.send(JSON.stringify({ id, result, error }));
+  }
+
   send(action, params = {}, timeoutMs = 10000) {
     return new Promise((resolve, reject) => {
       if (!this.connected) {
@@ -113,6 +162,148 @@ class BrowserBridge {
 }
 
 const bridge = new BrowserBridge();
+
+// ============================================================
+// NDI — find, receive, send via grandi
+// ============================================================
+
+let ndiFinder = null;
+let ndiReceiver = null;
+let ndiReceiverPump = false;
+let ndiSender = null;
+let ndiSendActive = false;
+
+// Binary frame protocol constants
+const FRAME_TYPE_NDI_VIDEO = 0x01; // server → browser
+const FRAME_TYPE_CANVAS    = 0x02; // browser → server
+
+async function ndiGetSources() {
+  if (!ndiFinder) {
+    ndiFinder = await grandi.find({ showLocalSources: true });
+  }
+  const sources = ndiFinder.sources();
+  return sources.map(s => ({ name: s.name, urlAddress: s.urlAddress }));
+}
+
+async function ndiStartReceive(sourceName) {
+  // Stop existing receiver
+  ndiStopReceive();
+
+  const sources = await ndiGetSources();
+  const source = sources.find(s => s.name === sourceName);
+  if (!source) throw new Error(`NDI source not found: ${sourceName}`);
+
+  ndiReceiver = await grandi.receive({
+    source: { name: source.name, urlAddress: source.urlAddress },
+    colorFormat: grandi.COLOR_FORMAT_RGBX_RGBA,
+    allowVideoFields: false,
+  });
+
+  ndiReceiverPump = true;
+  log(`NDI receiving from: ${sourceName}`);
+
+  // Start frame pump
+  const pumpReceiver = ndiReceiver; // capture ref to detect destroy
+  (async function pump() {
+    while (ndiReceiverPump && ndiReceiver === pumpReceiver) {
+      try {
+        const frame = await pumpReceiver.video(100); // 100ms timeout, returns Promise
+        if (!ndiReceiverPump || ndiReceiver !== pumpReceiver) break;
+        if (frame && frame.data && bridge.connected && bridge.ws) {
+          const header = Buffer.alloc(9);
+          header[0] = FRAME_TYPE_NDI_VIDEO;
+          header.writeUInt32LE(frame.xres, 1);
+          header.writeUInt32LE(frame.yres, 5);
+          const msg = Buffer.concat([header, Buffer.from(frame.data)]);
+          try {
+            bridge.ws.send(msg);
+          } catch (e) {
+            // WebSocket send error — browser might be gone
+          }
+        }
+      } catch (e) {
+        // Timeout (code 4040) is normal — just means no frame this interval
+        if (!ndiReceiverPump || ndiReceiver !== pumpReceiver) break;
+      }
+    }
+  })();
+}
+
+function ndiStopReceive() {
+  ndiReceiverPump = false;
+  if (ndiReceiver) {
+    try { ndiReceiver.destroy(); } catch (e) {}
+    ndiReceiver = null;
+    log("NDI receiver stopped");
+  }
+}
+
+async function ndiStartSend(name = "ShaderClaw", width = 1920, height = 1080) {
+  ndiStopSend();
+  ndiSender = await grandi.send({ name });
+  ndiSendActive = true;
+  ndiSender._width = width;
+  ndiSender._height = height;
+  log(`NDI sending as: ${name} (${width}x${height})`);
+}
+
+function ndiStopSend() {
+  ndiSendActive = false;
+  if (ndiSender) {
+    try { ndiSender.destroy(); } catch (e) {}
+    ndiSender = null;
+    log("NDI sender stopped");
+  }
+}
+
+let _ndiFrameCount = 0;
+function ndiHandleCanvasFrame(data) {
+  if (!ndiSender || !ndiSendActive) return;
+  if (++_ndiFrameCount % 30 === 1) log(`NDI send: frame ${_ndiFrameCount}, ${data.length} bytes`);
+  // data is raw buffer: [0x02][width LE 4][height LE 4][RGBA pixels]
+  const width = data.readUInt32LE(1);
+  const height = data.readUInt32LE(5);
+  const pixels = data.slice(9);
+
+  try {
+    ndiSender.video({
+      data: pixels,
+      fourCC: grandi.FOURCC_RGBA,
+      xres: width,
+      yres: height,
+      frameRateN: 30000,
+      frameRateD: 1001,
+      lineStrideBytes: width * 4,
+      pictureAspectRatio: width / height,
+      frameFormatType: grandi.FORMAT_TYPE_PROGRESSIVE,
+    });
+  } catch (e) {
+    // send error
+  }
+}
+
+function ndiGetTally() {
+  if (!ndiSender) return { onProgram: false, onPreview: false };
+  try {
+    const tally = ndiSender.tally(0); // non-blocking
+    return tally || { onProgram: false, onPreview: false };
+  } catch (e) {
+    return { onProgram: false, onPreview: false };
+  }
+}
+
+// Cleanup NDI on process exit
+function ndiCleanup() {
+  ndiStopReceive();
+  ndiStopSend();
+  if (ndiFinder) {
+    try { ndiFinder.destroy(); } catch (e) {}
+    ndiFinder = null;
+  }
+}
+process.on("exit", ndiCleanup);
+process.on("SIGINT", () => { ndiCleanup(); process.exit(0); });
+process.on("SIGTERM", () => { ndiCleanup(); process.exit(0); });
 
 // ============================================================
 // HTTP Static Server
@@ -150,6 +341,13 @@ const wss = new WebSocketServer({ server: httpServer });
 
 wss.on("connection", (ws) => {
   bridge.attach(ws);
+
+  // Handle binary frames from browser (NDI send)
+  ws.on("message", (data, isBinary) => {
+    if (isBinary && data.length > 9 && data[0] === FRAME_TYPE_CANVAS) {
+      ndiHandleCanvasFrame(data);
+    }
+  });
 });
 
 // ============================================================
