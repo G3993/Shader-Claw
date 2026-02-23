@@ -114,18 +114,6 @@
     "hasVertex": true
   },
   {
-    "id": 22,
-    "title": "Voxel Figure",
-    "description": "Precise 3D voxel human figure — blocky Minecraft-style character with zoom",
-    "type": "generator",
-    "categories": [
-      "Generator",
-      "Art"
-    ],
-    "file": "cubist_figure.fs",
-    "hasVertex": true
-  },
-  {
     "id": 23,
     "title": "Text",
     "description": "Unified text effects — 20 presets across 8 families with 3 bitmap fonts",

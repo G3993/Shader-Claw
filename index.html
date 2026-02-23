@@ -6,6 +6,9 @@
 <title>ShaderClaw</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #09090f;
@@ -65,41 +68,8 @@ body {
   flex-shrink: 0;
 }
 
-.brand .claw-marks {
-  filter: drop-shadow(0 0 4px var(--accent));
-  animation: clawPulse 2s ease-in-out infinite;
-}
-
-@keyframes clawPulse {
-  0%, 100% { filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 8px var(--accent)); opacity: 0.85; }
-  50% { filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 16px var(--accent)) drop-shadow(0 0 24px #ff2040); opacity: 1; }
-}
-
 .brand .brand-text { display: flex; align-items: center; gap: 6px; }
 .brand .brand-text span { color: var(--accent); }
-
-.status-light {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-  transition: opacity 0.3s;
-}
-
-.status-light.connected {
-  animation: statusPulse 2s ease-in-out infinite;
-}
-
-.status-light.disconnected {
-  opacity: 0.15;
-  animation: none;
-}
-
-@keyframes statusPulse {
-  0%, 100% { opacity: 0.4; box-shadow: 0 0 2px var(--accent); }
-  50% { opacity: 1; box-shadow: 0 0 6px var(--accent), 0 0 12px var(--accent); }
-}
 
 #shader-list {
   flex: 1;
@@ -355,6 +325,7 @@ body {
 
 .control-row input[type="text"] {
   flex: 1;
+  min-width: 0;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -364,7 +335,7 @@ body {
   font-family: monospace;
   letter-spacing: 1px;
   text-transform: uppercase;
-  max-width: 160px;
+  max-width: 130px;
 }
 
 .control-row .val {
@@ -394,25 +365,42 @@ body {
 
 .section-header:first-child { padding-top: 4px; }
 
-.section-add-btn {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s, border-color 0.15s;
-  line-height: 1;
+.import-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
 }
 
-.section-add-btn:hover {
+.import-tile {
+  background: rgba(30, 30, 42, 0.6);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 6px 2px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+
+.import-tile:hover {
   color: var(--text);
   border-color: var(--text-dim);
+  background: rgba(40, 40, 56, 0.8);
+}
+
+.import-tile svg { opacity: 0.7; }
+.import-tile:hover svg { opacity: 1; }
+
+.import-tile span {
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .media-item {
@@ -457,7 +445,49 @@ body {
 .media-item:hover .media-delete { opacity: 1; }
 .media-item .media-delete:hover { color: var(--accent); }
 
-#media-file-input { display: none; }
+.text-mic-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 4px;
+  margin-left: 4px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.text-mic-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.text-mic-btn.active { color: #ff4444; border-color: #ff4444; background: rgba(255,68,68,0.1); }
+
+.media-item .audio-bar {
+  width: 30px;
+  height: 6px;
+  background: rgba(40, 40, 56, 0.8);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.media-item .audio-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #4ecdc4;
+  border-radius: 3px;
+  transition: width 0.05s;
+}
+
+.media-item .audio-toggle {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.media-item .audio-toggle:hover { color: var(--text); }
 
 #inputs-panel {
   width: 100%;
@@ -504,6 +534,28 @@ body {
   font-size: 10px;
 }
 
+/* Drag shader as background */
+.shader-item[draggable="true"] { cursor: grab; }
+.shader-item[draggable="true"]:active { cursor: grabbing; }
+
+#three-canvas.drag-over {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: inset 0 0 40px rgba(230, 57, 70, 0.15);
+}
+
+#remove-bg-btn {
+  display: none;
+  font-size: 11px;
+  width: auto;
+  padding: 0 8px;
+  gap: 4px;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+#remove-bg-btn.visible { display: flex; }
+
 /* Editor — hidden, kept functional for MCP */
 #editor-area {
   display: none;
@@ -522,14 +574,9 @@ body {
   <div id="sidebar">
     <div class="brand">
       <div class="logo-wrap">
-        <svg class="claw-marks" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#e63946" stroke-width="2.5" stroke-linecap="round">
-          <path d="M7 3 L5 14 L8 24"/>
-          <path d="M14 2 L14 14 L14 25"/>
-          <path d="M21 3 L23 14 L20 24"/>
-        </svg>
+        <img src="logo.png" alt="ShaderClaw" width="28" height="28" style="object-fit: contain;">
       </div>
       <div class="brand-text">SHADER<span>CLAW</span></div>
-      <div class="status-light disconnected" id="status-light"></div>
     </div>
     <div id="shader-list"></div>
   </div>
@@ -540,6 +587,7 @@ body {
       <canvas id="gl-canvas"></canvas>
       <canvas id="three-canvas"></canvas>
       <div class="canvas-controls">
+        <button class="canvas-btn" id="remove-bg-btn" title="Remove shader background">&#x2715; BG</button>
         <button class="canvas-btn" id="params-toggle-btn" title="Toggle Parameters">&#x2699;</button>
         <button class="canvas-btn" id="play-btn" title="Play/Pause">&#9654;</button>
         <button class="canvas-btn" id="fs-btn" title="Fullscreen">&#x26F6;</button>
@@ -553,8 +601,41 @@ body {
         <!-- Inputs panel (top) -->
         <div id="inputs-panel">
           <div class="inputs-header">
-            <button class="section-add-btn" id="inputs-add-btn" title="Add media input">+</button>
             <span class="title">Inputs</span>
+          </div>
+          <div class="import-grid">
+            <button class="import-tile" id="tile-image" title="Import image">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>Image</span>
+            </button>
+            <button class="import-tile" id="tile-video" title="Import video">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"/></svg>
+              <span>Video</span>
+            </button>
+            <button class="import-tile" id="tile-model" title="Import 3D model">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              <span>3D Model</span>
+            </button>
+            <button class="import-tile" id="tile-sound" title="Import audio">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+              <span>Sound</span>
+            </button>
+            <button class="import-tile" id="tile-vector" title="Import SVG" style="display:none">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+              <span>Vector</span>
+            </button>
+            <button class="import-tile" id="tile-text3d" title="Create 3D text">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,7 4,4 20,4 20,7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+              <span>3D Text</span>
+            </button>
+            <button class="import-tile" id="tile-webcam" title="Webcam input">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              <span>Webcam</span>
+            </button>
+            <button class="import-tile" id="tile-mic" title="Live mic captions" style="display:none">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <span>Mic</span>
+            </button>
           </div>
           <div class="media-list" id="media-list"></div>
         </div>
@@ -562,7 +643,7 @@ body {
         <!-- Parameters panel (below) -->
         <div id="params-panel">
           <div id="params-header">
-            <span class="title">Parameters</span>
+            <span class="title">Details</span>
             <div class="actions">
               <button class="params-btn" id="params-collapse" title="Collapse">&#x25B2;</button>
               <button class="params-btn" id="params-close" title="Close">&#x2715;</button>
@@ -571,7 +652,11 @@ body {
           <div id="params-body"></div>
         </div>
       </div>
-      <input type="file" id="media-file-input" accept="image/*,video/*,.glb,.gltf" multiple>
+      <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/gif,image/webp" multiple style="display:none">
+      <input type="file" id="video-file-input" accept="video/mp4,video/webm" multiple style="display:none">
+      <input type="file" id="model-file-input" accept=".glb,.gltf,.stl,.fbx,.obj" multiple style="display:none">
+      <input type="file" id="sound-file-input" accept="audio/mpeg,audio/wav,audio/ogg,.mp3,.wav,.ogg" multiple style="display:none">
+      <input type="file" id="vector-file-input" accept=".svg,image/svg+xml" style="display:none">
     </div>
 
     <div id="editor-area">
@@ -593,10 +678,19 @@ body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.6.10/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
 <script>
 // ============================================================
 // ShaderClaw — ISF Shader Builder
 // ============================================================
+
+// FBXLoader needs fflate — shim it onto THREE namespace
+if (window.fflate && typeof THREE !== 'undefined') THREE.fflate = window.fflate;
 
 const DEFAULT_SHADER = `/*{
   "DESCRIPTION": "ShaderClaw default — radial pulse",
@@ -655,7 +749,7 @@ function buildFragmentShader(source) {
   const parsed = parseISF(source);
   const uniformLines = (parsed.inputs || []).map(isfInputToUniform);
 
-  const header = [
+  const headerParts = [
     'precision highp float;',
     'uniform float TIME;',
     'uniform vec2 RENDERSIZE;',
@@ -664,12 +758,19 @@ function buildFragmentShader(source) {
     'varying vec2 isf_FragNormCoord;',
     '#define IMG_NORM_PIXEL(img, coord) texture2D(img, coord)',
     '#define IMG_PIXEL(img, coord) texture2D(img, coord / RENDERSIZE)',
+    // Audio-reactive uniforms (always declared, zero when no audio)
+    'uniform sampler2D audioFFT;',
+    'uniform float audioLevel;',
+    'uniform float audioBass;',
+    'uniform float audioMid;',
+    'uniform float audioHigh;',
     ...uniformLines,
     ''
-  ].join('\n');
+  ];
+  const header = headerParts.join('\n');
 
   const cleaned = parsed.glsl.replace(/#version\s+\d+.*/g, '');
-  return { frag: header + cleaned, parsed };
+  return { frag: header + cleaned, parsed, headerLineCount: headerParts.length };
 }
 
 const VERT_SHADER = `
@@ -687,16 +788,80 @@ void main() {
 const mediaInputs = [];
 let mediaIdCounter = 0;
 
+// Audio-reactive system
+let audioCtx = null;
+let audioAnalyser = null;
+let audioDataArray = null;
+let audioFFTGLTexture = null;
+let audioFFTThreeTexture = null;
+let audioLevel = 0, audioBass = 0, audioMid = 0, audioHigh = 0;
+let activeAudioEntry = null;
+
+// Audio-reactive per-frame update (global scope — called from Renderer.render)
+function updateAudioUniforms(gl) {
+  if (!audioAnalyser || !activeAudioEntry) {
+    audioLevel = audioBass = audioMid = audioHigh = 0;
+    return;
+  }
+  audioAnalyser.getByteFrequencyData(audioDataArray);
+  const len = audioDataArray.length; // 128 bins
+
+  // Compute RMS level
+  let sum = 0;
+  for (let i = 0; i < len; i++) sum += audioDataArray[i] * audioDataArray[i];
+  audioLevel = Math.sqrt(sum / len) / 255.0;
+
+  // Bass (bins 0-15), Mid (16-80), High (81-127)
+  let bassSum = 0, midSum = 0, highSum = 0;
+  for (let i = 0; i < 16; i++) bassSum += audioDataArray[i];
+  for (let i = 16; i < 81; i++) midSum += audioDataArray[i];
+  for (let i = 81; i < len; i++) highSum += audioDataArray[i];
+  audioBass = bassSum / (16 * 255);
+  audioMid = midSum / (65 * 255);
+  audioHigh = highSum / (47 * 255);
+
+  // Upload FFT data to GL texture (256x1 LUMINANCE)
+  if (!audioFFTGLTexture) {
+    audioFFTGLTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, audioFFTGLTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  }
+  gl.bindTexture(gl.TEXTURE_2D, audioFFTGLTexture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, len, 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, audioDataArray);
+
+  // Update THREE DataTexture
+  if (!audioFFTThreeTexture) {
+    audioFFTThreeTexture = new THREE.DataTexture(audioDataArray, len, 1, THREE.LuminanceFormat);
+    audioFFTThreeTexture.needsUpdate = true;
+  } else {
+    audioFFTThreeTexture.needsUpdate = true;
+  }
+
+  // Update audio level bar in media list
+  if (activeAudioEntry) {
+    const bar = document.querySelector('.audio-bar-fill[data-audio-id="' + activeAudioEntry.id + '"]');
+    if (bar) bar.style.width = (audioLevel * 100) + '%';
+  }
+}
+
 function detectMediaType(file) {
   const ext = file.name.split('.').pop().toLowerCase();
-  if (['glb', 'gltf'].includes(ext)) return 'model';
+  if (['glb', 'gltf', 'stl', 'fbx', 'obj'].includes(ext)) return 'model';
+  if (['mp3', 'wav', 'ogg'].includes(ext)) return 'audio';
+  if (ext === 'svg') return 'svg';
   if (file.type.startsWith('video/')) return 'video';
   return 'image';
 }
 
-function mediaTypeIcon(type) {
+function mediaTypeIcon(type, name) {
+  if (type === 'video' && name === 'Webcam') return '\u{1F4F9}';
   if (type === 'video') return '\u{1F3AC}';
   if (type === 'model') return '\u{1F9CA}';
+  if (type === 'audio') return '\u{1F50A}';
+  if (type === 'svg') return '\u{2712}';
   return '\u{1F5BC}';
 }
 
@@ -796,7 +961,7 @@ class Renderer {
 
   _prettyErrors(log) {
     if (!log) return '';
-    const headerLines = 9;
+    const headerLines = this._headerLines || 14;
     return log.replace(/ERROR:\s*\d+:(\d+)/g, (m, line) => {
       const adjusted = Math.max(1, parseInt(line) - headerLines);
       return `Line ${adjusted}`;
@@ -846,11 +1011,49 @@ class Renderer {
       gl.activeTexture(gl.TEXTURE0 + texUnit);
       gl.bindTexture(gl.TEXTURE_2D, tex.glTexture);
       if (tex.isVideo && tex.element && tex.element.readyState >= 2) {
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tex.element);
+        if (tex.flipH) {
+          // Mirror webcam: draw flipped to offscreen canvas
+          if (!tex._flipCanvas) {
+            tex._flipCanvas = document.createElement('canvas');
+            tex._flipCtx = tex._flipCanvas.getContext('2d');
+          }
+          const v = tex.element;
+          const fc = tex._flipCanvas;
+          if (fc.width !== v.videoWidth || fc.height !== v.videoHeight) {
+            fc.width = v.videoWidth || 640;
+            fc.height = v.videoHeight || 480;
+          }
+          const ctx = tex._flipCtx;
+          ctx.save();
+          ctx.translate(fc.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(v, 0, 0);
+          ctx.restore();
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fc);
+        } else {
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tex.element);
+        }
       }
       gl.uniform1i(this._getLoc(name), texUnit);
       texUnit++;
     }
+
+    // Audio-reactive uniforms
+    updateAudioUniforms(gl);
+    if (audioFFTGLTexture) {
+      gl.activeTexture(gl.TEXTURE0 + texUnit);
+      gl.bindTexture(gl.TEXTURE_2D, audioFFTGLTexture);
+      gl.uniform1i(this._getLoc('audioFFT'), texUnit);
+      texUnit++;
+    }
+    const alLoc = this._getLoc('audioLevel');
+    if (alLoc) gl.uniform1f(alLoc, audioLevel);
+    const abLoc = this._getLoc('audioBass');
+    if (abLoc) gl.uniform1f(abLoc, audioBass);
+    const amLoc = this._getLoc('audioMid');
+    if (amLoc) gl.uniform1f(amLoc, audioMid);
+    const ahLoc = this._getLoc('audioHigh');
+    if (ahLoc) gl.uniform1f(ahLoc, audioHigh);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuf);
     gl.enableVertexAttribArray(0);
@@ -902,11 +1105,12 @@ class SceneRenderer {
     this.inputValues = {};
     this.inputs = [];
     this.media = []; // { name, type, threeTexture, threeModel }
+    this._shaderBg = null; // { isfRenderer, texture } when shader bg active
   }
 
   load(sceneDef) {
     this.cleanup();
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, preserveDrawingBuffer: true });
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.resize();
     this.sceneDef = sceneDef.create(this.renderer, this.canvas, this.media);
@@ -916,6 +1120,13 @@ class SceneRenderer {
 
   render() {
     if (!this.sceneDef || !this.renderer) return;
+    // Update audio analysis (used by ISF bg shader and scene)
+    if (this._isfGL) updateAudioUniforms(this._isfGL);
+    // Drive ISF offscreen render and update texture before 3D render
+    if (this._shaderBg) {
+      this._shaderBg.isfRenderer.render();
+      this._shaderBg.texture.needsUpdate = true;
+    }
     const elapsed = (performance.now() - this.startTime) / 1000;
     this.sceneDef.update(elapsed, this.inputValues, this.media);
     this.renderer.render(this.sceneDef.scene, this.sceneDef.camera);
@@ -1142,10 +1353,73 @@ function generateControls(inputs, container, onChange) {
 
       row.appendChild(textInput);
 
+      // Mic button — toggles speech recognition into this text field
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRec) {
+        const micBtn = document.createElement('button');
+        micBtn.className = 'text-mic-btn';
+        micBtn.textContent = '\u{1F3A4}';
+        micBtn.title = 'Mic input';
+        let micRec = null;
+        let micActive = false;
+
+        function startMicRec() {
+          micRec = new SpeechRec();
+          micRec.continuous = true;
+          micRec.interimResults = true;
+          micRec.lang = 'en-US';
+          micRec.onresult = (event) => {
+            let interim = '';
+            let final = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              if (event.results[i].isFinal) final += event.results[i][0].transcript;
+              else interim += event.results[i][0].transcript;
+            }
+            const raw = (final || interim).trim();
+            if (!raw) return;
+            const str = raw.toUpperCase().slice(-maxLen);
+            textInput.value = str;
+            for (let i = 0; i < maxLen; i++) {
+              values[inp.NAME + '_' + i] = charToCode(str[i]);
+            }
+            values[inp.NAME + '_len'] = str.replace(/\s+$/, '').length;
+            onChange(values);
+          };
+          micRec.onerror = (e) => {
+            console.warn('Mic error:', e.error);
+            if (e.error === 'not-allowed' || e.error === 'aborted') {
+              micActive = false;
+              micBtn.classList.remove('active');
+            }
+          };
+          micRec.onend = () => {
+            if (micActive) {
+              // Create fresh instance — Chrome won't restart a used one reliably
+              setTimeout(startMicRec, 300);
+            }
+          };
+          micRec.start();
+        }
+
+        micBtn.addEventListener('click', () => {
+          if (micActive && micRec) {
+            micActive = false;
+            micRec.stop();
+            micRec = null;
+            micBtn.classList.remove('active');
+            return;
+          }
+          micActive = true;
+          micBtn.classList.add('active');
+          startMicRec();
+        });
+        row.appendChild(micBtn);
+      }
+
     } else if (inp.TYPE === 'image') {
       values[inp.NAME] = null; // texture binding, not a scalar value
 
-      const compatibleMedia = mediaInputs.filter(m => m.type === 'image' || m.type === 'video');
+      const compatibleMedia = mediaInputs.filter(m => m.type === 'image' || m.type === 'video' || m.type === 'svg');
       if (compatibleMedia.length === 0) {
         const placeholder = document.createElement('span');
         placeholder.style.cssText = 'color: var(--text-dim); font-size: 10px;';
@@ -1230,6 +1504,7 @@ function hexToRgb(hex) {
   const threeCanvas = document.getElementById('three-canvas');
   const isfRenderer = new Renderer(glCanvas);
   const sceneRenderer = new SceneRenderer(threeCanvas);
+  sceneRenderer._isfGL = isfRenderer.gl; // For audio uniform updates in scene mode
   const paramsPanel = document.getElementById('params-panel');
   const paramsBody = document.getElementById('params-body');
   const paramsHeader = document.getElementById('params-header');
@@ -1237,6 +1512,11 @@ function hexToRgb(hex) {
 
   // Track which renderer is active: 'shader' or 'scene'
   let activeMode = 'shader';
+
+  // Shader-as-background state
+  let shaderBgActive = false;
+  let shaderBgTexture = null;
+  let shaderBgOriginalBackground = null;
 
   function getActiveRenderer() {
     return activeMode === 'scene' ? sceneRenderer : isfRenderer;
@@ -1248,6 +1528,7 @@ function hexToRgb(hex) {
 
   function switchToShader() {
     if (activeMode === 'scene') sceneRenderer.stop();
+    removeShaderBackground();
     activeMode = 'shader';
     glCanvas.style.display = 'block';
     threeCanvas.style.display = 'none';
@@ -1282,7 +1563,8 @@ function hexToRgb(hex) {
   // --- Compile (ISF shaders only) ---
   function compile() {
     const source = editor.getValue();
-    const { frag, parsed } = buildFragmentShader(source);
+    const { frag, parsed, headerLineCount } = buildFragmentShader(source);
+    isfRenderer._headerLines = headerLineCount;
     const result = isfRenderer.compile(VERT_SHADER, frag);
 
     currentInputs = parsed.inputs || [];
@@ -1321,6 +1603,7 @@ function hexToRgb(hex) {
 
   // --- Load a Three.js scene file ---
   async function loadScene(folder, file) {
+    removeShaderBackground();
     switchToScene();
     errorBar.textContent = '';
     errorBar.classList.remove('show');
@@ -1355,6 +1638,76 @@ function hexToRgb(hex) {
       errorBar.classList.add('show');
     }
   }
+
+  // --- Shader as 3D Scene Background ---
+  async function applyShaderBackground(folder, file) {
+    if (activeMode !== 'scene' || !sceneRenderer.sceneDef) return;
+
+    try {
+      const r = await fetch((folder || 'shaders') + '/' + file);
+      const src = await r.text();
+      const { frag, parsed, headerLineCount } = buildFragmentShader(src);
+      isfRenderer._headerLines = headerLineCount;
+      const result = isfRenderer.compile(VERT_SHADER, frag);
+      if (!result.ok) {
+        console.warn('Shader bg compile failed:', result.errors);
+        return;
+      }
+
+      // Set ISF inputs to defaults
+      isfRenderer.inputValues = {};
+      (parsed.inputs || []).forEach(inp => {
+        if (inp.DEFAULT != null) isfRenderer.inputValues[inp.NAME] = inp.DEFAULT;
+      });
+
+      // Stop ISF's own animation loop — scene loop drives it
+      isfRenderer.stop();
+
+      // Store original background
+      shaderBgOriginalBackground = sceneRenderer.sceneDef.scene.background;
+
+      // Create CanvasTexture from ISF's WebGL canvas
+      shaderBgTexture = new THREE.CanvasTexture(glCanvas);
+      shaderBgTexture.minFilter = THREE.LinearFilter;
+      shaderBgTexture.magFilter = THREE.LinearFilter;
+      sceneRenderer.sceneDef.scene.background = shaderBgTexture;
+
+      // Tell SceneRenderer to drive ISF each frame
+      sceneRenderer._shaderBg = { isfRenderer, texture: shaderBgTexture };
+      shaderBgActive = true;
+
+      // Show remove button
+      document.getElementById('remove-bg-btn').classList.add('visible');
+    } catch (e) {
+      console.warn('Failed to apply shader background:', e);
+    }
+  }
+
+  function removeShaderBackground() {
+    if (!shaderBgActive) return;
+
+    // Restore original scene background
+    if (sceneRenderer.sceneDef && shaderBgOriginalBackground) {
+      sceneRenderer.sceneDef.scene.background = shaderBgOriginalBackground;
+    }
+
+    // Dispose texture
+    if (shaderBgTexture) {
+      shaderBgTexture.dispose();
+      shaderBgTexture = null;
+    }
+
+    // Clear SceneRenderer's reference
+    sceneRenderer._shaderBg = null;
+    shaderBgActive = false;
+    shaderBgOriginalBackground = null;
+
+    // Hide remove button
+    document.getElementById('remove-bg-btn').classList.remove('visible');
+  }
+
+  // Remove BG button handler
+  document.getElementById('remove-bg-btn').addEventListener('click', removeShaderBackground);
 
   // Expose full API for MCP server bridge
   window.shaderClaw = {
@@ -1420,6 +1773,11 @@ function hexToRgb(hex) {
           cb.checked = value;
         }
 
+        const sel = row.querySelector('select');
+        if (sel && typeof value === 'number') {
+          sel.value = value;
+        }
+
         break;
       }
     },
@@ -1440,6 +1798,21 @@ function hexToRgb(hex) {
       removeMedia(id);
       return { ok: true };
     },
+
+    addWebcam: addMediaFromWebcam,
+
+    applyShaderBackground,
+    removeShaderBackground,
+
+    getAudioLevels: () => ({
+      level: audioLevel,
+      bass: audioBass,
+      mid: audioMid,
+      high: audioHigh,
+      hasAudio: !!activeAudioEntry,
+    }),
+
+    setVarFontWeight,
   };
 
   // --- Auto-compile on change ---
@@ -1510,9 +1883,10 @@ function hexToRgb(hex) {
     const manifest = await resp.json();
     const list = document.getElementById('shader-list');
 
-    // Separate shaders and scenes
-    const shaders = manifest.filter(item => item.type !== 'scene');
+    // Separate into categories
     const scenes = manifest.filter(item => item.type === 'scene');
+    const textShaders = manifest.filter(item => item.type !== 'scene' && (item.categories || []).includes('Text'));
+    const otherShaders = manifest.filter(item => item.type !== 'scene' && !(item.categories || []).includes('Text'));
 
     function addSectionHeader(text) {
       const header = document.createElement('div');
@@ -1525,6 +1899,19 @@ function hexToRgb(hex) {
       const div = document.createElement('div');
       div.className = 'shader-item';
       div.innerHTML = `<span class="name">${item.title}</span>`;
+
+      // Make non-scene items draggable (for shader-as-background)
+      if (item.type !== 'scene') {
+        div.draggable = true;
+        div.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('application/x-shaderclaw-shader', JSON.stringify({
+            folder: item.folder || 'shaders',
+            file: item.file,
+            title: item.title
+          }));
+          e.dataTransfer.effectAllowed = 'copy';
+        });
+      }
 
       div.addEventListener('click', async () => {
         list.querySelectorAll('.shader-item').forEach(el => el.classList.remove('active'));
@@ -1550,23 +1937,112 @@ function hexToRgb(hex) {
       list.appendChild(div);
     }
 
-    if (shaders.length > 0) {
-      addSectionHeader('Shaders');
-      shaders.forEach(addItem);
-    }
     if (scenes.length > 0) {
       addSectionHeader('3D Scenes');
       scenes.forEach(addItem);
+    }
+    if (otherShaders.length > 0) {
+      addSectionHeader('Shaders');
+      otherShaders.forEach(addItem);
+    }
+    if (textShaders.length > 0) {
+      addSectionHeader('Text');
+      textShaders.forEach(addItem);
     }
   } catch (e) {
     console.warn('Could not load shader manifest:', e);
   }
 
+  // --- Drop shader onto 3D scene as background ---
+  const previewEl = document.getElementById('preview');
+
+  previewEl.addEventListener('dragover', (e) => {
+    if (activeMode !== 'scene') return;
+    if (!e.dataTransfer.types.includes('application/x-shaderclaw-shader')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    threeCanvas.classList.add('drag-over');
+  });
+
+  previewEl.addEventListener('dragleave', (e) => {
+    // Only remove if leaving the preview area entirely
+    if (!previewEl.contains(e.relatedTarget)) {
+      threeCanvas.classList.remove('drag-over');
+    }
+  });
+
+  previewEl.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    threeCanvas.classList.remove('drag-over');
+    const data = e.dataTransfer.getData('application/x-shaderclaw-shader');
+    if (!data || activeMode !== 'scene') return;
+    try {
+      const { folder, file } = JSON.parse(data);
+      await applyShaderBackground(folder, file);
+    } catch (err) {
+      console.warn('Drop failed:', err);
+    }
+  });
+
   // --- INPUTS Panel (Media) ---
-  const mediaFileInput = document.getElementById('media-file-input');
   const mediaListContainer = document.getElementById('media-list');
 
-  document.getElementById('inputs-add-btn').addEventListener('click', () => mediaFileInput.click());
+  // File inputs for each type
+  const imageFileInput = document.getElementById('image-file-input');
+  const videoFileInput = document.getElementById('video-file-input');
+  const modelFileInput = document.getElementById('model-file-input');
+  const soundFileInput = document.getElementById('sound-file-input');
+  const vectorFileInput = document.getElementById('vector-file-input');
+
+  function wireFileInput(input) {
+    input.addEventListener('change', async (e) => {
+      for (const file of e.target.files) {
+        await addMediaFromFile(file);
+      }
+      input.value = '';
+    });
+  }
+  wireFileInput(imageFileInput);
+  wireFileInput(videoFileInput);
+  wireFileInput(modelFileInput);
+  wireFileInput(soundFileInput);
+  wireFileInput(vectorFileInput);
+
+  // Tile click handlers
+  document.getElementById('tile-image').addEventListener('click', () => imageFileInput.click());
+  document.getElementById('tile-video').addEventListener('click', () => videoFileInput.click());
+  document.getElementById('tile-model').addEventListener('click', () => modelFileInput.click());
+  document.getElementById('tile-sound').addEventListener('click', () => soundFileInput.click());
+  document.getElementById('tile-vector').addEventListener('click', () => vectorFileInput.click());
+
+  document.getElementById('tile-webcam').addEventListener('click', async () => {
+    try { await addMediaFromWebcam(); }
+    catch (e) { console.warn('Webcam access denied:', e.message); }
+  });
+
+  // 3D Text tile — choose geometry or variable font
+  document.getElementById('tile-text3d').addEventListener('click', async () => {
+    const choice = prompt('Text mode:\n1 = 3D Geometry\n2 = Variable Font Texture\n\nEnter 1 or 2:');
+    if (!choice) return;
+    const mode = choice.trim();
+    if (mode === '1') {
+      const text = prompt('Enter text for 3D geometry:');
+      if (!text || !text.trim()) return;
+      try { await addText3D(text.trim()); }
+      catch (e) { console.warn('3D Text failed:', e.message); }
+    } else if (mode === '2') {
+      const text = prompt('Enter text for variable font texture:');
+      if (!text || !text.trim()) return;
+      try { addVariableFontText(text.trim()); }
+      catch (e) { console.warn('Variable font text failed:', e.message); }
+    }
+  });
+
+  // Mic tile — directly starts live mic captions
+  document.getElementById('tile-mic').addEventListener('click', () => {
+    try { startMicCaptions(); }
+    catch (e) { console.warn('Mic captions failed:', e.message); }
+  });
 
   function renderMediaList() {
     mediaListContainer.innerHTML = '';
@@ -1576,11 +2052,44 @@ function hexToRgb(hex) {
 
       const icon = document.createElement('span');
       icon.className = 'media-icon';
-      icon.textContent = mediaTypeIcon(media.type);
+      icon.textContent = mediaTypeIcon(media.type, media.name);
 
       const name = document.createElement('span');
       name.className = 'media-name';
       name.textContent = media.name;
+
+      item.appendChild(icon);
+      item.appendChild(name);
+
+      // Audio: play/pause toggle + level bar
+      if (media.type === 'audio') {
+        const toggle = document.createElement('button');
+        toggle.className = 'audio-toggle';
+        toggle.textContent = (media.element && !media.element.paused) ? '\u23F8' : '\u25B6';
+        toggle.title = 'Play/Pause';
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (media.element) {
+            if (media.element.paused) {
+              if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+              media.element.play().catch(() => {});
+              toggle.textContent = '\u23F8';
+            } else {
+              media.element.pause();
+              toggle.textContent = '\u25B6';
+            }
+          }
+        });
+        item.appendChild(toggle);
+
+        const bar = document.createElement('div');
+        bar.className = 'audio-bar';
+        const fill = document.createElement('div');
+        fill.className = 'audio-bar-fill';
+        fill.dataset.audioId = media.id;
+        bar.appendChild(fill);
+        item.appendChild(bar);
+      }
 
       const del = document.createElement('button');
       del.className = 'media-delete';
@@ -1591,8 +2100,6 @@ function hexToRgb(hex) {
         removeMedia(media.id);
       });
 
-      item.appendChild(icon);
-      item.appendChild(name);
       item.appendChild(del);
       mediaListContainer.appendChild(item);
     });
@@ -1602,7 +2109,7 @@ function hexToRgb(hex) {
     // Auto-bind image/video media to ISF image inputs by order
     isfRenderer.textures = {};
     const imageInputs = currentInputs.filter(inp => inp.TYPE === 'image');
-    const compatibleMedia = mediaInputs.filter(m => m.type === 'image' || m.type === 'video');
+    const compatibleMedia = mediaInputs.filter(m => m.type === 'image' || m.type === 'video' || m.type === 'svg');
 
     imageInputs.forEach((inp, i) => {
       // Check if a specific media was selected via control UI
@@ -1622,6 +2129,7 @@ function hexToRgb(hex) {
           glTexture: media.glTexture,
           isVideo: media.type === 'video',
           element: media.element,
+          flipH: !!media._webcamFlip,
         };
       }
     });
@@ -1713,12 +2221,33 @@ function hexToRgb(hex) {
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
-      video.src = URL.createObjectURL(file);
-      await new Promise((resolve) => {
-        video.onloadeddata = resolve;
-        video.load();
+      video.preload = 'auto';
+      // Keep video in the DOM so Chrome doesn't GC its decode pipeline
+      video.style.cssText = 'position:fixed;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none';
+      document.body.appendChild(video);
+      // Auto-recover from unexpected pauses and stalls
+      video.addEventListener('pause', () => {
+        if (video.loop && !video.ended) video.play().catch(() => {});
       });
-      video.play();
+      video.addEventListener('stalled', () => { video.play().catch(() => {}); });
+      // Set up listeners before assigning src to avoid race conditions
+      const loaded = new Promise((resolve, reject) => {
+        video.onloadeddata = () => resolve();
+        video.onerror = () => reject(new Error('Video format not supported: ' + file.name));
+      });
+      video.src = URL.createObjectURL(file);
+      video.load();
+      await loaded;
+      try {
+        await video.play();
+      } catch (e) {
+        console.warn('Video autoplay blocked for', file.name, '— will retry on interaction');
+        const retryPlay = () => {
+          video.play().catch(() => {});
+          document.removeEventListener('click', retryPlay);
+        };
+        document.addEventListener('click', retryPlay, { once: true });
+      }
       entry.element = video;
       entry.glTexture = createGLTexture(isfRenderer.gl, video);
       const threeTex = new THREE.VideoTexture(video);
@@ -1726,17 +2255,166 @@ function hexToRgb(hex) {
       entry.threeTexture = threeTex;
 
     } else if (type === 'model') {
-      if (typeof THREE.GLTFLoader === 'undefined') {
-        console.warn('GLTFLoader not available');
-        return null;
-      }
-      const loader = new THREE.GLTFLoader();
+      const ext = file.name.split('.').pop().toLowerCase();
       const url = URL.createObjectURL(file);
-      const gltf = await new Promise((resolve, reject) => {
-        loader.load(url, resolve, undefined, reject);
+
+      if (ext === 'stl') {
+        const loader = new THREE.STLLoader();
+        const geometry = await new Promise((resolve, reject) => {
+          loader.load(url, resolve, undefined, reject);
+        });
+        geometry.computeVertexNormals();
+        const mat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.4, metalness: 0.1 });
+        const mesh = new THREE.Mesh(geometry, mat);
+        const group = new THREE.Group();
+        group.add(mesh);
+        entry.threeModel = group;
+
+      } else if (ext === 'obj') {
+        const loader = new THREE.OBJLoader();
+        const group = await new Promise((resolve, reject) => {
+          loader.load(url, resolve, undefined, reject);
+        });
+        entry.threeModel = group;
+
+      } else if (ext === 'fbx') {
+        if (window.fflate) THREE.fflate = window.fflate;
+        const loader = new THREE.FBXLoader();
+        const group = await new Promise((resolve, reject) => {
+          loader.load(url, resolve, undefined, reject);
+        });
+        entry.threeModel = group;
+
+      } else {
+        // GLTF/GLB
+        if (typeof THREE.GLTFLoader === 'undefined') {
+          console.warn('GLTFLoader not available');
+          return null;
+        }
+        const loader = new THREE.GLTFLoader();
+        const gltf = await new Promise((resolve, reject) => {
+          loader.load(url, resolve, undefined, reject);
+        });
+        entry.threeModel = gltf.scene;
+      }
+
+    } else if (type === 'audio') {
+      // Audio-reactive sound
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioAnalyser = audioCtx.createAnalyser();
+        audioAnalyser.fftSize = 256;
+        audioAnalyser.smoothingTimeConstant = 0.8;
+        audioAnalyser.connect(audioCtx.destination);
+        audioDataArray = new Uint8Array(audioAnalyser.frequencyBinCount); // 128 bins
+      }
+
+      // Disconnect previous audio source
+      if (activeAudioEntry && activeAudioEntry._sourceNode) {
+        try { activeAudioEntry._sourceNode.disconnect(); } catch(e) {}
+        if (activeAudioEntry.element) activeAudioEntry.element.pause();
+      }
+
+      const audio = document.createElement('audio');
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      audio.style.cssText = 'position:fixed;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none';
+      document.body.appendChild(audio);
+
+      const loaded = new Promise((resolve, reject) => {
+        audio.oncanplaythrough = () => resolve();
+        audio.onerror = () => reject(new Error('Audio format not supported: ' + file.name));
       });
-      entry.threeModel = gltf.scene;
+      audio.src = URL.createObjectURL(file);
+      audio.load();
+      await loaded;
+
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      const sourceNode = audioCtx.createMediaElementSource(audio);
+      sourceNode.connect(audioAnalyser);
+
+      entry.element = audio;
+      entry._sourceNode = sourceNode;
+      activeAudioEntry = entry;
+
+      try { await audio.play(); }
+      catch (e) {
+        console.warn('Audio autoplay blocked — retry on interaction');
+        const retryPlay = () => { audio.play().catch(() => {}); };
+        document.addEventListener('click', retryPlay, { once: true });
+      }
+
+    } else if (type === 'svg') {
+      // SVG — render to canvas texture
+      const text = await file.text();
+      const blob = new Blob([text], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = url;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = 2048;
+      canvas.height = 2048;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 2048, 2048);
+      URL.revokeObjectURL(url);
+
+      entry.element = canvas;
+      entry.glTexture = createGLTexture(isfRenderer.gl, canvas);
+      const threeTex = new THREE.CanvasTexture(canvas);
+      threeTex.needsUpdate = true;
+      entry.threeTexture = threeTex;
     }
+
+    mediaInputs.push(entry);
+    renderMediaList();
+    autoBindTextures();
+
+    // Auto-switch to "Custom" shape when a model is added in scene mode
+    if (type === 'model' && activeMode === 'scene') {
+      currentInputValues['shape'] = 6;
+      getActiveRenderer().inputValues = currentInputValues;
+      window.shaderClaw.updateControlUI('shape', 6);
+    }
+
+    return entry;
+  }
+
+  async function addMediaFromWebcam() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const id = ++mediaIdCounter;
+    const entry = { id, name: 'Webcam', type: 'video', element: null, glTexture: null, threeTexture: null, threeModel: null, stream };
+
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.style.cssText = 'position:fixed;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none';
+    document.body.appendChild(video);
+    video.addEventListener('pause', () => { video.play().catch(() => {}); });
+    video.addEventListener('stalled', () => { video.play().catch(() => {}); });
+
+    const loaded = new Promise((resolve, reject) => {
+      video.onloadeddata = () => resolve();
+      video.onerror = () => reject(new Error('Webcam video failed'));
+    });
+    video.srcObject = stream;
+    await loaded;
+    await video.play();
+
+    entry.element = video;
+    entry.glTexture = createGLTexture(isfRenderer.gl, video);
+    const threeTex = new THREE.VideoTexture(video);
+    // Mirror webcam horizontally
+    threeTex.wrapS = THREE.RepeatWrapping;
+    threeTex.repeat.x = -1;
+    threeTex.offset.x = 1;
+    threeTex.needsUpdate = true;
+    entry.threeTexture = threeTex;
+    entry._webcamFlip = true; // Flag for GL flip in ISF renderer
 
     mediaInputs.push(entry);
     renderMediaList();
@@ -1751,6 +2429,269 @@ function hexToRgb(hex) {
     return addMediaFromFile(file);
   }
 
+  // 3D Text — generates TextGeometry mesh from user string
+  async function addText3D(text) {
+    const fontLoader = new THREE.FontLoader();
+    const fontUrl = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json';
+    const font = await new Promise((resolve, reject) => {
+      fontLoader.load(fontUrl, resolve, undefined, reject);
+    });
+    const geometry = new THREE.TextGeometry(text, {
+      font: font,
+      size: 0.5,
+      height: 0.15,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 0.02,
+      bevelSize: 0.01,
+      bevelSegments: 3
+    });
+    geometry.computeBoundingBox();
+    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+    geometry.translate(-center.x, -center.y, -center.z);
+
+    const mat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.15 });
+    const mesh = new THREE.Mesh(geometry, mat);
+    const group = new THREE.Group();
+    group.add(mesh);
+
+    const id = ++mediaIdCounter;
+    const entry = { id, name: '"' + text + '"', type: 'model', element: null, glTexture: null, threeTexture: null, threeModel: group };
+    mediaInputs.push(entry);
+    renderMediaList();
+    autoBindTextures();
+
+    if (activeMode === 'scene') {
+      currentInputValues['shape'] = 6;
+      getActiveRenderer().inputValues = currentInputValues;
+      window.shaderClaw.updateControlUI('shape', 6);
+    }
+    return entry;
+  }
+
+  // Variable Font Text — renders text to canvas with animatable weight
+  let _varFontEntry = null;
+  let _varFontCanvas = null;
+  let _varFontCtx = null;
+  let _varFontText = '';
+  let _varFontWeight = 400;
+
+  function _renderVarFontCanvas() {
+    if (!_varFontCtx || !_varFontText) return;
+    const c = _varFontCanvas;
+    const ctx = _varFontCtx;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.save();
+    ctx.translate(0, c.height);
+    ctx.scale(1, -1);
+    const w = Math.round(_varFontWeight);
+    ctx.font = `${w} ${Math.round(c.height * 0.35)}px "Inter", "Segoe UI Variable", "SF Pro", sans-serif`;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(_varFontText, c.width / 2, c.height / 2);
+    ctx.restore();
+    // Update textures
+    if (_varFontEntry) {
+      if (_varFontEntry.glTexture) {
+        const gl = isfRenderer.gl;
+        gl.bindTexture(gl.TEXTURE_2D, _varFontEntry.glTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+      }
+      if (_varFontEntry.threeTexture) {
+        _varFontEntry.threeTexture.needsUpdate = true;
+      }
+    }
+  }
+
+  function addVariableFontText(text) {
+    _varFontText = text;
+    _varFontCanvas = document.createElement('canvas');
+    _varFontCanvas.width = 2048;
+    _varFontCanvas.height = 512;
+    _varFontCtx = _varFontCanvas.getContext('2d');
+    _renderVarFontCanvas();
+
+    const id = ++mediaIdCounter;
+    const entry = {
+      id, name: 'VarFont: ' + text, type: 'image',
+      element: _varFontCanvas, glTexture: createGLTexture(isfRenderer.gl, _varFontCanvas),
+      threeTexture: new THREE.CanvasTexture(_varFontCanvas), threeModel: null,
+      _isVarFont: true
+    };
+    entry.threeTexture.needsUpdate = true;
+    _varFontEntry = entry;
+
+    mediaInputs.push(entry);
+    renderMediaList();
+    autoBindTextures();
+    return entry;
+  }
+
+  // Update variable font weight externally (called from ISF parameter or API)
+  function setVarFontWeight(w) {
+    _varFontWeight = Math.max(100, Math.min(900, w));
+    _renderVarFontCanvas();
+  }
+
+  // Mic Captions — real-time speech-to-text → canvas texture
+  let _micCaptionEntry = null;
+  let _micCaptionCanvas = null;
+  let _micCaptionCtx = null;
+  let _micCaptionText = '';
+  let _micRecognition = null;
+
+  function _renderMicCaptionCanvas() {
+    if (!_micCaptionCtx) return;
+    const c = _micCaptionCanvas;
+    const ctx = _micCaptionCtx;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.save();
+    ctx.translate(0, c.height);
+    ctx.scale(1, -1);
+    ctx.font = `500 ${Math.round(c.height * 0.18)}px "Inter", "Segoe UI", sans-serif`;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Word-wrap for longer text
+    const words = _micCaptionText.split(' ');
+    const maxWidth = c.width * 0.9;
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    const lineHeight = c.height * 0.22;
+    const startY = c.height / 2 - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((l, i) => {
+      ctx.fillText(l, c.width / 2, startY + i * lineHeight);
+    });
+    ctx.restore();
+    // Update textures
+    if (_micCaptionEntry) {
+      if (_micCaptionEntry.glTexture) {
+        const gl = isfRenderer.gl;
+        gl.bindTexture(gl.TEXTURE_2D, _micCaptionEntry.glTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+      }
+      if (_micCaptionEntry.threeTexture) {
+        _micCaptionEntry.threeTexture.needsUpdate = true;
+      }
+    }
+  }
+
+  // Push mic transcription text into text-type ISF inputs (e.g. "msg")
+  function _pushMicTextToShader(text) {
+    const textInputs = currentInputs.filter(inp => inp.TYPE === 'text');
+    if (textInputs.length === 0) return;
+
+    function charToCode(ch) {
+      if (!ch || ch === ' ') return 26;
+      const c = ch.toUpperCase().charCodeAt(0) - 65;
+      return (c >= 0 && c <= 25) ? c : 26;
+    }
+
+    for (const inp of textInputs) {
+      const maxLen = inp.MAX_LENGTH || 12;
+      // Take last maxLen chars so latest speech is visible
+      const str = text.toUpperCase().slice(-maxLen);
+      for (let i = 0; i < maxLen; i++) {
+        currentInputValues[inp.NAME + '_' + i] = charToCode(str[i]);
+      }
+      currentInputValues[inp.NAME + '_len'] = str.replace(/\s+$/, '').length;
+
+      // Update the text input field in the UI
+      const rows = paramsBody.querySelectorAll('.control-row');
+      for (const row of rows) {
+        const label = row.querySelector('label');
+        if (label && label.textContent === inp.NAME) {
+          const field = row.querySelector('input[type="text"]');
+          if (field) field.value = str;
+          break;
+        }
+      }
+    }
+    getActiveRenderer().inputValues = currentInputValues;
+  }
+
+  function startMicCaptions() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech Recognition not supported in this browser. Use Chrome.');
+      return;
+    }
+
+    _micCaptionCanvas = document.createElement('canvas');
+    _micCaptionCanvas.width = 2048;
+    _micCaptionCanvas.height = 512;
+    _micCaptionCtx = _micCaptionCanvas.getContext('2d');
+    _micCaptionText = '(listening...)';
+    _renderMicCaptionCanvas();
+
+    const id = ++mediaIdCounter;
+    const entry = {
+      id, name: 'Mic Captions', type: 'image',
+      element: _micCaptionCanvas, glTexture: createGLTexture(isfRenderer.gl, _micCaptionCanvas),
+      threeTexture: new THREE.CanvasTexture(_micCaptionCanvas), threeModel: null,
+      _isMicCaption: true
+    };
+    entry.threeTexture.needsUpdate = true;
+    _micCaptionEntry = entry;
+
+    mediaInputs.push(entry);
+    renderMediaList();
+    autoBindTextures();
+
+    // Start speech recognition
+    _micRecognition = new SpeechRecognition();
+    _micRecognition.continuous = true;
+    _micRecognition.interimResults = true;
+    _micRecognition.lang = 'en-US';
+
+    _micRecognition.onresult = (event) => {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      _micCaptionText = (final || interim).trim() || '...';
+      _renderMicCaptionCanvas();
+
+      // Push transcription into any text-type ISF inputs (e.g. "msg" on the Text shader)
+      _pushMicTextToShader(_micCaptionText);
+    };
+
+    _micRecognition.onerror = (e) => {
+      console.warn('Speech recognition error:', e.error);
+      if (e.error === 'not-allowed') {
+        _micCaptionText = '(mic access denied)';
+        _renderMicCaptionCanvas();
+      }
+    };
+
+    _micRecognition.onend = () => {
+      // Auto-restart if still in media list
+      if (_micCaptionEntry && mediaInputs.includes(_micCaptionEntry)) {
+        try { _micRecognition.start(); } catch(e) {}
+      }
+    };
+
+    _micRecognition.start();
+    return entry;
+  }
+
+  // Audio-reactive per-frame update
   function removeMedia(id) {
     const idx = mediaInputs.findIndex(m => m.id === id);
     if (idx === -1) return;
@@ -1763,21 +2704,75 @@ function hexToRgb(hex) {
     if (entry.threeTexture) {
       entry.threeTexture.dispose();
     }
+    // Cleanup webcam stream
+    if (entry.stream) {
+      entry.stream.getTracks().forEach(t => t.stop());
+    }
     // Cleanup video element
     if (entry.type === 'video' && entry.element) {
       entry.element.pause();
+      if (entry.element.src) URL.revokeObjectURL(entry.element.src);
       entry.element.src = '';
+      entry.element.load();
+      if (entry.element.parentNode) entry.element.parentNode.removeChild(entry.element);
+    }
+    // Cleanup mic captions
+    if (entry._isMicCaption && _micRecognition) {
+      try { _micRecognition.stop(); } catch(e) {}
+      _micRecognition = null;
+      _micCaptionEntry = null;
+      _micCaptionText = '';
+    }
+    // Cleanup variable font
+    if (entry._isVarFont) {
+      _varFontEntry = null;
+      _varFontText = '';
+    }
+    // Cleanup audio element
+    if (entry.type === 'audio') {
+      if (entry._sourceNode) {
+        try { entry._sourceNode.disconnect(); } catch(e) {}
+      }
+      if (entry.element) {
+        entry.element.pause();
+        if (entry.element.src) URL.revokeObjectURL(entry.element.src);
+        entry.element.src = '';
+        if (entry.element.parentNode) entry.element.parentNode.removeChild(entry.element);
+      }
+      if (activeAudioEntry === entry) {
+        activeAudioEntry = null;
+        audioLevel = audioBass = audioMid = audioHigh = 0;
+      }
+    }
+    // If removing last model while shape is "Custom", revert to Cube
+    if (entry.type === 'model' && activeMode === 'scene' && currentInputValues['shape'] === 6) {
+      const hasOtherModel = mediaInputs.some((m, i) => i !== idx && m.type === 'model');
+      if (!hasOtherModel) {
+        currentInputValues['shape'] = 0;
+        getActiveRenderer().inputValues = currentInputValues;
+        window.shaderClaw.updateControlUI('shape', 0);
+      }
     }
     mediaInputs.splice(idx, 1);
     renderMediaList();
     autoBindTextures();
   }
 
-  mediaFileInput.addEventListener('change', async (e) => {
-    for (const file of e.target.files) {
-      await addMediaFromFile(file);
+  // (file input change listeners wired above via wireFileInput)
+
+  // Restart video/audio playback when tab regains focus (Chrome pauses muted background videos)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      mediaInputs.forEach(m => {
+        if (m.type === 'video' && m.element && m.element.paused) {
+          m.element.play().catch(() => {});
+        }
+        if (m.type === 'audio' && m.element && m.element.paused && m === activeAudioEntry) {
+          if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+          m.element.play().catch(() => {});
+        }
+      });
     }
-    mediaFileInput.value = '';
   });
 
   // --- Load default scene and start ---
@@ -1795,7 +2790,6 @@ function hexToRgb(hex) {
   // ============================================================
 
   if (location.protocol !== 'file:') {
-    const statusLight = document.getElementById('status-light');
     let ws = null;
     let reconnectTimer = null;
 
@@ -1804,12 +2798,10 @@ function hexToRgb(hex) {
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        statusLight.className = 'status-light connected';
         if (reconnectTimer) { clearInterval(reconnectTimer); reconnectTimer = null; }
       };
 
       ws.onclose = () => {
-        statusLight.className = 'status-light disconnected';
         if (!reconnectTimer) {
           reconnectTimer = setInterval(() => wsConnect(), 2000);
         }
@@ -1889,6 +2881,11 @@ function hexToRgb(hex) {
 
             case 'remove_media': {
               result = window.shaderClaw.removeMedia(params.id);
+              break;
+            }
+
+            case 'get_audio_levels': {
+              result = window.shaderClaw.getAudioLevels();
               break;
             }
 
