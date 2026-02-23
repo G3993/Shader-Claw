@@ -712,6 +712,10 @@ body {
               <button class="mask-mode-btn" data-mode="2">inv</button>
             </div>
           </div>
+          <div class="mask-row" id="bg-row">
+            <label>bg</label>
+            <select id="bg-select"><option value="">(none)</option></select>
+          </div>
         </div>
 
         <!-- Parameters panel (below) -->
@@ -844,6 +848,7 @@ function buildFragmentShader(source) {
     'uniform sampler2D _maskTex;',
     'uniform float _maskMode;',
     'uniform float _maskFlip;',
+    'uniform float _maskFlipV;',
     ...uniformLines,
     ''
   ];
@@ -862,6 +867,7 @@ void main() {
     if (_maskMode > 0.5) {
         vec2 muv = gl_FragCoord.xy / RENDERSIZE.xy;
         if (_maskFlip > 0.5) muv.x = 1.0 - muv.x;
+        if (_maskFlipV > 0.5) muv.y = 1.0 - muv.y;
         vec4 _m = texture2D(_maskTex, muv);
         float _lum = dot(_m.rgb, vec3(0.299, 0.587, 0.114));
         if (_maskMode > 1.5) _lum = 1.0 - _lum;
@@ -1072,6 +1078,8 @@ class Renderer {
     this.playing = true;
     this.animId = null;
     this.textures = {}; // name → { glTexture, isVideo, element }
+    this._bgProgram = null;
+    this._bgUniformLocs = {};
     this._initGeometry();
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -1153,9 +1161,103 @@ class Renderer {
     return this.uniformLocs[name];
   }
 
+  _getBgLoc(name) {
+    if (!(name in this._bgUniformLocs)) {
+      this._bgUniformLocs[name] = this.gl.getUniformLocation(this._bgProgram, name);
+    }
+    return this._bgUniformLocs[name];
+  }
+
+  compileBg(vertSrc, fragSrc) {
+    const gl = this.gl;
+    if (this._bgProgram) { gl.deleteProgram(this._bgProgram); this._bgProgram = null; }
+    this._bgUniformLocs = {};
+    if (!fragSrc) return { ok: true }; // clearing bg
+
+    const vs = this._compileShader(gl.VERTEX_SHADER, vertSrc);
+    if (!vs.shader) return { ok: false, errors: 'BG Vertex: ' + vs.log };
+    const fs = this._compileShader(gl.FRAGMENT_SHADER, fragSrc);
+    if (!fs.shader) { gl.deleteShader(vs.shader); return { ok: false, errors: 'BG: ' + fs.log }; }
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs.shader);
+    gl.attachShader(prog, fs.shader);
+    gl.bindAttribLocation(prog, 0, 'position');
+    gl.linkProgram(prog);
+    gl.deleteShader(vs.shader);
+    gl.deleteShader(fs.shader);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      gl.deleteProgram(prog);
+      return { ok: false, errors: 'BG Link failed' };
+    }
+    this._bgProgram = prog;
+    return { ok: true };
+  }
+
+  _renderBg() {
+    const gl = this.gl;
+    if (!this._bgProgram) return;
+
+    gl.useProgram(this._bgProgram);
+    const elapsed = (performance.now() - this.startTime) / 1000;
+    const tLoc = this._getBgLoc('TIME');
+    if (tLoc) gl.uniform1f(tLoc, elapsed);
+    const rLoc = this._getBgLoc('RENDERSIZE');
+    if (rLoc) gl.uniform2f(rLoc, this.canvas.width, this.canvas.height);
+    const pLoc = this._getBgLoc('PASSINDEX');
+    if (pLoc) gl.uniform1i(pLoc, 0);
+    const fLoc = this._getBgLoc('FRAMEINDEX');
+    if (fLoc) gl.uniform1i(fLoc, this.frameIndex);
+
+    // Set bg shader's own input defaults (stored on renderer)
+    if (this._bgInputValues) {
+      for (const [name, val] of Object.entries(this._bgInputValues)) {
+        const loc = this._getBgLoc(name);
+        if (!loc) continue;
+        if (typeof val === 'number') gl.uniform1f(loc, val);
+        else if (typeof val === 'boolean') gl.uniform1i(loc, val ? 1 : 0);
+        else if (Array.isArray(val)) {
+          if (val.length === 2) gl.uniform2f(loc, val[0], val[1]);
+          else if (val.length === 4) gl.uniform4f(loc, val[0], val[1], val[2], val[3]);
+        }
+      }
+    }
+
+    // Audio uniforms for bg shader
+    if (audioFFTGLTexture) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, audioFFTGLTexture);
+      const aLoc = this._getBgLoc('audioFFT');
+      if (aLoc) gl.uniform1i(aLoc, 0);
+    }
+    const bgAl = this._getBgLoc('audioLevel');
+    if (bgAl) gl.uniform1f(bgAl, audioLevel);
+    const bgAb = this._getBgLoc('audioBass');
+    if (bgAb) gl.uniform1f(bgAb, audioBass);
+    const bgAm = this._getBgLoc('audioMid');
+    if (bgAm) gl.uniform1f(bgAm, audioMid);
+    const bgAh = this._getBgLoc('audioHigh');
+    if (bgAh) gl.uniform1f(bgAh, audioHigh);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuf);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
   render() {
     const gl = this.gl;
     if (!this.program) return;
+
+    // Render background shader first (if set)
+    if (this._bgProgram) {
+      gl.disable(gl.BLEND);
+      this._renderBg();
+      // Now enable blending so foreground composites on top
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    } else {
+      gl.disable(gl.BLEND);
+    }
 
     gl.useProgram(this.program);
 
@@ -1189,7 +1291,7 @@ class Renderer {
       gl.activeTexture(gl.TEXTURE0 + texUnit);
       gl.bindTexture(gl.TEXTURE_2D, tex.glTexture);
       if (tex.isVideo && tex.element && tex.element.readyState >= 2) {
-        if (tex.flipH) {
+        if (tex.flipH || tex.flipV) {
           // Mirror webcam: draw flipped to offscreen canvas
           if (!tex._flipCanvas) {
             tex._flipCanvas = document.createElement('canvas');
@@ -1203,8 +1305,8 @@ class Renderer {
           }
           const ctx = tex._flipCtx;
           ctx.save();
-          ctx.translate(fc.width, 0);
-          ctx.scale(-1, 1);
+          ctx.translate(tex.flipH ? fc.width : 0, tex.flipV ? fc.height : 0);
+          ctx.scale(tex.flipH ? -1 : 1, tex.flipV ? -1 : 1);
           ctx.drawImage(v, 0, 0);
           ctx.restore();
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fc);
@@ -1249,7 +1351,9 @@ class Renderer {
     const _maskModeLoc = this._getLoc('_maskMode');
     if (_maskModeLoc) gl.uniform1f(_maskModeLoc, _maskMode);
     const _maskFlipLoc = this._getLoc('_maskFlip');
+    const _maskFlipVLoc = this._getLoc('_maskFlipV');
     if (_maskFlipLoc) gl.uniform1f(_maskFlipLoc, 0.0);
+    if (_maskFlipVLoc) gl.uniform1f(_maskFlipVLoc, 0.0);
     if (_maskMediaId && _maskMode > 0) {
       const maskMedia = mediaInputs.find(m => String(m.id) === String(_maskMediaId));
       if (maskMedia && maskMedia.glTexture) {
@@ -1259,6 +1363,7 @@ class Renderer {
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskMedia.element);
         }
         if (_maskFlipLoc && maskMedia._webcamFlip) gl.uniform1f(_maskFlipLoc, 1.0);
+        if (_maskFlipVLoc && maskMedia._webcamFlipV) gl.uniform1f(_maskFlipVLoc, 1.0);
         gl.uniform1i(this._getLoc('_maskTex'), texUnit);
         texUnit++;
       }
@@ -2165,6 +2270,43 @@ function hexToRgb(hex) {
       addSectionHeader('Text');
       textShaders.forEach(addItem);
     }
+
+    // Populate background shader dropdown (non-scene shaders only)
+    const bgSelect = document.getElementById('bg-select');
+    const bgShaders = manifest.filter(item => item.type !== 'scene');
+    bgShaders.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify({ folder: item.folder || 'shaders', file: item.file });
+      opt.textContent = item.title;
+      bgSelect.appendChild(opt);
+    });
+    bgSelect.addEventListener('change', async () => {
+      if (!bgSelect.value) {
+        isfRenderer.compileBg(null, null);
+        return;
+      }
+      try {
+        const { folder, file } = JSON.parse(bgSelect.value);
+        const r = await fetch(folder + '/' + file);
+        const src = await r.text();
+        const { frag, parsed } = buildFragmentShader(src);
+        const result = isfRenderer.compileBg(VERT_SHADER, frag);
+        if (result.ok) {
+          // Store bg shader defaults
+          const bgVals = {};
+          (parsed.inputs || []).forEach(inp => {
+            if (inp.DEFAULT != null) bgVals[inp.NAME] = inp.DEFAULT;
+          });
+          isfRenderer._bgInputValues = bgVals;
+        } else {
+          console.warn('BG shader compile failed:', result.errors);
+          bgSelect.value = '';
+        }
+      } catch (e) {
+        console.warn('Failed to load bg shader:', e);
+        bgSelect.value = '';
+      }
+    });
   } catch (e) {
     console.warn('Could not load shader manifest:', e);
   }
@@ -2277,32 +2419,42 @@ function hexToRgb(hex) {
       item.appendChild(icon);
       item.appendChild(name);
 
-      // Webcam: flip toggle
+      // Webcam: H/V flip toggles
       if (media._webcamFlip !== undefined) {
-        const flip = document.createElement('button');
-        flip.className = 'flip-toggle' + (media._webcamFlip ? ' active' : '');
-        flip.textContent = 'FLIP';
-        flip.title = 'Mirror horizontally';
-        flip.addEventListener('click', (e) => {
+        const flipH = document.createElement('button');
+        flipH.className = 'flip-toggle' + (media._webcamFlip ? ' active' : '');
+        flipH.textContent = 'H';
+        flipH.title = 'Mirror horizontally';
+        flipH.addEventListener('click', (e) => {
           e.stopPropagation();
           media._webcamFlip = !media._webcamFlip;
-          flip.classList.toggle('active', media._webcamFlip);
-          // Update Three.js texture mirror
+          flipH.classList.toggle('active', media._webcamFlip);
           if (media.threeTexture) {
-            if (media._webcamFlip) {
-              media.threeTexture.wrapS = THREE.RepeatWrapping;
-              media.threeTexture.repeat.x = -1;
-              media.threeTexture.offset.x = 1;
-            } else {
-              media.threeTexture.wrapS = THREE.ClampToEdgeWrapping;
-              media.threeTexture.repeat.x = 1;
-              media.threeTexture.offset.x = 0;
-            }
+            media.threeTexture.wrapS = media._webcamFlip ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
+            media.threeTexture.repeat.x = media._webcamFlip ? -1 : 1;
+            media.threeTexture.offset.x = media._webcamFlip ? 1 : 0;
             media.threeTexture.needsUpdate = true;
           }
           autoBindTextures();
         });
-        item.appendChild(flip);
+        const flipV = document.createElement('button');
+        flipV.className = 'flip-toggle' + (media._webcamFlipV ? ' active' : '');
+        flipV.textContent = 'V';
+        flipV.title = 'Mirror vertically';
+        flipV.addEventListener('click', (e) => {
+          e.stopPropagation();
+          media._webcamFlipV = !media._webcamFlipV;
+          flipV.classList.toggle('active', media._webcamFlipV);
+          if (media.threeTexture) {
+            media.threeTexture.wrapT = media._webcamFlipV ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
+            media.threeTexture.repeat.y = media._webcamFlipV ? -1 : 1;
+            media.threeTexture.offset.y = media._webcamFlipV ? 1 : 0;
+            media.threeTexture.needsUpdate = true;
+          }
+          autoBindTextures();
+        });
+        item.appendChild(flipH);
+        item.appendChild(flipV);
       }
 
       // Audio: play/pause toggle + level bar
@@ -2374,6 +2526,7 @@ function hexToRgb(hex) {
           isVideo: media.type === 'video',
           element: media.element,
           flipH: !!media._webcamFlip,
+          flipV: !!media._webcamFlipV,
         };
       }
     });
@@ -2701,13 +2854,17 @@ function hexToRgb(hex) {
     entry.element = video;
     entry.glTexture = createGLTexture(isfRenderer.gl, video);
     const threeTex = new THREE.VideoTexture(video);
-    // Mirror webcam horizontally
+    // Mirror webcam horizontally + vertically
     threeTex.wrapS = THREE.RepeatWrapping;
+    threeTex.wrapT = THREE.RepeatWrapping;
     threeTex.repeat.x = -1;
+    threeTex.repeat.y = -1;
     threeTex.offset.x = 1;
+    threeTex.offset.y = 1;
     threeTex.needsUpdate = true;
     entry.threeTexture = threeTex;
-    entry._webcamFlip = true; // Flag for GL flip in ISF renderer
+    entry._webcamFlip = true; // Flag for GL horizontal flip in ISF renderer
+    entry._webcamFlipV = true; // Flag for GL vertical flip
 
     mediaInputs.push(entry);
     renderMediaList();
