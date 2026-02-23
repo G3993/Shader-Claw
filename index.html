@@ -827,6 +827,7 @@ function buildFragmentShader(source) {
     // Mask uniforms (global post-process mask)
     'uniform sampler2D _maskTex;',
     'uniform float _maskMode;',
+    'uniform float _maskFlip;',
     ...uniformLines,
     ''
   ];
@@ -844,6 +845,7 @@ void main() {
     _shaderMain();
     if (_maskMode > 0.5) {
         vec2 muv = gl_FragCoord.xy / RENDERSIZE.xy;
+        if (_maskFlip > 0.5) muv.x = 1.0 - muv.x;
         vec4 _m = texture2D(_maskTex, muv);
         float _lum = dot(_m.rgb, vec3(0.299, 0.587, 0.114));
         if (_maskMode > 1.5) _lum = 1.0 - _lum;
@@ -1230,34 +1232,17 @@ class Renderer {
     // Global mask texture
     const _maskModeLoc = this._getLoc('_maskMode');
     if (_maskModeLoc) gl.uniform1f(_maskModeLoc, _maskMode);
+    const _maskFlipLoc = this._getLoc('_maskFlip');
+    if (_maskFlipLoc) gl.uniform1f(_maskFlipLoc, 0.0);
     if (_maskMediaId && _maskMode > 0) {
       const maskMedia = mediaInputs.find(m => String(m.id) === String(_maskMediaId));
       if (maskMedia && maskMedia.glTexture) {
         gl.activeTexture(gl.TEXTURE0 + texUnit);
         gl.bindTexture(gl.TEXTURE_2D, maskMedia.glTexture);
         if (maskMedia.type === 'video' && maskMedia.element && maskMedia.element.readyState >= 2) {
-          if (maskMedia._webcamFlip) {
-            if (!maskMedia._maskFlipCanvas) {
-              maskMedia._maskFlipCanvas = document.createElement('canvas');
-              maskMedia._maskFlipCtx = maskMedia._maskFlipCanvas.getContext('2d');
-            }
-            const v = maskMedia.element;
-            const fc = maskMedia._maskFlipCanvas;
-            if (fc.width !== v.videoWidth || fc.height !== v.videoHeight) {
-              fc.width = v.videoWidth || 640;
-              fc.height = v.videoHeight || 480;
-            }
-            const ctx2 = maskMedia._maskFlipCtx;
-            ctx2.save();
-            ctx2.translate(fc.width, 0);
-            ctx2.scale(-1, 1);
-            ctx2.drawImage(v, 0, 0);
-            ctx2.restore();
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fc);
-          } else {
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskMedia.element);
-          }
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskMedia.element);
         }
+        if (_maskFlipLoc && maskMedia._webcamFlip) gl.uniform1f(_maskFlipLoc, 1.0);
         gl.uniform1i(this._getLoc('_maskTex'), texUnit);
         texUnit++;
       }

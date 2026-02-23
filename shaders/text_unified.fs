@@ -140,12 +140,16 @@ vec4 effectJames(vec2 uv) {
     float alpha = transparentBg ? 0.0 : 1.0;
     col += vec3(0.02, 0.01, 0.03) * (uv.y * 0.3 + 0.05 * sin(uv.x * 3.0 + TIME * 0.5));
 
+    // Grid layout: compute how many columns fit, then stack rows
     float charW = 0.09 * textScale;
     float charH = charW * 1.5;
     float gap = charW * 0.25;
-    float totalW = float(numChars) * charW + float(numChars - 1) * gap;
-    float startX = 0.5 - totalW * 0.5;
-    float baseY = 0.5 - charH * 0.5;
+    float rowGap = charH * 0.3;
+    float cols = max(1.0, floor((0.9 + gap) / (charW + gap)));
+    int numCols = int(cols);
+    int numRows = (numChars + numCols - 1) / numCols;
+    float totalH = float(numRows) * charH + float(numRows - 1) * rowGap;
+    float startY = 0.5 + totalH * 0.5 - charH; // top row, top-down
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
 
     float textMask = 0.0;
@@ -157,13 +161,21 @@ vec4 effectJames(vec2 uv) {
         int ch = getChar(i);
         if (ch == 26) continue;
 
+        int row = i / numCols;
+        int colIdx = i - row * numCols;
+        // Center partial last row
+        int charsInRow = numChars - row * numCols;
+        if (charsInRow > numCols) charsInRow = numCols;
+        float rowW = float(charsInRow) * charW + float(charsInRow - 1) * gap;
+        float rowStartX = 0.5 - rowW * 0.5;
+
         float phase = float(i) * 1.3 + TIME * speed * cycleSpeed;
         int style = int(mod(floor(phase), 18.0));
         float bp = float(i) * 0.8 + TIME * speed * 2.5;
         float yOff = sin(bp) * 0.015 * bounce;
         float sp = 1.0 + sin(bp + 1.0) * 0.05 * bounce;
-        float cx = startX + float(i) * (charW + gap);
-        float cy = baseY + yOff;
+        float cx = rowStartX + float(colIdx) * (charW + gap);
+        float cy = startY - float(row) * (charH + rowGap) + yOff;
         vec2 cellUV = vec2((p.x - cx) / (charW * sp), (p.y - cy) / (charH * sp));
 
         if (cellUV.x < -0.1 || cellUV.x > 1.1 || cellUV.y < -0.1 || cellUV.y > 1.1) continue;
