@@ -926,6 +926,11 @@ function _getFontStack(inputValues) {
   return _fontFamilies[idx] || _fontFamilies[0];
 }
 
+// Invalidate font texture cache when Google Fonts finish loading
+if (typeof document !== 'undefined' && document.fonts) {
+  document.fonts.ready.then(() => { _vfLastMsg = ''; });
+}
+
 function updateVarFontTexture(gl, inputValues) {
   // Build msg from character uniforms
   const maxLen = 24;
@@ -939,6 +944,10 @@ function updateVarFontTexture(gl, inputValues) {
     else msg += ' ';
   }
   msg = msg.trim() || 'ETHEREA';
+
+  // Sync weight from ISF param if available
+  const iw = inputValues['fontWeight'];
+  if (iw != null) _vfWeight = Math.max(100, Math.min(900, iw));
 
   // Only re-render canvas if text, weight, or font changed
   const fontStack = _getFontStack(inputValues);
@@ -1896,6 +1905,10 @@ function hexToRgb(hex) {
       currentInputValues = generateControls(parsed.inputs, paramsBody, (vals) => {
         isfRenderer.inputValues = vals;
         if ('fontFamily' in vals) setVarFontFamily(vals.fontFamily);
+        if ('fontWeight' in vals) {
+          _vfWeight = Math.max(100, Math.min(900, vals.fontWeight));
+          setVarFontWeight(vals.fontWeight);
+        }
         autoBindTextures();
       });
       isfRenderer.inputValues = currentInputValues;
