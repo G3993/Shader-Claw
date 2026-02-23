@@ -1,0 +1,149 @@
+[
+  {
+    "id": 1,
+    "title": "Gradient",
+    "description": "Animated soft-light gradient with 3 drifting color stops",
+    "type": "generator",
+    "categories": [
+      "Generator"
+    ],
+    "file": "no_mans_sky_gradients.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 2,
+    "title": "Sky",
+    "description": "Starfield with rotating layers, customizable colors and speed",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Nature"
+    ],
+    "file": "sky.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 9,
+    "title": "Geometric",
+    "description": "Geometric planet with procedural surface patterns",
+    "type": "generator",
+    "categories": [
+      "Generator"
+    ],
+    "file": "phipiplanet.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 11,
+    "title": "Spherical Fibonacci",
+    "description": "Animated spherical fibonacci dot pattern on a rotating sphere",
+    "type": "generator",
+    "categories": [
+      "Generator"
+    ],
+    "file": "oooofs.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 14,
+    "title": "Water",
+    "description": "TDM Seascape — procedural ocean with volumetric waves",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Nature"
+    ],
+    "file": "st_ms2sd1fs.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 16,
+    "title": "SpaceIsThePlace",
+    "description": "",
+    "type": "generator",
+    "categories": [
+      "Generator"
+    ],
+    "file": "spaceistheplace.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 17,
+    "title": "CloudVortex",
+    "description": "",
+    "type": "generator",
+    "categories": [
+      "Generator"
+    ],
+    "file": "cloudvortex.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 19,
+    "title": "black hole sun",
+    "description": "black hole sun",
+    "type": "generator",
+    "categories": [
+      "Distortion Effect"
+    ],
+    "file": "black_hole_sun.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 20,
+    "title": "Moon Water",
+    "description": "Moonlit ocean with a big bright moon, gentle waves, and shimmering reflections",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Nature"
+    ],
+    "file": "moonwater.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 21,
+    "title": "Galaxy",
+    "description": "Milky Way galaxy — dense particle starfield with nebula clouds and galactic core",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Nature"
+    ],
+    "file": "galaxy.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 22,
+    "title": "Voxel Figure",
+    "description": "Precise 3D voxel human figure — blocky Minecraft-style character with zoom",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Art"
+    ],
+    "file": "cubist_figure.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 23,
+    "title": "Text",
+    "description": "Unified text effects — 20 presets across 8 families with 3 bitmap fonts",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Text"
+    ],
+    "file": "text_unified.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 100,
+    "title": "Spinning Cube",
+    "description": "Rotating cube with adjustable speed, color, and size",
+    "type": "scene",
+    "categories": ["3D"],
+    "file": "spinning_cube.scene.js",
+    "folder": "scenes"
+  }
+]

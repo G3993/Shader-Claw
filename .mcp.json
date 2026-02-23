@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "shaderclaw": {
+      "command": "node",
+      "args": ["server.js"],
+      "cwd": "C:\\Users\\nofun\\Documents\\ShaderClaw",
+      "env": {
+        "SHADERCLAW_PORT": "7777"
+      }
+    }
+  }
+}

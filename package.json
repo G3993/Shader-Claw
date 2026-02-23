@@ -1,0 +1,15 @@
+{
+  "name": "shaderclaw",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ISF shader creation tool with MCP server for Claude Code",
+  "main": "server.js",
+  "scripts": {
+    "start": "bun run server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "ws": "^8.18.0",
+    "zod": "^3.24.2"
+  }
+}
