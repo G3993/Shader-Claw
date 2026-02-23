@@ -495,6 +495,22 @@ body {
 .media-item:hover .media-delete { opacity: 1; }
 .media-item .media-delete:hover { color: var(--accent); }
 
+.media-item .flip-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  line-height: 16px;
+}
+.media-item .flip-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+.media-item .flip-toggle.active { color: var(--green); border-color: var(--green); background: rgba(78,205,196,0.1); }
+
 .text-mic-btn {
   background: none;
   border: 1px solid var(--border);
@@ -2260,6 +2276,34 @@ function hexToRgb(hex) {
 
       item.appendChild(icon);
       item.appendChild(name);
+
+      // Webcam: flip toggle
+      if (media._webcamFlip !== undefined) {
+        const flip = document.createElement('button');
+        flip.className = 'flip-toggle' + (media._webcamFlip ? ' active' : '');
+        flip.textContent = 'FLIP';
+        flip.title = 'Mirror horizontally';
+        flip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          media._webcamFlip = !media._webcamFlip;
+          flip.classList.toggle('active', media._webcamFlip);
+          // Update Three.js texture mirror
+          if (media.threeTexture) {
+            if (media._webcamFlip) {
+              media.threeTexture.wrapS = THREE.RepeatWrapping;
+              media.threeTexture.repeat.x = -1;
+              media.threeTexture.offset.x = 1;
+            } else {
+              media.threeTexture.wrapS = THREE.ClampToEdgeWrapping;
+              media.threeTexture.repeat.x = 1;
+              media.threeTexture.offset.x = 0;
+            }
+            media.threeTexture.needsUpdate = true;
+          }
+          autoBindTextures();
+        });
+        item.appendChild(flip);
+      }
 
       // Audio: play/pause toggle + level bar
       if (media.type === 'audio') {
