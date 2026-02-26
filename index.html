@@ -4678,7 +4678,7 @@ function stopNdiSend() {
     _dbgLines.push(msg);
     if (_dbg) {
       _dbg.textContent = _dbgLines.slice(-20).join('\n');
-      // _dbg.style.display = ''; // debug overlay hidden by default
+      if (window.innerWidth <= 768) _dbg.style.display = ''; // show debug on mobile
     }
   }
   dbg('init: starting...');
@@ -4705,39 +4705,6 @@ function stopNdiSend() {
   // Three.js canvas always renders offscreen — gl-canvas is the compositor output
   threeCanvas.style.display = 'none';
   glCanvas.style.display = 'block';
-
-  // ===== GESTURE PROCESSOR =====
-  class GestureProcessor {
-    constructor() {
-      this.morphValue = 1.0;   // 0=square, 1=full rectangle
-      this._targetMorph = 1.0;
-      this.textureScale = 1.0; // driven by slider
-      this.settled = true;
-      this._wasPinching = false;
-      this._pinchStartX = 0;
-      this._pinchStartMorph = 1.0;
-    }
-    update(mp) {
-      if (mp.isPinching && mp.handCount > 0) {
-        if (!this._wasPinching) {
-          this._pinchStartX = mp.pinchPos[0];
-          this._pinchStartMorph = this.morphValue;
-        }
-        const dx = mp.pinchPos[0] - this._pinchStartX;
-        this._targetMorph = Math.max(0, Math.min(1, this._pinchStartMorph + dx * 2.5));
-        this._wasPinching = true;
-      } else {
-        this._wasPinching = false;
-      }
-      const diff = this._targetMorph - this.morphValue;
-      this.morphValue += diff * 0.12;
-      this.settled = Math.abs(diff) < 0.001 && !mp.isPinching;
-    }
-    applyToLayer(layer) {
-      if ('morph' in layer.inputValues) layer.inputValues.morph = this.morphValue;
-      if ('shapeScale' in layer.inputValues) layer.inputValues.shapeScale = this.textureScale;
-    }
-  }
 
   // MediaPipe manager
   const mediaPipeMgr = new MediaPipeManager(isfRenderer.gl);
@@ -7769,8 +7736,9 @@ function stopNdiSend() {
     dbg('layers: ' + layers.map(l => l.id + '=' + (l.visible?'V':'-') + (l.program?'P':'-') + (l.fbo?'F':'-')).join(' '));
     // Start composition loop now that everything is ready
     compositionLoop();
-    // Auto-hide debug overlay after 5 seconds if all went well
-    setTimeout(() => { if (_dbg) _dbg.style.display = 'none'; }, 5000);
+    // Auto-hide debug overlay after 10 seconds if all went well (longer on mobile for debugging)
+    const isMobile = window.innerWidth <= 768;
+    setTimeout(() => { if (_dbg) _dbg.style.display = 'none'; }, isMobile ? 15000 : 5000);
   })().catch(e => {
     dbg('FATAL: ' + e.message);
     errorBar.textContent = 'Default load failed: ' + e.message;

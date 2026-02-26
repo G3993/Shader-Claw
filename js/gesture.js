@@ -15,6 +15,14 @@ class GestureProcessor {
     this.tracking = false;  // currently receiving data
     this.wasTracking = false;
     this.settled = true;    // true when smooth ≈ rest (nothing to apply)
+
+    // Pinch-drag shape morph (compositor-level)
+    this.morphValue = 1.0;   // 0=square, 1=full rectangle
+    this._targetMorph = 1.0;
+    this.textureScale = 1.0; // driven by slider
+    this._wasPinching = false;
+    this._pinchStartX = 0;
+    this._pinchStartMorph = 1.0;
   }
 
   update(mediaPipeMgr) {
@@ -129,6 +137,21 @@ class GestureProcessor {
     s.boost += (t.boost - s.boost) * L;
     s.alive += (t.alive - s.alive) * (gotData ? 0.1 : 0.03);
 
+    // --- Pinch-drag shape morph (compositor-level) ---
+    if (mediaPipeMgr && mediaPipeMgr.isPinching && mediaPipeMgr.handCount > 0) {
+      if (!this._wasPinching) {
+        this._pinchStartX = mediaPipeMgr.pinchPos[0];
+        this._pinchStartMorph = this.morphValue;
+      }
+      const dx = mediaPipeMgr.pinchPos[0] - this._pinchStartX;
+      this._targetMorph = Math.max(0, Math.min(1, this._pinchStartMorph + dx * 2.5));
+      this._wasPinching = true;
+    } else {
+      this._wasPinching = false;
+    }
+    const morphDiff = this._targetMorph - this.morphValue;
+    this.morphValue += morphDiff * 0.12;
+
     // Check if we've settled back to rest (skip applying if nothing to do)
     const r = this.rest;
     const eps = 0.002;
@@ -139,7 +162,8 @@ class GestureProcessor {
       && Math.abs(s.open - r.open) < eps
       && Math.abs(s.morph - r.morph) < eps
       && Math.abs(s.boost - r.boost) < eps
-      && Math.abs(s.alive - r.alive) < eps;
+      && Math.abs(s.alive - r.alive) < eps
+      && Math.abs(morphDiff) < 0.001;
   }
 
   getValues() {
