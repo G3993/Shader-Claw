@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html><body style="margin:0;background:#000">
+<canvas id="c" style="width:100vw;height:100vh"></canvas>
+<script>
+const c = document.getElementById('c');
+c.width = 800; c.height = 600;
+const gl = c.getContext('webgl');
+if (!gl) { document.body.innerHTML = '<h1 style="color:red">NO WEBGL</h1>'; }
+else {
+  const vs = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vs, 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0,1);}');
+  gl.compileShader(vs);
+  const fs = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fs, 'precision highp float;varying vec2 v;uniform float t;void main(){gl_FragColor=vec4(sin(v.x*10.+t)*.5+.5,sin(v.y*10.+t*1.3)*.5+.5,sin((v.x+v.y)*5.+t*.7)*.5+.5,1);}');
+  gl.compileShader(fs);
+  const pg = gl.createProgram();
+  gl.attachShader(pg,vs); gl.attachShader(pg,fs); gl.linkProgram(pg); gl.useProgram(pg);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pg,'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const tl = gl.getUniformLocation(pg,'t');
+  function draw(){gl.uniform1f(tl,performance.now()/1000);gl.drawArrays(gl.TRIANGLES,0,3);requestAnimationFrame(draw);}
+  draw();
+  document.title = 'WEBGL OK - ' + gl.getParameter(gl.RENDERER);
+}
+</script></body></html>

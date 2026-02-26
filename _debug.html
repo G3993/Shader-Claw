@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug</title></head>
+<body style="background:#111;color:#0f0;font-family:monospace;padding:20px">
+<h2>ShaderClaw Debug</h2>
+<pre id="log"></pre>
+<script>
+const log = document.getElementById('log');
+function L(msg) { log.textContent += msg + '\n'; console.log(msg); }
+
+window.onerror = (msg, src, line, col, err) => {
+  L('ERROR: ' + msg + ' at ' + src + ':' + line + ':' + col);
+  if (err && err.stack) L(err.stack);
+};
+
+window.addEventListener('unhandledrejection', (e) => {
+  L('UNHANDLED REJECTION: ' + (e.reason ? (e.reason.message || e.reason) : e));
+  if (e.reason && e.reason.stack) L(e.reason.stack);
+});
+
+L('1. Loading CDN scripts...');
+</script>
+
+<!-- CDN libs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+L('2. CDN loaded. THREE=' + (typeof THREE) + ' CodeMirror=' + (typeof CodeMirror));
+L('3. Testing ES module import...');
+</script>
+
+<script type="module">
+const log = document.getElementById('log');
+function L(msg) { log.textContent += msg + '\n'; console.log(msg); }
+
+try {
+  L('4. Module scope entered');
+
+  L('5. Importing state.js...');
+  const state = await import('./js/state.js');
+  L('   OK: LAYER_IDS=' + JSON.stringify(state.LAYER_IDS));
+
+  L('6. Importing isf.js...');
+  const isf = await import('./js/isf.js');
+  L('   OK: VERT_SHADER exists=' + !!isf.VERT_SHADER);
+
+  L('7. Importing renderer.js...');
+  const rend = await import('./js/renderer.js');
+  L('   OK: Renderer class=' + typeof rend.Renderer);
+
+  L('8. Importing scene-renderer.js...');
+  const sr = await import('./js/scene-renderer.js');
+  L('   OK: SceneRenderer class=' + typeof sr.SceneRenderer);
+
+  L('9. Importing audio.js...');
+  const audio = await import('./js/audio.js');
+  L('   OK: getAudioState=' + typeof audio.getAudioState);
+
+  L('10. Importing media.js...');
+  const media = await import('./js/media.js');
+  L('   OK: MediaPipeManager=' + typeof media.MediaPipeManager);
+
+  L('11. Importing mcp-bridge.js...');
+  const mcp = await import('./js/mcp-bridge.js');
+  L('   OK: connect=' + typeof mcp.connect);
+
+  L('12. Importing layers.js...');
+  const layers = await import('./js/layers.js');
+  L('   OK: initLayerFBOs=' + typeof layers.initLayerFBOs);
+
+  L('13. Importing ui/sidebar.js...');
+  const sidebar = await import('./js/ui/sidebar.js');
+  L('   OK: initSidebar=' + typeof sidebar.initSidebar);
+
+  L('14. Importing ui/params.js...');
+  const params = await import('./js/ui/params.js');
+  L('   OK: generateControls=' + typeof params.generateControls);
+
+  L('15. Importing ui/editor.js...');
+  const editor = await import('./js/ui/editor.js');
+  L('   OK: initEditor=' + typeof editor.initEditor);
+
+  L('16. Importing ui/canvas-controls.js...');
+  const cc = await import('./js/ui/canvas-controls.js');
+  L('   OK: initCanvasControls=' + typeof cc.initCanvasControls);
+
+  L('17. Importing ui/modals.js...');
+  const modals = await import('./js/ui/modals.js');
+  L('   OK: loadManifest=' + typeof modals.loadManifest);
+
+  L('18. All imports OK! Testing DOM...');
+  const canvas = document.createElement('canvas');
+  canvas.width = 100; canvas.height = 100;
+  const gl = canvas.getContext('webgl');
+  L('   WebGL context=' + !!gl);
+
+  L('19. Creating Renderer...');
+  document.body.appendChild(canvas);
+  canvas.id = 'test-canvas';
+  const r = new rend.Renderer(canvas);
+  L('   OK: gl=' + !!r.gl);
+
+  L('20. Compiling compositor...');
+  const compResult = r.initCompositor(7);
+  L('   OK: compositorProgram=' + !!r.compositorProgram + ' errors=' + compResult.errors);
+
+  L('21. Compiling default shader...');
+  const { frag, parsed, headerLineCount } = isf.buildFragmentShader(isf.DEFAULT_SHADER);
+  const shResult = r.compile(isf.VERT_SHADER, frag);
+  L('   OK: ' + shResult.ok + ' errors=' + shResult.errors);
+
+  L('\n=== ALL TESTS PASSED ===');
+
+} catch(e) {
+  L('CAUGHT ERROR: ' + e.message);
+  L(e.stack);
+}
+</script>
+</body>
+</html>

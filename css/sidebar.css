@@ -1,0 +1,286 @@
+/* ShaderClaw v2 — Sidebar components */
+
+/* ── Sidebar Container ── */
+#sidebar {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* ── Brand ── */
+.brand {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand span {
+  color: var(--accent);
+}
+
+.brand::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: var(--accent);
+  margin-top: 6px;
+  opacity: 0.3;
+}
+
+/* ── Section Headers ── */
+.section-title {
+  padding: 8px 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── Destination Pills ── */
+.dest-pills {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px 8px;
+  flex-wrap: wrap;
+}
+
+.dest-pill {
+  padding: 3px 8px;
+  font-size: 9px;
+  font-family: var(--font);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-dim);
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.dest-pill:hover {
+  border-color: var(--border-focus);
+  color: var(--text);
+}
+
+.dest-pill.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ── Ratio Select ── */
+.ratio-select {
+  margin: 0 12px 8px;
+}
+
+/* ── Layer Stack ── */
+.layer-stack {
+  padding: 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ── Layer Card ── */
+.layer-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.layer-card:hover {
+  border-color: var(--border-focus);
+}
+
+.layer-card.selected {
+  border-left: 2px solid var(--accent);
+}
+
+/* ── Layer Header ── */
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Layer Visibility Toggle ── */
+.layer-vis {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 3px;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.layer-vis:hover {
+  opacity: 1;
+}
+
+.layer-vis.hidden {
+  opacity: 0.25;
+}
+
+/* ── Layer Name ── */
+.layer-name {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex: 1;
+}
+
+.layer-card.selected .layer-name {
+  color: var(--accent);
+}
+
+/* ── Layer Opacity ── */
+.layer-opacity {
+  width: 40px;
+  accent-color: var(--accent);
+  height: 3px;
+}
+
+/* ── Layer Blend ── */
+.layer-blend {
+  width: 60px;
+  font-size: 9px;
+}
+
+/* ── Layer Detail Panel ── */
+.layer-detail {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.detail-section-title {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 8px 0 4px;
+}
+
+.detail-section-title:first-child {
+  margin-top: 0;
+}
+
+/* ── Detail Control Rows ── */
+.layer-detail .control-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+.layer-detail .control-row label {
+  width: 60px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.layer-detail .control-row input[type="range"] {
+  flex: 1;
+}
+
+.layer-detail .control-row .val {
+  width: 28px;
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Output Section ── */
+.output-section {
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+}
+
+.output-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+/* ── Output Buttons ── */
+.output-btn {
+  padding: 2px 8px;
+  font-size: 9px;
+  font-family: var(--font);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-dim);
+  transition: all 0.15s;
+}
+
+.output-btn:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.output-btn.active {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+/* ── Status Dot ── */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.status-dot.active {
+  background: var(--green);
+  box-shadow: 0 0 4px var(--green);
+}
+
+.status-dot.connecting {
+  background: var(--yellow);
+}
+
+.status-dot.error {
+  background: var(--accent);
+}
+
+/* ── Export Row ── */
+.export-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.export-row .output-btn {
+  flex: 1;
+  text-align: center;
+}

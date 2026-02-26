@@ -12,7 +12,7 @@
   },
   {
     "id": 2,
-    "title": "Sky",
+    "title": "Stars",
     "description": "Starfield with rotating layers, customizable colors and speed",
     "type": "generator",
     "categories": [
@@ -114,24 +114,194 @@
     "hasVertex": true
   },
   {
-    "id": 23,
-    "title": "Text",
-    "description": "Unified text effects — 20 presets across 8 families with 3 bitmap fonts",
+    "id": 28,
+    "title": "Etherea",
+    "description": "Cycling font styles per letter with 18 visual patterns",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_james.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 29,
+    "title": "Wave",
+    "description": "Sine displacement per letter with shadow",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_wave.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 30,
+    "title": "Cascade",
+    "description": "Tiled rows with wave offsets and alternating colors",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_cascade.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 31,
+    "title": "Digifade",
+    "description": "Glitch dissolve with horizontal slice displacement",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_digifade.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 32,
+    "title": "Coil",
+    "description": "Text on spiral rings with 4 shape variants",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_coil.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 33,
+    "title": "Flag",
+    "description": "Waving flag surface with 4 wave variants",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_flag.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 34,
+    "title": "Bricks",
+    "description": "Grid with animated displacement and 3 pattern variants",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_bricks.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 35,
+    "title": "Spacy",
+    "description": "Perspective tunnel rows with 4 depth variants",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_spacy.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 37,
+    "title": "3D Type",
+    "description": "Layered depth text with parallax perspective, hue gradients, and breathing animation",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_3dtype.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 24,
+    "title": "Star Constellation",
+    "description": "Drifting star particles connected by thin lines, drawn to the mouse",
     "type": "generator",
     "categories": [
       "Generator",
-      "Text"
+      "Simulation"
     ],
-    "file": "text_unified.fs",
+    "file": "bioluminescent_fluid.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 25,
+    "title": "Fluid Simulation",
+    "description": "Navier-Stokes fluid simulation — vorticity confinement, pressure projection, mouse interaction. Port of Pavel Dobryakov's WebGL-Fluid-Simulation.",
+    "type": "generator",
+    "categories": [
+      "Generator",
+      "Simulation"
+    ],
+    "file": "fluid_sim.fs",
     "hasVertex": true
   },
   {
     "id": 100,
-    "title": "Spinning Cube",
+    "title": "Spinning Shape",
     "description": "Rotating cube with adjustable speed, color, and size",
     "type": "scene",
     "categories": ["3D"],
     "file": "spinning_cube.scene.js",
     "folder": "scenes"
+  },
+  {
+    "id": 101,
+    "title": "Spinning Heads",
+    "description": "3D head gallery with 7 material presets — Standard, Wireframe, Flat, Chrome, Glass, X-Ray, Normal. Auto-loads LeePerrySmith bust or use your own model.",
+    "type": "scene",
+    "categories": ["3D"],
+    "file": "spinning_heads.scene.js",
+    "folder": "scenes"
+  },
+  {
+    "id": 102,
+    "title": "Birds",
+    "description": "Flocking birds — procedural boid flocks with wing-flapping V-shaped silhouettes against an atmospheric sky",
+    "type": "generator",
+    "categories": ["Generator", "Nature"],
+    "file": "birds.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 27,
+    "title": "Cube in Water",
+    "description": "Chrome cube bobbing on a raymarched ocean — procedural sky, wave reflections, underwater darkening",
+    "type": "generator",
+    "categories": ["Generator", "Nature", "3D"],
+    "file": "cube_in_water.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 38,
+    "title": "ASCII Matrix",
+    "description": "Falling columns of ASCII characters — matrix rain with density-mapped glyphs",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "ascii_shader.fs"
+  },
+  {
+    "id": 39,
+    "title": "Typewriter",
+    "description": "Typewriter — characters appear one by one with a blinking cursor",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_typewriter.fs"
+  },
+  {
+    "id": 42,
+    "title": "ASCII Rain",
+    "description": "Falling columns of your custom message text — matrix rain using your words",
+    "type": "generator",
+    "categories": ["Generator", "Text"],
+    "file": "text_ascii.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 103,
+    "title": "Tesseract",
+    "description": "4D hypercube — 16 vertices and 32 edges rotating through four-dimensional space, projected to 3D",
+    "type": "scene",
+    "categories": ["3D"],
+    "file": "tesseract.scene.js",
+    "folder": "scenes"
+  },
+  {
+    "id": 40,
+    "title": "Wind",
+    "description": "Minimal gradient movements — soft drifting color fields like a gentle breeze",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "wind.fs"
+  },
+  {
+    "id": 104,
+    "title": "Dancing Cube",
+    "description": "SDF raymarched box/octahedron blend — driven by body tracking parameters (rotation, scale, glow, morph, alive)",
+    "type": "generator",
+    "categories": ["Generator", "3D"],
+    "file": "mediapipeline_cube.fs"
   }
 ]

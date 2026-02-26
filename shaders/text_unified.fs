@@ -1,89 +1,37 @@
 /*{
   "CATEGORIES": ["Generator", "Text"],
-  "DESCRIPTION": "Unified text effects — 21 presets across 9 effect families with 3 bitmap fonts + variable font",
+  "DESCRIPTION": "Unified text effects - 21 presets across 9 effect families with 3 bitmap fonts + variable font",
   "INPUTS": [
     { "NAME": "msg", "TYPE": "text", "DEFAULT": " ETHEREA", "MAX_LENGTH": 24 },
-    { "NAME": "fontFamily", "TYPE": "long", "VALUES": [0,1,2,3], "LABELS": ["Inter","Times New Roman","Libre Caslon","Outfit"], "DEFAULT": 0 },
-    { "NAME": "fontWeight", "TYPE": "float", "MIN": 100, "MAX": 900, "DEFAULT": 400 },
-    { "NAME": "effect", "TYPE": "long",
-      "VALUES": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    { "NAME": "fontFamily", "LABEL": "Font", "TYPE": "long", "VALUES": [0,1,2,3], "LABELS": ["Inter","Times New Roman","Libre Caslon","Outfit"], "DEFAULT": 0 },
+    { "NAME": "fontWeight", "LABEL": "Weight", "TYPE": "float", "MIN": 100, "MAX": 900, "DEFAULT": 400 },
+    { "NAME": "effect", "LABEL": "Effect", "TYPE": "long",
+      "VALUES": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
       "LABELS": ["James","Wave","Cascade","Digifade","Digifade Glitch",
                  "Coil Wide","Coil Star","Coil Lemniscate","Coil Pulse",
                  "Flag Banner","Flag Origami","Flag Barber","Flag Newsprint",
                  "Bricks","Bricks Harlequin","Bricks Zebra",
-                 "Spacy","Spacy Bridge","Spacy Whitney","Spacy Recede",
-                 "Variable Font"],
-      "DEFAULT": 20 },
-    { "NAME": "font", "TYPE": "long", "VALUES": [0,1,2], "LABELS": ["Block","Slim","Round"], "DEFAULT": 0 },
-    { "NAME": "speed", "TYPE": "float", "MIN": 0.1, "MAX": 3.0, "DEFAULT": 0.5 },
-    { "NAME": "intensity", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
-    { "NAME": "density", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
-    { "NAME": "textScale", "TYPE": "float", "MIN": 0.3, "MAX": 2.0, "DEFAULT": 1.0 },
-    { "NAME": "textColor", "TYPE": "color", "DEFAULT": [1.0, 1.0, 1.0, 1.0] },
-    { "NAME": "bgColor", "TYPE": "color", "DEFAULT": [0.0, 0.0, 0.0, 1.0] },
-    { "NAME": "transparentBg", "TYPE": "bool", "DEFAULT": true }
+                 "Spacy","Spacy Bridge","Spacy Whitney","Spacy Recede"],
+      "DEFAULT": 0 },
+    { "NAME": "speed", "LABEL": "Speed", "TYPE": "float", "MIN": 0.1, "MAX": 3.0, "DEFAULT": 0.5 },
+    { "NAME": "intensity", "LABEL": "Intensity", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
+    { "NAME": "density", "LABEL": "Density", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
+    { "NAME": "textScale", "LABEL": "Size", "TYPE": "float", "MIN": 0.3, "MAX": 2.0, "DEFAULT": 1.0 },
+    { "NAME": "textColor", "LABEL": "Color", "TYPE": "color", "DEFAULT": [1.0, 1.0, 1.0, 1.0] },
+    { "NAME": "bgColor", "LABEL": "Background", "TYPE": "color", "DEFAULT": [0.0, 0.0, 0.0, 1.0] },
+    { "NAME": "transparentBg", "LABEL": "Transparent", "TYPE": "bool", "DEFAULT": true }
   ]
 }*/
 
 const float PI = 3.14159265;
 const float TWO_PI = 6.28318530;
 
-// ═══════════════════════════════════════════════════════════════════════
-// CONSOLIDATED FONT TABLE — single 27-branch lookup, font selected once
-// ═══════════════════════════════════════════════════════════════════════
-
-vec2 charData(int ch) {
-    // Each branch loads all 3 fonts, selects by uniform at end
-    vec2 b, s, r;
-    if      (ch == 0)  { b=vec2(1033777.,14897.);  s=vec2(338240.,4430.);   r=vec2(1033760.,4433.);  }
-    else if (ch == 1)  { b=vec2(1001022.,31281.);  s=vec2(338304.,12620.);  r=vec2(574912.,14894.);  }
-    else if (ch == 2)  { b=vec2(541230.,14896.);   s=vec2(270528.,6408.);   r=vec2(541120.,14864.);  }
-    else if (ch == 3)  { b=vec2(575068.,29265.);   s=vec2(338304.,12618.);  r=vec2(575872.,12881.);  }
-    else if (ch == 4)  { b=vec2(999967.,32272.);   s=vec2(270784.,14604.);  r=vec2(541664.,32286.);  }
-    else if (ch == 5)  { b=vec2(999952.,32272.);   s=vec2(270592.,14604.);  r=vec2(541184.,32286.);  }
-    else if (ch == 6)  { b=vec2(771630.,14896.);   s=vec2(338112.,6408.);   r=vec2(640448.,14864.);  }
-    else if (ch == 7)  { b=vec2(1033777.,17969.);  s=vec2(338240.,10574.);  r=vec2(575008.,17983.);  }
-    else if (ch == 8)  { b=vec2(135310.,14468.);   s=vec2(135616.,14468.);  r=vec2(135616.,14468.);  }
-    else if (ch == 9)  { b=vec2(68172.,7234.);     s=vec2(75904.,6210.);    r=vec2(84352.,7234.);    }
-    else if (ch == 10) { b=vec2(807505.,18004.);   s=vec2(338240.,10572.);  r=vec2(674336.,19096.);  }
-    else if (ch == 11) { b=vec2(541215.,16912.);   s=vec2(270784.,8456.);   r=vec2(541664.,16912.);  }
-    else if (ch == 12) { b=vec2(706097.,18293.);   s=vec2(338240.,10702.);  r=vec2(575008.,18293.);  }
-    else if (ch == 13) { b=vec2(640561.,18229.);   s=vec2(338240.,10698.);  r=vec2(640544.,18229.);  }
-    else if (ch == 14) { b=vec2(575022.,14897.);   s=vec2(338048.,4426.);   r=vec2(574912.,14897.);  }
-    else if (ch == 15) { b=vec2(999952.,31281.);   s=vec2(270592.,12620.);  r=vec2(541184.,14894.);  }
-    else if (ch == 16) { b=vec2(579149.,14897.);   s=vec2(342208.,4426.);   r=vec2(706976.,14897.);  }
-    else if (ch == 17) { b=vec2(1004113.,31281.);  s=vec2(338240.,12620.);  r=vec2(674336.,14894.);  }
-    else if (ch == 18) { b=vec2(460334.,14896.);   s=vec2(67968.,6404.);    r=vec2(34240.,14862.);   }
-    else if (ch == 19) { b=vec2(135300.,31876.);   s=vec2(135296.,14468.);  r=vec2(135296.,31876.);  }
-    else if (ch == 20) { b=vec2(575022.,17969.);   s=vec2(338048.,10570.);  r=vec2(574912.,17969.);  }
-    else if (ch == 21) { b=vec2(567620.,17969.);   s=vec2(331904.,10570.);  r=vec2(338048.,17969.);  }
-    else if (ch == 22) { b=vec2(710513.,17969.);   s=vec2(473408.,10570.);  r=vec2(716320.,17973.);  }
-    else if (ch == 23) { b=vec2(141873.,17962.);   s=vec2(141632.,10564.);  r=vec2(141856.,17732.);  }
-    else if (ch == 24) { b=vec2(135300.,17962.);   s=vec2(135296.,10564.);  r=vec2(135296.,17732.);  }
-    else if (ch == 25) { b=vec2(139807.,31778.);   s=vec2(139712.,14404.);  r=vec2(279520.,31782.);  }
-    else               { return vec2(0.0, 0.0); }
-
-    if (font > 1.5) return r;
-    if (font > 0.5) return s;
-    return b;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// FONT ENGINE — uses pre-fetched data to avoid redundant lookups
-// ═══════════════════════════════════════════════════════════════════════
-
-// Extract pixel from pre-fetched vec2 data (no charData call)
-float pxFromData(vec2 data, float col, float row) {
-    float ri = floor(row);
-    float rv;
-    if (ri < 4.0) rv = mod(floor(data.x / pow(32.0, ri)), 32.0);
-    else rv = mod(floor(data.y / pow(32.0, ri - 4.0)), 32.0);
-    return mod(floor(rv / pow(2.0, 4.0 - floor(col))), 2.0);
-}
-
-// Standard charPixel (calls charData once)
+// Atlas-only font engine (no bitmap fallback — faster ANGLE compile)
 float charPixel(int ch, float col, float row) {
-    return pxFromData(charData(ch), col, row);
+    if (ch < 0 || ch > 25) return 0.0;
+    vec2 uv = vec2(col / 5.0, row / 7.0);
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
+    return smoothstep(0.1, 0.55, texture2D(fontAtlasTex, vec2((float(ch) + uv.x) / 27.0, uv.y)).r);
 }
 
 int getChar(int slot) {
@@ -120,16 +68,15 @@ int charCount() {
 
 float sampleChar(int ch, vec2 uv) {
     if (ch < 0 || ch > 25) return 0.0;
-    float c = uv.x * 5.0, r = uv.y * 7.0;
-    if (c < 0.0 || c >= 5.0 || r < 0.0 || r >= 7.0) return 0.0;
-    return charPixel(ch, c, r);
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
+    return texture2D(fontAtlasTex, vec2((float(ch) + uv.x) / 27.0, uv.y)).r;
 }
 
 float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 0: JAMES — cycling font styles per letter
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 0: JAMES - cycling font styles per letter
+// =======================================================================
 
 vec4 effectJames(vec2 uv) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -187,8 +134,7 @@ vec4 effectJames(vec2 uv) {
             float grow = floor(grid.y);
             if (gcol >= 0.0 && gcol < 5.0 && grow >= 0.0 && grow < 7.0) {
                 // Fetch font data ONCE for this character
-                vec2 data = charData(ch);
-                float filled = pxFromData(data, gcol, grow);
+                float filled = smoothstep(0.1, 0.55, texture2D(fontAtlasTex, vec2((float(ch) + cellUV.x) / 27.0, cellUV.y)).r);
                 if (filled > 0.5) {
                     vec2 lp = fract(grid);
                     float inten = 1.0;
@@ -198,10 +144,10 @@ vec4 effectJames(vec2 uv) {
                     else if (style == 1) inten = smoothstep(0.45, 0.35, length(lp - 0.5));
                     // 2: outline
                     else if (style == 2) {
-                        float nb = pxFromData(data, gcol-1.0, grow)
-                                 + pxFromData(data, gcol+1.0, grow)
-                                 + pxFromData(data, gcol, grow-1.0)
-                                 + pxFromData(data, gcol, grow+1.0);
+                        float nb = charPixel(ch, gcol-1.0, grow)
+                                 + charPixel(ch, gcol+1.0, grow)
+                                 + charPixel(ch, gcol, grow-1.0)
+                                 + charPixel(ch, gcol, grow+1.0);
                         inten = nb > 3.5 ? 0.0 : 1.0;
                     }
                     // 3: horizontal stripes
@@ -253,9 +199,9 @@ vec4 effectJames(vec2 uv) {
     return vec4(col, alpha);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 1: WAVE — sine displacement per letter
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 1: WAVE - sine displacement per letter
+// =======================================================================
 
 vec4 effectWave(vec2 uv) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -299,9 +245,9 @@ vec4 effectWave(vec2 uv) {
     return result;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 2: CASCADE — tiled rows with wave offsets
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 2: CASCADE - tiled rows with wave offsets
+// =======================================================================
 
 vec4 effectCascade(vec2 uv) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -347,9 +293,9 @@ vec4 effectCascade(vec2 uv) {
     return vec4(fc, a);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 3-4: DIGIFADE — glitch dissolve
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 3-4: DIGIFADE - glitch dissolve
+// =======================================================================
 
 vec4 effectDigifade(vec2 uv, int sub) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -362,33 +308,60 @@ vec4 effectDigifade(vec2 uv, int sub) {
 
     float t = TIME * speed * sweepSpeed;
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
-    float cH = 0.18 * textScale, cW = cH * (5.0/7.0), gW = cW * 0.2;
-    float totalW = float(numChars) * cW + float(numChars - 1) * gW;
-    float startX = 0.5 - totalW*0.5, startY = 0.5 - cH*0.5;
+
+    // Responsive grid: fit chars into rows that fill the screen
+    // Each char cell is 5:7 aspect ratio
+    float maxCols = max(1.0, floor(0.9 * aspect / (textScale * (5.0/7.0) * 0.18)));
+    int numCols = int(min(maxCols, float(numChars)));
+    int numRows = (numChars + numCols - 1) / numCols;
+    if (numRows > 6) { numCols = (numChars + 5) / 6; numRows = (numChars + numCols - 1) / numCols; }
+
+    float cH = min(0.18 * textScale, 0.85 / float(numRows));
+    float cW = cH * (5.0/7.0);
+    float gW = cW * 0.2;
+    float rowGap = cH * 0.2;
+    float totalH = float(numRows) * cH + float(numRows - 1) * rowGap;
+    float baseY = 0.5 + totalH * 0.5 - cH;
 
     float si = floor(uv.y * sliceCount);
     float n1 = hash(si + floor(t*2.0));
     float n2 = hash(si*3.7 + floor(t*3.0));
-    float sw = sin(t*0.7)*0.5+0.5;
-    float ps = smoothstep(sw-0.15, sw+0.1, (p.x-startX)/totalW);
 
-    float dx = abs(ps*n1*glitchAmount*maxDisp + ps*sin(si*0.3*complexity+t)*glitchAmount*maxDisp*0.3);
-    float dy = vertGlitch > 0.01 ? ps*(n2-0.5)*vertGlitch*glitchAmount*0.06 : 0.0;
-
-    vec2 samp = vec2(p.x - dx, p.y - dy);
-    float rx = samp.x - startX, ry = samp.y - startY;
     float textHit = 0.0;
 
-    if (rx >= 0.0 && rx <= totalW && ry >= 0.0 && ry <= cH) {
-        float cs = cW + gW;
-        float csF = rx / cs;
-        int slot = int(floor(csF));
-        float clx = fract(csF), cf = cW/cs;
-        if (clx < cf && slot >= 0 && slot < numChars) {
-            float gc = (clx/cf)*5.0, gr = (ry/cH)*7.0;
-            if (gc >= 0.0 && gc < 5.0 && gr >= 0.0 && gr < 7.0) {
-                int ch = getChar(slot);
-                if (ch >= 0 && ch <= 25) textHit = charPixel(ch, gc, gr);
+    for (int row = 0; row < 6; row++) {
+        if (row >= numRows) break;
+        // How many chars in this row
+        int charsInRow = numChars - row * numCols;
+        if (charsInRow > numCols) charsInRow = numCols;
+
+        float rowW = float(charsInRow) * cW + float(charsInRow - 1) * gW;
+        float startX = 0.5 - rowW * 0.5;
+        float startY = baseY - float(row) * (cH + rowGap);
+
+        float sw = sin(t*0.7)*0.5+0.5;
+        float ps = smoothstep(sw-0.15, sw+0.1, (p.x-startX)/max(rowW, 0.001));
+
+        float dx = abs(ps*n1*glitchAmount*maxDisp + ps*sin(si*0.3*complexity+t)*glitchAmount*maxDisp*0.3);
+        float dy = vertGlitch > 0.01 ? ps*(n2-0.5)*vertGlitch*glitchAmount*0.06 : 0.0;
+
+        vec2 samp = vec2(p.x - dx, p.y - dy);
+        float rx = samp.x - startX, ry = samp.y - startY;
+
+        if (rx >= 0.0 && rx <= rowW && ry >= 0.0 && ry <= cH) {
+            float cs = cW + gW;
+            float csF = rx / cs;
+            int slot = int(floor(csF));
+            float clx = fract(csF), cf = cW/cs;
+            if (clx < cf && slot >= 0 && slot < charsInRow) {
+                int globalIdx = row * numCols + slot;
+                if (globalIdx < numChars) {
+                    float gc = (clx/cf)*5.0, gr = (ry/cH)*7.0;
+                    if (gc >= 0.0 && gc < 5.0 && gr >= 0.0 && gr < 7.0) {
+                        int ch = getChar(globalIdx);
+                        if (ch >= 0 && ch <= 25) textHit = max(textHit, charPixel(ch, gc, gr));
+                    }
+                }
             }
         }
     }
@@ -399,9 +372,9 @@ vec4 effectDigifade(vec2 uv, int sub) {
     return vec4(fc, a);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 5-8: COIL — text on spiral rings
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 5-8: COIL - text on spiral rings
+// =======================================================================
 
 vec4 effectCoil(vec2 uv, int sub) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -480,9 +453,9 @@ vec4 effectCoil(vec2 uv, int sub) {
     return vec4(fc, a);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 9-12: FLAG — waving flag surface
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 9-12: FLAG - waving flag surface
+// =======================================================================
 
 vec4 effectFlag(vec2 uv, int sub) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -544,9 +517,9 @@ vec4 effectFlag(vec2 uv, int sub) {
     return vec4(fc, a);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 13-15: BRICKS — grid with animated displacement
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 13-15: BRICKS - grid with animated displacement
+// =======================================================================
 
 vec4 effectBricks(vec2 uv, int sub) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -605,9 +578,9 @@ vec4 effectBricks(vec2 uv, int sub) {
     return vec4(fc, a);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 16-19: SPACY — perspective tunnel rows
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 16-19: SPACY - perspective tunnel rows
+// =======================================================================
 
 vec4 effectSpacy(vec2 uv, int sub) {
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
@@ -666,46 +639,93 @@ vec4 effectSpacy(vec2 uv, int sub) {
     return vec4(fc, a);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EFFECT 20: VARIABLE FONT — canvas-rendered text via texture
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// EFFECT 20: VARIABLE FONT - canvas-rendered text via texture
+// =======================================================================
 
 vec4 effectVarFont(vec2 uv) {
     vec4 tex = texture2D(varFontTex, uv);
     float lum = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
-    vec3 col = transparentBg ? textColor.rgb : mix(bgColor.rgb, textColor.rgb, lum);
+    vec3 col = transparentBg ? textColor.rgb * lum : mix(bgColor.rgb, textColor.rgb, lum);
     float alpha = transparentBg ? lum : 1.0;
     return vec4(col, alpha);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 // MAIN DISPATCHER
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 
 void main() {
     vec2 uv = gl_FragCoord.xy / RENDERSIZE.xy;
     int e = int(effect);
 
-    if (e == 0)  { gl_FragColor = effectJames(uv); return; }
-    if (e == 1)  { gl_FragColor = effectWave(uv); return; }
-    if (e == 2)  { gl_FragColor = effectCascade(uv); return; }
-    if (e == 3)  { gl_FragColor = effectDigifade(uv, 0); return; }
-    if (e == 4)  { gl_FragColor = effectDigifade(uv, 1); return; }
-    if (e == 5)  { gl_FragColor = effectCoil(uv, 0); return; }
-    if (e == 6)  { gl_FragColor = effectCoil(uv, 1); return; }
-    if (e == 7)  { gl_FragColor = effectCoil(uv, 2); return; }
-    if (e == 8)  { gl_FragColor = effectCoil(uv, 3); return; }
-    if (e == 9)  { gl_FragColor = effectFlag(uv, 0); return; }
-    if (e == 10) { gl_FragColor = effectFlag(uv, 1); return; }
-    if (e == 11) { gl_FragColor = effectFlag(uv, 2); return; }
-    if (e == 12) { gl_FragColor = effectFlag(uv, 3); return; }
-    if (e == 13) { gl_FragColor = effectBricks(uv, 0); return; }
-    if (e == 14) { gl_FragColor = effectBricks(uv, 1); return; }
-    if (e == 15) { gl_FragColor = effectBricks(uv, 2); return; }
-    if (e == 16) { gl_FragColor = effectSpacy(uv, 0); return; }
-    if (e == 17) { gl_FragColor = effectSpacy(uv, 1); return; }
-    if (e == 18) { gl_FragColor = effectSpacy(uv, 2); return; }
-    if (e == 19) { gl_FragColor = effectSpacy(uv, 3); return; }
-    if (e == 20) { gl_FragColor = effectVarFont(uv); return; }
-    gl_FragColor = effectSpacy(uv, 3);
+    vec4 col;
+    if      (e == 0)  col = effectJames(uv);
+    else if (e == 1)  col = effectWave(uv);
+    else if (e == 2)  col = effectCascade(uv);
+    else if (e == 3)  col = effectDigifade(uv, 0);
+    else if (e == 4)  col = effectDigifade(uv, 1);
+    else if (e == 5)  col = effectCoil(uv, 0);
+    else if (e == 6)  col = effectCoil(uv, 1);
+    else if (e == 7)  col = effectCoil(uv, 2);
+    else if (e == 8)  col = effectCoil(uv, 3);
+    else if (e == 9)  col = effectFlag(uv, 0);
+    else if (e == 10) col = effectFlag(uv, 1);
+    else if (e == 11) col = effectFlag(uv, 2);
+    else if (e == 12) col = effectFlag(uv, 3);
+    else if (e == 13) col = effectBricks(uv, 0);
+    else if (e == 14) col = effectBricks(uv, 1);
+    else if (e == 15) col = effectBricks(uv, 2);
+    else if (e == 16) col = effectSpacy(uv, 0);
+    else if (e == 17) col = effectSpacy(uv, 1);
+    else if (e == 18) col = effectSpacy(uv, 2);
+    else if (e == 19) col = effectSpacy(uv, 3);
+    else if (e == 20) col = effectVarFont(uv);
+    else              col = effectSpacy(uv, 3);
+
+    // Voice decay glitch - subtle digital artifact as text fades
+    if (_voiceGlitch > 0.01) {
+        float g = _voiceGlitch;
+        float t = TIME * 17.0;
+
+        // Horizontal scanline bands that shift UV
+        float band = floor(uv.y * mix(8.0, 40.0, g) + t * 3.0);
+        float bandNoise = fract(sin(band * 91.7 + t) * 43758.5);
+        float bandActive = step(1.0 - g * 0.6, bandNoise);
+        float shift = (bandNoise - 0.5) * 0.08 * g * bandActive;
+
+        // RGB channel split - chromatic aberration
+        float chromaAmt = g * 0.015;
+        vec2 uvR = uv + vec2(shift + chromaAmt, 0.0);
+        vec2 uvB = uv + vec2(shift - chromaAmt, 0.0);
+        vec2 uvG = uv + vec2(shift, chromaAmt * 0.5);
+
+        // Re-sample the effect at offset UVs for each channel
+        vec4 cR, cG, cB;
+        if      (e == 0)  { cR = effectJames(uvR); cG = effectJames(uvG); cB = effectJames(uvB); }
+        else if (e == 1)  { cR = effectWave(uvR);  cG = effectWave(uvG);  cB = effectWave(uvB); }
+        else if (e == 2)  { cR = effectCascade(uvR); cG = effectCascade(uvG); cB = effectCascade(uvB); }
+        else if (e == 3 || e == 4) { cR = effectDigifade(uvR, e-3); cG = effectDigifade(uvG, e-3); cB = effectDigifade(uvB, e-3); }
+        else if (e >= 16 && e <= 19) { cR = effectSpacy(uvR, e-16); cG = effectSpacy(uvG, e-16); cB = effectSpacy(uvB, e-16); }
+        else { cR = col; cG = col; cB = col; } // fallback - scanline + dropout still apply
+
+        vec4 glitched = vec4(cR.r, cG.g, cB.b, max(max(cR.a, cG.a), cB.a));
+
+        // Scanline darkening
+        float scanline = 0.95 + 0.05 * sin(uv.y * RENDERSIZE.y * 1.5 + t * 40.0);
+
+        // Random block dropout - flicker blocks to black
+        float blockX = floor(uv.x * 6.0);
+        float blockY = floor(uv.y * 4.0);
+        float blockNoise = fract(sin((blockX + blockY * 7.0) * 113.1 + floor(t * 8.0)) * 43758.5);
+        float dropout = step(1.0 - g * 0.15, blockNoise);
+
+        glitched.rgb *= scanline;
+        glitched.rgb *= 1.0 - dropout;
+
+        // Blend: more glitch as decay increases
+        col = mix(col, glitched, smoothstep(0.0, 0.3, g));
+    }
+
+    gl_FragColor = col;
 }

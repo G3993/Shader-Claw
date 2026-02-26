@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShaderClaw v2</title>
+
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+
+<!-- MediaPipe Vision (lazy loaded by MediaPipeManager) -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32" defer></script>
+<script>window.MediaPipeVision = window.MediaPipeVision || {};</script>
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/sidebar.css">
+<link rel="stylesheet" href="css/editor.css">
+<link rel="stylesheet" href="css/nodes.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Main Panel -->
+    <div id="main">
+      <!-- Canvas Viewport -->
+      <div id="viewport">
+        <canvas id="gl-canvas"></canvas>
+        <canvas id="three-canvas"></canvas>
+        <!-- canvas-controls injected by js/ui/canvas-controls.js -->
+      </div>
+
+      <!-- Resize Handle -->
+      <div id="resize-handle"></div>
+
+      <!-- Editor Area -->
+      <div id="editor-area">
+        <!-- tabs + panels injected by js/ui/editor.js -->
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <!-- content injected by js/ui/sidebar.js -->
+    </div>
+  </div>
+
+  <!-- App Entry -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

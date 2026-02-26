@@ -1,16 +1,17 @@
 (function(THREE) {
     const INPUTS = [
+        { NAME: "shape", TYPE: "long", DEFAULT: 1, VALUES: [0,1,2,3,4,5,6], LABELS: ["Cube","Sphere","Torus","Cylinder","Cone","Dodecahedron","Custom"] },
+        { NAME: "texture", TYPE: "image" },
         { NAME: "cubeColor", TYPE: "color", DEFAULT: [1.0, 1.0, 1.0, 1.0] },
+        { NAME: "transparentBg", TYPE: "bool", DEFAULT: true },
         { NAME: "bgColor", TYPE: "color", DEFAULT: [0.035, 0.035, 0.059, 1.0] },
-        { NAME: "shape", TYPE: "long", DEFAULT: 0, VALUES: [0,1,2,3,4,5,6], LABELS: ["Cube","Sphere","Torus","Cylinder","Cone","Dodecahedron","Custom"] },
-        { NAME: "floor", TYPE: "bool", DEFAULT: true },
+        { NAME: "floor", TYPE: "bool", DEFAULT: false },
         { NAME: "speed", TYPE: "float", DEFAULT: 1.0, MIN: 0.0, MAX: 5.0 },
+        { NAME: "movement", TYPE: "float", DEFAULT: 0.6, MIN: 0.0, MAX: 2.0 },
         { NAME: "rotX", TYPE: "float", DEFAULT: 0.7, MIN: -3.0, MAX: 3.0 },
         { NAME: "rotY", TYPE: "float", DEFAULT: 1.0, MIN: -3.0, MAX: 3.0 },
         { NAME: "rotZ", TYPE: "float", DEFAULT: 0.0, MIN: -3.0, MAX: 3.0 },
-        { NAME: "size", TYPE: "float", DEFAULT: 1.0, MIN: 0.2, MAX: 3.0 },
-        { NAME: "texture", TYPE: "image" },
-        { NAME: "texScale", TYPE: "float", DEFAULT: 1.0, MIN: 0.1, MAX: 10.0 }
+        { NAME: "size", TYPE: "float", DEFAULT: 1.0, MIN: 0.2, MAX: 3.0 }
     ];
 
     function makeGeometry(shapeId) {
@@ -26,7 +27,8 @@
 
     function create(renderer, canvas, media) {
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x09090f);
+        const _bgColor = new THREE.Color(0x09090f);
+        scene.background = null; // transparent by default
 
         const camera = new THREE.PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 100);
         camera.position.set(0, 1.2, 3.5);
@@ -49,8 +51,8 @@
         scene.add(pivot);
 
         // Mesh
-        let currentShape = 0;
-        let geometry = makeGeometry(0);
+        let currentShape = 1;
+        let geometry = makeGeometry(1);
         const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(1.0, 1.0, 1.0),
             roughness: 0.35,
@@ -120,17 +122,24 @@
                 // Texture scale (tiles when > 1)
                 _texScale.value = (values.texScale != null) ? values.texScale : 1.0;
 
-                // Background color (only if background is a Color, not a texture)
-                if (values.bgColor && scene.background && scene.background.isColor) {
-                    const bg = values.bgColor;
-                    scene.background.setRGB(bg[0], bg[1], bg[2]);
+                // Transparent background toggle
+                var wantTransparent = values.transparentBg != null ? !!values.transparentBg : true;
+                if (wantTransparent) {
+                    scene.background = null;
+                } else {
+                    if (!scene.background) scene.background = _bgColor;
+                    if (values.bgColor) {
+                        var bg = values.bgColor;
+                        _bgColor.setRGB(bg[0], bg[1], bg[2]);
+                    }
+                    scene.background = _bgColor;
                 }
 
                 // Floor toggle
-                gridHelper.visible = values.floor != null ? !!values.floor : true;
+                gridHelper.visible = values.floor != null ? !!values.floor : false;
 
                 // Shape switching
-                const shapeId = (values.shape != null) ? values.shape : 0;
+                const shapeId = (values.shape != null) ? values.shape : 1;
                 if (shapeId !== currentShape) {
                     if (shapeId === 6) {
                         // Custom model — hide default mesh, show model from media
@@ -193,6 +202,22 @@
                 pivot.rotation.y = time * spd * ry;
                 pivot.rotation.z = time * spd * rz;
                 pivot.scale.setScalar(sz);
+
+                // Auto-orbit camera — mimics natural mouse exploration
+                var orbit = (values.movement != null) ? values.movement : 0.6;
+                if (orbit > 0.001) {
+                    var ot = time * 0.25 * orbit;
+                    // Multi-frequency for organic feel
+                    var angle = ot + 0.4 * Math.sin(ot * 0.7) + 0.2 * Math.sin(ot * 1.3);
+                    var dist = 3.5 + 0.6 * Math.sin(ot * 0.5) * orbit;
+                    var camY = 1.2 + 0.8 * Math.sin(ot * 0.35) * orbit;
+                    camera.position.set(
+                        Math.sin(angle) * dist,
+                        camY,
+                        Math.cos(angle) * dist
+                    );
+                    camera.lookAt(0, 0, 0);
+                }
 
                 if (values.cubeColor && !material.map) {
                     const c = values.cubeColor;
