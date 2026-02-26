@@ -163,6 +163,18 @@ body {
   opacity: 0.8;
   transition: opacity 0.15s;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.layer-vis svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .layer-vis:hover { opacity: 1; }
@@ -1338,17 +1350,41 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* ===== MOBILE RESPONSIVE ===== */
+#mobile-drag-handle { display: none; }
+
 @media (max-width: 768px) {
   #app {
     grid-template-columns: 1fr;
-    grid-template-rows: 36vh 1fr;
+    grid-template-rows: 36vh auto 1fr;
     height: 100vh;
     height: 100dvh;
   }
 
   #sidebar-resize { display: none; }
-  #sidebar {
+
+  #mobile-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    cursor: row-resize;
+    touch-action: none;
+    z-index: 10;
     order: 2;
+    flex-shrink: 0;
+  }
+  .drag-pill {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+  }
+
+  #sidebar {
+    order: 3;
     border-left: none;
     border-top: 1px solid var(--border);
     overflow-y: auto;
@@ -1360,6 +1396,11 @@ body {
   }
 
   #preview {
+    order: 1;
+    min-height: 0;
+  }
+
+  #main {
     order: 1;
     min-height: 0;
   }
@@ -1560,7 +1601,7 @@ body {
 
 @media (max-width: 480px) {
   #app {
-    grid-template-rows: 32vh 1fr;
+    grid-template-rows: 32vh auto 1fr;
   }
 
   .layer-name {
@@ -1953,6 +1994,9 @@ body {
     </div>
     <div class="browser-body"></div>
   </div>
+
+  <!-- MOBILE DRAG HANDLE -->
+  <div id="mobile-drag-handle"><span class="drag-pill"></span></div>
 
   <!-- MAIN -->
   <div id="main">
@@ -6284,6 +6328,34 @@ function stopNdiSend() {
     resizing = false;
     resizeHandle.classList.remove('active');
     document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+
+  // Mobile drag handle — resize canvas/sidebar split
+  const mobileDragHandle = document.getElementById('mobile-drag-handle');
+  const mainEl = document.getElementById('main');
+  let mobileResizing = false;
+  let mobileResizePointerId = null;
+  mobileDragHandle.addEventListener('pointerdown', (e) => {
+    mobileResizing = true;
+    mobileResizePointerId = e.pointerId;
+    mobileDragHandle.setPointerCapture(e.pointerId);
+    document.body.style.userSelect = 'none';
+  });
+  mobileDragHandle.addEventListener('pointermove', (e) => {
+    if (!mobileResizing) return;
+    const vh = window.innerHeight;
+    const pct = Math.max(8, Math.min(70, (e.clientY / vh) * 100));
+    appEl.style.gridTemplateRows = pct + 'vh auto 1fr';
+  });
+  mobileDragHandle.addEventListener('pointerup', () => {
+    mobileResizing = false;
+    mobileResizePointerId = null;
+    document.body.style.userSelect = '';
+  });
+  mobileDragHandle.addEventListener('pointercancel', () => {
+    mobileResizing = false;
+    mobileResizePointerId = null;
     document.body.style.userSelect = '';
   });
 
