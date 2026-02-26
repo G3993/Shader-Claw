@@ -1505,7 +1505,7 @@ process.on("SIGTERM", () => { stopPixelStream(); ndiCleanup(); process.exit(0); 
 async function main() {
   // Start HTTP + WS server
   httpServer.listen(PORT, () => {
-    log(`HTTP + WS server listening on http://localhost:${PORT}`);
+    log(`HTTP + WS server listening on port ${PORT}`);
   });
 
   httpServer.on("error", (err) => {

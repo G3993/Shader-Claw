@@ -8040,7 +8040,7 @@ function stopNdiSend() {
     let reconnectTimer = null;
 
     function wsConnect() {
-      const wsUrl = `ws://${location.host}`;
+      const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
       ws = new WebSocket(wsUrl);
       ws.binaryType = 'arraybuffer';
 
