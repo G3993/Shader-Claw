@@ -190,6 +190,22 @@ body {
   flex: 1;
 }
 
+.layer-preset-row {
+  display: none;
+  padding: 8px 14px;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.layer-preset-row label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.layer-card.open .layer-preset-row { display: flex; }
+
 .layer-shader-select {
   background: var(--bg);
   color: var(--text);
@@ -199,9 +215,8 @@ body {
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  min-width: 90px;
-  max-width: 120px;
-  margin-left: auto;
+  flex: 1;
+  min-width: 0;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -250,9 +265,8 @@ body {
 }
 
 .layer-control-row select {
-  flex: 0 0 auto;
-  min-width: 90px;
-  margin-left: auto;
+  flex: 1;
+  min-width: 0;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -874,6 +888,23 @@ body {
   color: var(--text);
   border-color: var(--text-dim);
 }
+#scene-model-btn {
+  width: 100%;
+  padding: 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+#scene-model-btn:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
 .cam-toggle-row {
   display: flex;
   align-items: center;
@@ -1453,8 +1484,11 @@ body {
   .layer-shader-select {
     font-size: 12px;
     padding: 6px 20px 6px 8px;
-    max-width: 140px;
     min-height: 32px;
+  }
+
+  .layer-preset-row {
+    padding: 8px 12px;
   }
 
   .layer-controls {
@@ -1619,7 +1653,7 @@ body {
   }
 
   .layer-shader-select {
-    max-width: 110px;
+    font-size: 11px;
   }
 
   .import-grid {
@@ -1775,7 +1809,7 @@ body {
       <!-- Body Tracking -->
       <div class="layer-card" data-layer="bodytracking">
         <div class="layer-header">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.5"/><path d="M12 7v5m0 0l-4 6m4-6l4 6"/><path d="M7 11h10"/></svg>
+          <span class="layer-vis" style="cursor:default;opacity:0.6"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.5"/><path d="M12 7v5m0 0l-4 6m4-6l4 6"/><path d="M7 11h10"/></svg></span>
           <span class="layer-name">Body Tracking</span>
         </div>
         <div class="layer-controls">
@@ -1857,6 +1891,9 @@ body {
         <div class="layer-header">
           <button class="layer-vis" data-layer="text" title="Toggle visibility">&#x1F441;</button>
           <span class="layer-name">Text</span>
+        </div>
+        <div class="layer-preset-row">
+          <label>Preset</label>
           <select class="layer-shader-select" data-layer="text"></select>
         </div>
         <div class="text-msg-bar">
@@ -1887,6 +1924,9 @@ body {
         <div class="layer-header">
           <button class="layer-vis" data-layer="scene" title="Toggle visibility">&#x1F441;</button>
           <span class="layer-name">Shape</span>
+        </div>
+        <div class="layer-preset-row">
+          <label>Preset</label>
           <select class="layer-shader-select" data-layer="scene"></select>
         </div>
         <div class="layer-controls">
@@ -1910,8 +1950,8 @@ body {
             <button class="flip-toggle scene-flip-h" data-layer="scene" title="Flip Horizontal">H</button>
             <button class="flip-toggle scene-flip-v active" data-layer="scene" title="Flip Vertical">V</button>
           </div>
-          <div class="layer-control-row" style="justify-content:flex-end">
-            <button class="overlay-upload-btn" id="scene-model-btn" title="Import 3D model (.glb, .gltf, .stl, .fbx, .obj)" style="font-size:12px;padding:2px 10px;line-height:1">Add 3D</button>
+          <div class="layer-control-row">
+            <button id="scene-model-btn" title="Import 3D model (.glb, .gltf, .stl, .fbx, .obj)">+ Add 3D Model</button>
           </div>
         </div>
         <div class="layer-params" data-layer="scene"></div>
@@ -1922,6 +1962,9 @@ body {
         <div class="layer-header">
           <button class="layer-vis" data-layer="shader" title="Toggle visibility">&#x1F441;</button>
           <span class="layer-name">Shader</span>
+        </div>
+        <div class="layer-preset-row">
+          <label>Preset</label>
           <select class="layer-shader-select" data-layer="shader"></select>
         </div>
         <div class="layer-controls">
@@ -5198,6 +5241,7 @@ function stopNdiSend() {
     loadSource,
     loadScene,
     compile,
+    compileToLayer,
     getSource: () => editor.getValue(),
     getFocusedLayer: () => focusedLayerId,
 
@@ -5297,7 +5341,34 @@ function stopNdiSend() {
 
     enableMediaPipe: async (modes) => {
       try {
-        await mediaPipeMgr.init(modes);
+        // Ensure webcam is available for detection
+        const hasWebcam = mediaInputs.some(m => m.name === 'Webcam' && m.type === 'video');
+        if (!hasWebcam) await addMediaFromWebcam();
+        // Sync mode state with UI
+        if (modes) {
+          for (const k of ['hand', 'face', 'pose', 'segment']) {
+            if (k in modes) mpModeState[k] = modes[k];
+          }
+          // Update mode button UI
+          document.querySelectorAll('.mp-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', !!mpModeState[btn.dataset.mpMode]);
+          });
+        }
+        await mediaPipeMgr.init(mpModeState);
+        // Add MediaPipe media entry if not already present
+        if (!mediaInputs.some(m => m._isMediaPipe)) {
+          const id = ++mediaIdCounter;
+          mediaInputs.push({ id, name: mediaPipeMgr.getLabel(), type: 'mediapipe', element: null, glTexture: null, threeTexture: null, threeModel: null, _isMediaPipe: true });
+          renderMediaList();
+        }
+        // Enable gesture processing + show UI
+        gestureEnabled = true;
+        document.getElementById('cam-mediapipe-btn').classList.add('active');
+        document.getElementById('mp-modes-row').style.display = '';
+        document.getElementById('gesture-toggle-row').style.display = '';
+        document.getElementById('gesture-ctrl-btn').classList.add('active');
+        document.getElementById('hand-as-mouse-row').style.display = '';
+        document.getElementById('bt-texture-scale-row').style.display = '';
         return { ok: true, label: mediaPipeMgr.getLabel() };
       } catch (e) {
         return { ok: false, error: e.message };
@@ -5995,16 +6066,19 @@ function stopNdiSend() {
 
   // Mode toggle buttons
   mpModesRow.querySelectorAll('.mp-mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const mode = btn.dataset.mpMode;
       mpModeState[mode] = !mpModeState[mode];
       btn.classList.toggle('active', mpModeState[mode]);
       // If MediaPipe is active, reinit with new modes
       if (mediaPipeMgr.active) {
-        mediaPipeMgr.dispose();
         const mpEntry = mediaInputs.find(m => m._isMediaPipe);
         if (mpEntry) removeMedia(mpEntry.id);
-        startMediaPipe();
+        try {
+          await startMediaPipe();
+        } catch (e) {
+          console.warn('MediaPipe reinit failed:', e.message);
+        }
       }
     });
   });
@@ -8141,12 +8215,12 @@ function stopNdiSend() {
         try {
           switch (action) {
             case 'load_shader': {
-              window.shaderClaw.loadSource(params.code);
-              const compileResult = window.shaderClaw.getErrors();
+              const targetLayer = params.layerId || window.shaderClaw.getFocusedLayer();
+              const compResult = window.shaderClaw.compileToLayer(targetLayer, params.code);
               result = {
-                ok: compileResult === null,
-                errors: compileResult,
-                inputs: window.shaderClaw.getInputs(),
+                ok: compResult.ok,
+                errors: compResult.errors || null,
+                layer: targetLayer,
               };
               break;
             }

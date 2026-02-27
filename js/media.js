@@ -321,9 +321,21 @@ export class MediaPipeManager {
     this._lastHandLandmarks2 = null;
     this._frameCount = 0;
     this._lastTimestamp = 0;
+    // Pre-allocated data buffers to avoid per-frame GC churn
+    this._handData = new Uint8Array(42 * 4);
+    this._faceData = new Uint8Array(478 * 4);
+    this._poseData = new Uint8Array(33 * 4);
+    this._segData = null; // allocated on first seg frame (size varies)
+    this._segDataSize = 0;
+    // Pre-allocated landmark arrays
+    this._handLandmarkPool = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }));
+    this._handLandmarkPool2 = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }));
+    this._faceLandmarkPool = Array.from({ length: 478 }, () => ({ x: 0, y: 0, z: 0 }));
+    this._poseLandmarkPool = Array.from({ length: 33 }, () => ({ x: 0, y: 0, z: 0 }));
   }
 
   async init(modes) {
+    this.dispose(); // Clean up any existing landmarkers before reinit
     if (!window.MediaPipeVision) throw new Error('MediaPipe not loaded yet');
     const { FilesetResolver, HandLandmarker, FaceLandmarker, PoseLandmarker, ImageSegmenter } = window.MediaPipeVision;
     const wasmPath = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm';
@@ -410,14 +422,26 @@ export class MediaPipeManager {
         }
         this._lastPinchPos = [...this.pinchPos];
 
-        // Store raw landmarks for binding resolution
-        this._lastHandLandmarks = result.landmarks[0].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }));
+        // Store raw landmarks for binding resolution (reuse pooled objects)
+        const lms0 = result.landmarks[0];
+        for (let i = 0; i < 21; i++) {
+          const dst = this._handLandmarkPool[i], src = lms0[i];
+          dst.x = src.x; dst.y = 1.0 - src.y; dst.z = src.z;
+        }
+        this._lastHandLandmarks = this._handLandmarkPool;
         // Store second hand landmarks for two-hand gesture processing
-        this._lastHandLandmarks2 = result.landmarks.length >= 2
-          ? result.landmarks[1].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }))
-          : null;
+        if (result.landmarks.length >= 2) {
+          const lms1 = result.landmarks[1];
+          for (let i = 0; i < 21; i++) {
+            const dst = this._handLandmarkPool2[i], src = lms1[i];
+            dst.x = src.x; dst.y = 1.0 - src.y; dst.z = src.z;
+          }
+          this._lastHandLandmarks2 = this._handLandmarkPool2;
+        } else {
+          this._lastHandLandmarks2 = null;
+        }
 
-        const data = new Uint8Array(42 * 4);
+        const data = this._handData;
         for (let h = 0; h < Math.min(2, result.landmarks.length); h++) {
           for (let i = 0; i < 21; i++) {
             const idx = (h * 21 + i) * 4;
@@ -440,8 +464,14 @@ export class MediaPipeManager {
     if (this.faceLandmarker) {
       const result = this.faceLandmarker.detectForVideo(video, timestamp);
       if (result.faceLandmarks && result.faceLandmarks.length > 0) {
-        this._lastFaceLandmarks = result.faceLandmarks[0].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }));
-        const data = new Uint8Array(478 * 4);
+        const fLms = result.faceLandmarks[0];
+        const count = Math.min(478, fLms.length);
+        for (let i = 0; i < count; i++) {
+          const dst = this._faceLandmarkPool[i], src = fLms[i];
+          dst.x = src.x; dst.y = 1.0 - src.y; dst.z = src.z;
+        }
+        this._lastFaceLandmarks = this._faceLandmarkPool;
+        const data = this._faceData;
         for (let i = 0; i < Math.min(478, result.faceLandmarks[0].length); i++) {
           const p = result.faceLandmarks[0][i];
           data[i * 4] = Math.round(p.x * 255);
@@ -457,8 +487,13 @@ export class MediaPipeManager {
     if (this.poseLandmarker) {
       const result = this.poseLandmarker.detectForVideo(video, timestamp);
       if (result.landmarks && result.landmarks.length > 0) {
-        this._lastPoseLandmarks = result.landmarks[0].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }));
-        const data = new Uint8Array(33 * 4);
+        const pLms = result.landmarks[0];
+        for (let i = 0; i < 33; i++) {
+          const dst = this._poseLandmarkPool[i], src = pLms[i];
+          dst.x = src.x; dst.y = 1.0 - src.y; dst.z = src.z;
+        }
+        this._lastPoseLandmarks = this._poseLandmarkPool;
+        const data = this._poseData;
         for (let i = 0; i < 33; i++) {
           const p = result.landmarks[0][i];
           data[i * 4] = Math.round(p.x * 255);
@@ -476,7 +511,12 @@ export class MediaPipeManager {
         if (result.confidenceMasks && result.confidenceMasks.length > 0) {
           const mask = result.confidenceMasks[0];
           const w = mask.width, h = mask.height;
-          const data = new Uint8Array(w * h * 4);
+          const needed = w * h * 4;
+          if (!this._segData || this._segDataSize < needed) {
+            this._segData = new Uint8Array(needed);
+            this._segDataSize = needed;
+          }
+          const data = this._segData;
           const raw = mask.getAsFloat32Array();
           for (let i = 0; i < raw.length; i++) {
             const v = Math.round(raw[i] * 255);
@@ -501,11 +541,13 @@ export class MediaPipeManager {
   }
 
   dispose() {
-    if (this.handLandmarker) this.handLandmarker.close();
-    if (this.faceLandmarker) this.faceLandmarker.close();
-    if (this.poseLandmarker) this.poseLandmarker.close();
-    if (this.imageSegmenter) this.imageSegmenter.close();
+    if (this.handLandmarker) { this.handLandmarker.close(); this.handLandmarker = null; }
+    if (this.faceLandmarker) { this.faceLandmarker.close(); this.faceLandmarker = null; }
+    if (this.poseLandmarker) { this.poseLandmarker.close(); this.poseLandmarker = null; }
+    if (this.imageSegmenter) { this.imageSegmenter.close(); this.imageSegmenter = null; }
     this.active = false;
+    this._frameCount = 0;
+    this._lastTimestamp = -1;
   }
 }
 

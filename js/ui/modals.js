@@ -27,8 +27,10 @@ export function initShaderBrowser() {
   document.body.appendChild(shaderBrowserEl);
 
   shaderBrowserEl.querySelector('.browser-close').addEventListener('click', closeShaderBrowser);
+  let _searchTimer = null;
   shaderBrowserEl.querySelector('.browser-search').addEventListener('input', (e) => {
-    filterShaders(e.target.value);
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => filterShaders(e.target.value), 80);
   });
 }
 

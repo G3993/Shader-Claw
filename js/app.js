@@ -155,11 +155,11 @@ on('layer:select', ({ layerId }) => {
 
 // === Composition Render Loop ===
 
+let _rafId = null;
+
 function compositionLoop() {
-  if (!compositionPlaying || _contextLost) {
-    requestAnimationFrame(compositionLoop);
-    return;
-  }
+  _rafId = null;
+  if (!compositionPlaying || _contextLost) return;
 
   renderComposition(isfRenderer, sceneRenderer, mediaPipeMgr, tempCompositeFBO);
 
@@ -169,15 +169,21 @@ function compositionLoop() {
   isfRenderer.mouseDelta = [dx * 0.3, dy * 0.3];
   isfRenderer._lastMousePos = [...isfRenderer.mousePos];
 
-  requestAnimationFrame(compositionLoop);
+  _rafId = requestAnimationFrame(compositionLoop);
+}
+
+function startLoop() {
+  if (!_rafId && compositionPlaying && !_contextLost) {
+    _rafId = requestAnimationFrame(compositionLoop);
+  }
 }
 
 // === Mouse Tracking ===
 
+let _canvasRect = glCanvas.getBoundingClientRect();
 glCanvas.addEventListener('mousemove', (e) => {
-  const rect = glCanvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / rect.width;
-  const y = 1.0 - (e.clientY - rect.top) / rect.height;
+  const x = (e.clientX - _canvasRect.left) / _canvasRect.width;
+  const y = 1.0 - (e.clientY - _canvasRect.top) / _canvasRect.height;
   isfRenderer.mousePos = [x, y];
 });
 
@@ -203,13 +209,19 @@ glCanvas.addEventListener('webglcontextrestored', () => {
       compileToLayer(isfRenderer, id, layer._isfSource);
     }
   }
+  startLoop();
 });
 
 // === Resize ===
 
+let _resizeTimer = null;
 const resizeObserver = new ResizeObserver(() => {
-  isfRenderer.resize();
-  sceneRenderer.resize();
+  if (_resizeTimer) clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    isfRenderer.resize();
+    sceneRenderer.resize();
+    _canvasRect = glCanvas.getBoundingClientRect();
+  }, 50);
 });
 resizeObserver.observe(viewport);
 
@@ -274,6 +286,7 @@ document.addEventListener('keydown', (e) => {
     state.playing = compositionPlaying;
     if (playBtn) playBtn.textContent = compositionPlaying ? '⏸' : '▶';
     emit('play:toggle', { playing: compositionPlaying });
+    startLoop();
     return;
   }
 
@@ -583,7 +596,7 @@ async function init() {
   setEditorValue(DEFAULT_SHADER);
 
   // Start composition loop
-  requestAnimationFrame(compositionLoop);
+  startLoop();
 }
 
 init().catch(e => console.error('[ShaderClaw] Init failed:', e));

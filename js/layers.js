@@ -183,11 +183,9 @@ export function renderComposition(renderer, sceneRenderer, mediaPipeMgr, tempCom
       gl.bindTexture(gl.TEXTURE_2D, layer3d._sceneTexture);
     }
     // Frame-skip: upload every other frame (visual 30fps, compositor stays 60fps)
-    if (!layer3d._frameSkip) {
+    layer3d._frameCount = (layer3d._frameCount || 0) + 1;
+    if (layer3d._frameCount % 2 === 0) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, threeCanvas);
-      layer3d._frameSkip = true;
-    } else {
-      layer3d._frameSkip = false;
     }
     sceneTexture = layer3d._sceneTexture;
   }
@@ -227,13 +225,16 @@ export function renderComposition(renderer, sceneRenderer, mediaPipeMgr, tempCom
     renderer.renderLayerToFBO(overlayLayer, audioState, mediaPipeMgr, fontState, null);
   }
 
-  // Re-upload animated GIF each frame
+  // Re-upload animated GIF (throttle to 30fps — GIFs rarely exceed this)
   if (overlayLayer.visible && overlayLayer._gifElement && overlayLayer.fbo) {
-    const gl = renderer.gl;
-    gl.bindTexture(gl.TEXTURE_2D, overlayLayer.fbo.texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, overlayLayer._gifElement);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    overlayLayer._gifFrameCount = (overlayLayer._gifFrameCount || 0) + 1;
+    if (overlayLayer._gifFrameCount % 2 === 0) {
+      const gl = renderer.gl;
+      gl.bindTexture(gl.TEXTURE_2D, overlayLayer.fbo.texture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, overlayLayer._gifElement);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    }
   }
 
   // --- Phase 6: Final composite ---
@@ -244,6 +245,9 @@ export function renderComposition(renderer, sceneRenderer, mediaPipeMgr, tempCom
  * Auto-bind media textures to all layers that have image inputs
  */
 export function autoBindTextures() {
+  // Pre-filter compatible media once (not per-layer)
+  const compatible = state.mediaInputs.filter(m => m.type === 'image' || m.type === 'video' || m.type === 'svg');
+
   for (const id of LAYER_IDS) {
     const layer = getLayer(id);
     if (!layer.inputs) continue;
@@ -267,7 +271,6 @@ export function autoBindTextures() {
         }
       } else {
         // Auto-bind by index
-        const compatible = state.mediaInputs.filter(m => m.type === 'image' || m.type === 'video' || m.type === 'svg');
         if (compatible[imageIdx] && compatible[imageIdx].glTexture) {
           layer.textures[inp.NAME] = {
             glTexture: compatible[imageIdx].glTexture,

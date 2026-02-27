@@ -11,6 +11,8 @@ let audioFFTGLTexture = null;
 let audioFFTThreeTexture = null;
 let audioLevel = 0, audioBass = 0, audioMid = 0, audioHigh = 0;
 let activeAudioEntry = null;
+let _cachedBarEl = null;
+let _cachedBarId = null;
 
 /**
  * Initialize audio context (call on user gesture)
@@ -107,10 +109,13 @@ export function updateAudioUniforms(gl) {
 
   _syncState();
 
-  // Update audio bar UI
+  // Update audio bar UI (cached DOM ref to avoid querySelector per frame)
   if (activeAudioEntry && activeAudioEntry.id) {
-    const bar = document.querySelector('.audio-bar-fill[data-audio-id="' + activeAudioEntry.id + '"]');
-    if (bar) bar.style.width = (audioLevel * 100) + '%';
+    if (_cachedBarId !== activeAudioEntry.id) {
+      _cachedBarEl = document.querySelector('.audio-bar-fill[data-audio-id="' + activeAudioEntry.id + '"]');
+      _cachedBarId = activeAudioEntry.id;
+    }
+    if (_cachedBarEl) _cachedBarEl.style.width = (audioLevel * 100) + '%';
   }
 }
 

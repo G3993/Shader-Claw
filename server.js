@@ -352,6 +352,25 @@ const httpServer = createServer(async (req, res) => {
   let urlPath = req.url.split("?")[0];
   if (urlPath === "/") urlPath = "/index.html";
 
+  // Remote control API — POST /api/rc { action, params }
+  if (urlPath === "/api/rc" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", async () => {
+      try {
+        const { action, params = {}, timeout = 10000 } = JSON.parse(body);
+        if (!action) throw new Error("Missing action");
+        const result = await bridge.send(action, params, timeout);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, result }));
+      } catch (e) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
   const filePath = join(__dirname, urlPath);
 
   // Security: prevent path traversal
