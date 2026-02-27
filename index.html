@@ -987,10 +987,10 @@ body {
 }
 .mp-map-btn svg { stroke: var(--text-dim); }
 .mp-map-btn:hover { opacity: 0.7; border-color: var(--border); }
-.mp-map-btn.bound {
+.mp-map-btn.linked {
   opacity: 1; border-color: #4ecdc4;
 }
-.mp-map-btn.bound svg { stroke: #4ecdc4; filter: drop-shadow(0 0 3px rgba(78,205,196,0.5)); }
+.mp-map-btn.linked svg { stroke: #4ecdc4; filter: drop-shadow(0 0 3px rgba(78,205,196,0.5)); }
 
 .mp-picker {
   position: fixed; z-index: 1000; width: 180px; max-height: 290px;
@@ -1043,6 +1043,127 @@ body {
   transition: background 0.15s, border-color 0.15s;
 }
 .mp-picker-clear:hover { background: rgba(255,80,80,0.1); border-color: #ff5050; }
+
+/* === Body Tracking Panel — expanded styles === */
+.bt-section-header {
+  display: flex; align-items: center; gap: 6px; padding: 6px 8px;
+  cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-dim); user-select: none; transition: color 0.15s;
+}
+.bt-section-header:hover { color: var(--text); }
+.bt-section-header .bt-chevron {
+  font-size: 8px; transition: transform 0.2s; display: inline-block;
+}
+.bt-section-header.open .bt-chevron { transform: rotate(90deg); }
+.bt-section-body { display: none; padding: 0 8px 6px; }
+.bt-section-header.open + .bt-section-body { display: block; }
+
+/* Signal bars */
+.bt-signal-row {
+  display: flex; align-items: center; gap: 4px; height: 18px; margin-bottom: 3px;
+}
+.bt-signal-label {
+  width: 76px; font-size: 9px; color: var(--text-dim); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;
+}
+.bt-signal-bar {
+  flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px;
+  overflow: hidden; position: relative;
+}
+.bt-signal-fill {
+  height: 100%; border-radius: 4px; transition: width 0.08s linear;
+  min-width: 1px;
+}
+.bt-signal-fill.hand { background: rgba(78,205,196,0.6); }
+.bt-signal-fill.face { background: rgba(255,127,80,0.6); }
+.bt-signal-fill.pose { background: rgba(255,215,0,0.5); }
+.bt-signal-val {
+  width: 30px; font-size: 9px; color: var(--text-dim); text-align: right;
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.bt-signal-link {
+  width: 16px; height: 16px; padding: 0; background: none; border: none;
+  cursor: pointer; opacity: 0.3; font-size: 10px; color: var(--text-dim);
+  flex-shrink: 0; transition: opacity 0.15s;
+}
+.bt-signal-link:hover { opacity: 0.8; color: #4ecdc4; }
+
+/* Link rows */
+.bt-link-row {
+  display: flex; align-items: center; gap: 4px; padding: 3px 0;
+  font-size: 9px; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.bt-link-source { color: #4ecdc4; flex-shrink: 0; }
+.bt-link-arrow { color: var(--text-dim); margin: 0 2px; }
+.bt-link-target { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bt-link-value {
+  width: 34px; text-align: right; color: var(--text-dim);
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.bt-link-remove {
+  width: 16px; height: 16px; padding: 0; background: none; border: none;
+  cursor: pointer; color: rgba(255,80,80,0.5); font-size: 12px;
+  flex-shrink: 0; transition: color 0.15s;
+}
+.bt-link-remove:hover { color: #ff5050; }
+
+/* Action buttons */
+.bt-actions { display: flex; gap: 4px; margin-top: 6px; }
+.bt-action-btn {
+  flex: 1; padding: 4px 6px; background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 9px; font-family: inherit;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-align: center;
+}
+.bt-action-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+.bt-map-btn.active {
+  color: #4ecdc4; border-color: #4ecdc4;
+  animation: bt-pulse 1.2s ease-in-out infinite;
+}
+
+/* Link count badge */
+.bt-link-count {
+  background: rgba(78,205,196,0.25); color: #4ecdc4;
+  font-size: 8px; padding: 1px 5px; border-radius: 8px;
+  margin-left: auto; font-variant-numeric: tabular-nums;
+}
+
+/* Recording UI */
+.bt-rec-row {
+  display: flex; align-items: center; gap: 4px; margin-top: 6px;
+}
+.bt-rec-btn {
+  width: 28px; height: 22px; padding: 0; border-radius: 4px;
+  font-size: 9px; font-family: inherit; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+  color: var(--text-dim); transition: all 0.15s; text-align: center;
+}
+.bt-rec-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+.bt-rec-btn:disabled { opacity: 0.3; cursor: default; }
+.bt-rec-btn.recording {
+  background: rgba(255,60,60,0.15); border-color: #ff3c3c; color: #ff3c3c;
+  animation: bt-pulse 0.8s ease-in-out infinite;
+}
+.bt-rec-btn.playing {
+  background: rgba(78,205,196,0.15); border-color: #4ecdc4; color: #4ecdc4;
+}
+.bt-rec-timer {
+  font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
+
+@keyframes bt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Quick-link mode: pulse all mp-map buttons */
+.quicklink-active .mp-map-btn {
+  animation: bt-pulse 1s ease-in-out infinite;
+  opacity: 0.7; border-color: rgba(78,205,196,0.4);
+}
 
 .control-row .val {
   width: 44px;
@@ -1813,6 +1934,10 @@ body {
           <span class="layer-name">Body Tracking</span>
         </div>
         <div class="layer-controls">
+          <div class="layer-control-row" id="bt-preset-row" style="display:none">
+            <label>Preset</label>
+            <select id="bt-preset-select" class="layer-shader-select" style="flex:1"></select>
+          </div>
           <div class="cam-toggle-row">
             <label>MediaPipe</label>
             <button class="cam-switch" id="cam-mediapipe-btn" title="Toggle MediaPipe"></button>
@@ -1836,6 +1961,45 @@ body {
             <input type="range" id="bt-texture-scale" min="0.5" max="3.0" step="0.01" value="1.0">
             <span class="val" id="bt-texture-scale-val">1.00</span>
           </div>
+          <!-- Skeleton Overlay toggle -->
+          <div class="cam-toggle-row" id="bt-overlay-row" style="display:none">
+            <label>Skeleton Overlay</label>
+            <button class="cam-switch" id="bt-overlay-btn" title="Show skeleton overlay on canvas"></button>
+          </div>
+          <!-- Live Signals (collapsible) -->
+          <div id="bt-signals-section" style="display:none">
+            <div class="bt-section-header" id="bt-signals-header">
+              <span class="bt-chevron">&#x25B6;</span> Live Signals
+            </div>
+            <div class="bt-section-body" id="bt-signals-body"></div>
+          </div>
+          <!-- Live Links (collapsible) -->
+          <div id="bt-links-section" style="display:none">
+            <div class="bt-section-header" id="bt-links-header">
+              <span class="bt-chevron">&#x25B6;</span> Live Links <span class="bt-link-count" id="bt-link-count" style="display:none">0</span>
+            </div>
+            <div class="bt-section-body" id="bt-links-body">
+              <div id="bt-links-list"></div>
+              <div class="bt-actions">
+                <button class="bt-action-btn" id="bt-add-link-btn">+ Link</button>
+                <button class="bt-action-btn" id="bt-map-btn">Map</button>
+              </div>
+            </div>
+          </div>
+          <!-- Recording -->
+          <div id="bt-recording-section" style="display:none">
+            <div class="bt-section-header" id="bt-recording-header">
+              <span class="bt-chevron">&#x25B6;</span> Recording
+            </div>
+            <div class="bt-section-body" id="bt-recording-body">
+              <div class="bt-rec-row">
+                <button class="bt-rec-btn" id="bt-rec-btn" title="Record">&#x23FA;</button>
+                <button class="bt-rec-btn" id="bt-play-btn" title="Play" disabled>&#x25B6;</button>
+                <button class="bt-rec-btn" id="bt-json-btn" title="Export JSON" disabled>{ }</button>
+                <span class="bt-rec-timer" id="bt-rec-timer">0:00</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1844,10 +2008,11 @@ body {
         <div class="layer-header">
           <button class="layer-vis" data-layer="overlay" title="Toggle visibility">&#x1F441;</button>
           <span class="layer-name">Overlay</span>
-          <span style="flex:1"></span>
-          <button class="overlay-upload-btn" id="overlay-upload-btn" title="Upload image or GIF" style="font-size:14px;padding:0 6px;line-height:1">+</button>
         </div>
         <div class="layer-controls">
+          <div class="layer-control-row">
+            <button class="overlay-upload-btn" id="overlay-upload-btn" title="Upload image or GIF" style="width:100%">+ Add Image</button>
+          </div>
           <div class="layer-control-row">
             <label>X</label>
             <input type="range" id="overlay-tx" min="-1" max="1" step="0.01" value="0">
@@ -1982,6 +2147,14 @@ body {
               <option value="screen">Screen</option>
               <option value="overlay">Overlay</option>
             </select>
+          </div>
+          <div class="layer-control-row">
+            <label>Background</label>
+            <input type="color" id="shader-bg-color" value="#000000" style="width:28px;height:20px;padding:0;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;">
+          </div>
+          <div class="cam-toggle-row">
+            <label>Transparent BG</label>
+            <button class="cam-switch" id="shader-transparent-bg-btn" title="Convert luminance to alpha for compositing"></button>
           </div>
         </div>
         <div class="layer-params" data-layer="shader"></div>
@@ -3298,7 +3471,8 @@ class Renderer {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, layer.fbo.fbo);
     gl.viewport(0, 0, layer.fbo.width, layer.fbo.height);
-    gl.clearColor(0, 0, 0, 0);
+    const bgC = layer._bgColor;
+    gl.clearColor(bgC ? bgC[0] : 0, bgC ? bgC[1] : 0, bgC ? bgC[2] : 0, bgC ? 1 : 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.disable(gl.BLEND);
 
@@ -4038,7 +4212,7 @@ function generateControls(inputs, container, onChange) {
       const mpBtn = document.createElement('button');
       mpBtn.className = 'mp-map-btn';
       mpBtn.dataset.paramName = inp.NAME;
-      mpBtn.title = 'Map MediaPipe body part';
+      mpBtn.title = 'Link to body tracking';
       mpBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v5m0 0l-4 6m4-6l4 6"/><path d="M7 11h10"/></svg>';
       mpBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -4553,13 +4727,53 @@ const MP_BODY_PARTS = {
   ],
 };
 
+// Derived signals registry — organized by group, used by live signals UI and picker
+const DERIVED_SIGNALS = {
+  hand: [
+    { name: 'Pinch Dist', key: 'pinchDist' },
+    { name: 'Grip Strength', key: 'gripStrength' },
+    { name: 'Finger Spread', key: 'fingerSpread' },
+    { name: 'Hand Angle', key: 'handAngle' },
+    { name: 'Thumb Curl', key: 'thumbCurl' },
+    { name: 'Index Curl', key: 'indexCurl' },
+    { name: 'Middle Curl', key: 'middleCurl' },
+    { name: 'Ring Curl', key: 'ringCurl' },
+    { name: 'Pinky Curl', key: 'pinkyCurl' },
+  ],
+  face: [
+    { name: 'Head Yaw', key: 'headYaw' },
+    { name: 'Head Pitch', key: 'headPitch' },
+    { name: 'Head Roll', key: 'headRoll' },
+    { name: 'Mouth Open', key: 'mouthOpen' },
+    { name: 'Left Blink', key: 'leftBlink' },
+    { name: 'Right Blink', key: 'rightBlink' },
+    { name: 'Eyebrow Raise', key: 'eyebrowRaise' },
+  ],
+  pose: [
+    { name: 'Body Lean', key: 'bodyLean' },
+    { name: 'Left Arm Angle', key: 'leftArmAngle' },
+    { name: 'Right Arm Angle', key: 'rightArmAngle' },
+    { name: 'Shoulder Width', key: 'shoulderWidth' },
+  ],
+};
+
 /**
  * Resolve MediaPipe bindings for a layer: body part position → parameter value.
- * Each binding: { group, landmarkIndex, param, axis, min, max }
+ * Supports both landmark bindings { group, landmarkIndex, param, axis, min, max }
+ * and derived signal bindings { source: 'derived', signalKey, param, min, max }
  */
 function resolveBindings(layer, mediaPipeMgr) {
   if (!layer.mpBindings || !layer.mpBindings.length) return;
   for (const b of layer.mpBindings) {
+    // Derived signal binding
+    if (b.source === 'derived') {
+      const v = gestureProcessor.derived[b.signalKey];
+      if (v != null) {
+        layer.inputValues[b.param] = b.min + v * (b.max - b.min);
+      }
+      continue;
+    }
+    // Landmark binding
     let pos = null;
     if (b.group === 'hand' && mediaPipeMgr.handCount > 0) {
       if (mediaPipeMgr._lastHandLandmarks && mediaPipeMgr._lastHandLandmarks[b.landmarkIndex]) {
@@ -5063,7 +5277,7 @@ function stopNdiSend() {
           }
           autoBindTextures(layerId);
         });
-        syncMpBoundState(paramsContainer, layerId);
+        syncMpLinkedState(paramsContainer, layerId);
         // For text layer, init msg values from prominent bar
         if (layerId === 'text') {
           const msgInp = layer.inputs.find(inp => inp.TYPE === 'text' && inp.NAME === 'msg');
@@ -5219,7 +5433,7 @@ function stopNdiSend() {
           sceneLayer.inputValues = vals;
           autoBindTextures('scene');
         });
-        syncMpBoundState(paramsContainer, 'scene');
+        syncMpLinkedState(paramsContainer, 'scene');
       }
       sceneRenderer.inputValues = sceneLayer.inputValues;
       autoBindTextures('scene');
@@ -5887,29 +6101,35 @@ function stopNdiSend() {
       gizmoCanvas.height = r.height;
     }
     gCtx.clearRect(0, 0, gizmoCanvas.width, gizmoCanvas.height);
-    if (!o._hasImage || !o.visible) return;
 
-    const { cx, cy, hw, hh, ang } = gizmoGeometry();
-    gCtx.save();
-    gCtx.translate(cx, cy);
-    gCtx.rotate(ang);
-    // Dashed bounding box
-    gCtx.strokeStyle = 'rgba(78,205,196,0.7)';
-    gCtx.lineWidth = 1.5;
-    gCtx.setLineDash([6, 4]);
-    gCtx.strokeRect(-hw, -hh, hw*2, hh*2);
-    // Corner handles
-    gCtx.setLineDash([]);
-    const hs = 7;
-    const pts = [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
-    for (const [hx,hy] of pts) {
-      gCtx.fillStyle = '#fff';
-      gCtx.strokeStyle = '#4ecdc4';
-      gCtx.lineWidth = 2;
-      gCtx.fillRect(hx-hs, hy-hs, hs*2, hs*2);
-      gCtx.strokeRect(hx-hs, hy-hs, hs*2, hs*2);
+    // Skeleton overlay (drawn before gizmo so gizmo handles stay on top)
+    if (btOverlayEnabled && mediaPipeMgr.active) {
+      drawLandmarkOverlay(gCtx, gizmoCanvas.width, gizmoCanvas.height);
     }
-    gCtx.restore();
+
+    if (o._hasImage && o.visible) {
+      const { cx, cy, hw, hh, ang } = gizmoGeometry();
+      gCtx.save();
+      gCtx.translate(cx, cy);
+      gCtx.rotate(ang);
+      // Dashed bounding box
+      gCtx.strokeStyle = 'rgba(78,205,196,0.7)';
+      gCtx.lineWidth = 1.5;
+      gCtx.setLineDash([6, 4]);
+      gCtx.strokeRect(-hw, -hh, hw*2, hh*2);
+      // Corner handles
+      gCtx.setLineDash([]);
+      const hs = 7;
+      const pts = [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
+      for (const [hx,hy] of pts) {
+        gCtx.fillStyle = '#fff';
+        gCtx.strokeStyle = '#4ecdc4';
+        gCtx.lineWidth = 2;
+        gCtx.fillRect(hx-hs, hy-hs, hs*2, hs*2);
+        gCtx.strokeRect(hx-hs, hy-hs, hs*2, hs*2);
+      }
+      gCtx.restore();
+    }
     requestAnimationFrame(drawGizmo);
   }
   requestAnimationFrame(drawGizmo);
@@ -6029,6 +6249,66 @@ function stopNdiSend() {
     }
   });
 
+  // === BT Preset dropdown ===
+  const btPresetRow = document.getElementById('bt-preset-row');
+  const btPresetSelect = document.getElementById('bt-preset-select');
+  // Populate with body-tracking-friendly shaders (has rotationX/rotationY/shapeScale inputs)
+  {
+    const btShaders = manifest.filter(m => {
+      const cats = m.categories || [];
+      return cats.includes('3D') || m.title === 'Dancing Cube';
+    });
+    // Also include the Dancing Cube if it's not already matched
+    const dcEntry = manifest.find(m => m.title === 'Dancing Cube');
+    if (dcEntry && !btShaders.includes(dcEntry)) btShaders.unshift(dcEntry);
+    const ph = document.createElement('option');
+    ph.value = ''; ph.disabled = true; ph.selected = true; ph.textContent = '\u2014';
+    btPresetSelect.appendChild(ph);
+    for (const item of btShaders) {
+      const opt = document.createElement('option');
+      opt.value = item.file;
+      opt.textContent = item.title;
+      btPresetSelect.appendChild(opt);
+    }
+  }
+  btPresetSelect.addEventListener('change', async () => {
+    const file = btPresetSelect.value;
+    if (!file) return;
+    const item = manifest.find(m => m.file === file);
+    if (!item) return;
+    // Load to shader layer and enable gesture inputs
+    const layer = getLayer('shader');
+    if (layer) {
+      layer.manifestEntry = item;
+      layer._hasGestureInputs = true;
+      layer.visible = true;
+      updateLayerCardUI('shader');
+    }
+    await loadShaderToLayer('shader', 'shaders', file);
+    // Also update the shader layer dropdown
+    const shaderSelect = document.querySelector('.layer-shader-select[data-layer="shader"]');
+    if (shaderSelect) shaderSelect.value = file;
+  });
+
+  // === Shader layer: Background color & Transparent BG ===
+  document.getElementById('shader-bg-color').addEventListener('input', (e) => {
+    const hex = e.target.value;
+    const r = parseInt(hex.substr(1, 2), 16) / 255;
+    const g = parseInt(hex.substr(3, 2), 16) / 255;
+    const b = parseInt(hex.substr(5, 2), 16) / 255;
+    const layer = getLayer('shader');
+    if (layer) {
+      layer._bgColor = [r, g, b];
+    }
+  });
+  document.getElementById('shader-transparent-bg-btn').addEventListener('click', () => {
+    const btn = document.getElementById('shader-transparent-bg-btn');
+    const layer = getLayer('shader');
+    if (!layer) return;
+    layer.transparentBg = !layer.transparentBg;
+    btn.classList.toggle('active', layer.transparentBg);
+  });
+
   // === Body Tracking card: MediaPipe toggle ===
   const mpModesRow = document.getElementById('mp-modes-row');
   const gestureToggleRow = document.getElementById('gesture-toggle-row');
@@ -6037,7 +6317,440 @@ function stopNdiSend() {
   const handAsMouseBtn = document.getElementById('hand-as-mouse-btn');
   let gestureEnabled = false;
   let handAsMouseEnabled = false;
+  let btOverlayEnabled = false;
   const mpModeState = { hand: true, face: false, pose: false, segment: false };
+
+  // === Skeleton Overlay: landmark drawing constants ===
+  const HAND_CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+  const POSE_CONNECTIONS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+  const FACE_KEY_INDICES = [1,33,263,13,152,10,234,454,70,300,0,17,123,352,6];
+  const FACE_JAWLINE = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10];
+
+  function drawLandmarkOverlay(ctx, w, h) {
+    const _sx = (lm) => lm.x * w;
+    const _sy = (lm) => (1.0 - lm.y) * h;
+
+    // Hand skeleton
+    const hand = mediaPipeMgr._lastHandLandmarks;
+    if (hand && hand.length > 20) {
+      ctx.strokeStyle = 'rgba(78,205,196,0.5)';
+      ctx.fillStyle = 'rgba(78,205,196,0.6)';
+      ctx.lineWidth = 1.5;
+      for (const [a, b] of HAND_CONNECTIONS) {
+        if (!hand[a] || !hand[b]) continue;
+        ctx.beginPath(); ctx.moveTo(_sx(hand[a]), _sy(hand[a]));
+        ctx.lineTo(_sx(hand[b]), _sy(hand[b])); ctx.stroke();
+      }
+      for (let i = 0; i < 21; i++) {
+        if (!hand[i]) continue;
+        ctx.beginPath(); ctx.arc(_sx(hand[i]), _sy(hand[i]), 3, 0, Math.PI * 2); ctx.fill();
+      }
+      // Second hand
+      const hand2 = mediaPipeMgr._lastHandLandmarks2;
+      if (hand2 && hand2.length > 20) {
+        for (const [a, b] of HAND_CONNECTIONS) {
+          if (!hand2[a] || !hand2[b]) continue;
+          ctx.beginPath(); ctx.moveTo(_sx(hand2[a]), _sy(hand2[a]));
+          ctx.lineTo(_sx(hand2[b]), _sy(hand2[b])); ctx.stroke();
+        }
+        for (let i = 0; i < 21; i++) {
+          if (!hand2[i]) continue;
+          ctx.beginPath(); ctx.arc(_sx(hand2[i]), _sy(hand2[i]), 3, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+
+    // Pose skeleton
+    const pose = mediaPipeMgr._lastPoseLandmarks;
+    if (pose && pose.length > 28) {
+      ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+      ctx.fillStyle = 'rgba(255,215,0,0.5)';
+      ctx.lineWidth = 2;
+      for (const [a, b] of POSE_CONNECTIONS) {
+        if (!pose[a] || !pose[b]) continue;
+        ctx.beginPath(); ctx.moveTo(_sx(pose[a]), _sy(pose[a]));
+        ctx.lineTo(_sx(pose[b]), _sy(pose[b])); ctx.stroke();
+      }
+      for (let i = 0; i < 33; i++) {
+        if (!pose[i]) continue;
+        ctx.beginPath(); ctx.arc(_sx(pose[i]), _sy(pose[i]), 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    // Face mesh (sparse)
+    const face = mediaPipeMgr._lastFaceLandmarks;
+    if (face && face.length > 454) {
+      ctx.fillStyle = 'rgba(255,127,80,0.35)';
+      // Key landmark dots
+      for (const idx of FACE_KEY_INDICES) {
+        if (!face[idx]) continue;
+        ctx.beginPath(); ctx.arc(_sx(face[idx]), _sy(face[idx]), 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+      // Jawline contour
+      ctx.strokeStyle = 'rgba(255,127,80,0.25)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < FACE_JAWLINE.length; i++) {
+        const p = face[FACE_JAWLINE[i]];
+        if (!p) continue;
+        if (i === 0) ctx.moveTo(_sx(p), _sy(p));
+        else ctx.lineTo(_sx(p), _sy(p));
+      }
+      ctx.stroke();
+    }
+  }
+
+  // === Skeleton Overlay toggle ===
+  const btOverlayRow = document.getElementById('bt-overlay-row');
+  const btOverlayBtn = document.getElementById('bt-overlay-btn');
+  btOverlayBtn.addEventListener('click', () => {
+    btOverlayEnabled = !btOverlayEnabled;
+    btOverlayBtn.classList.toggle('active', btOverlayEnabled);
+  });
+
+  // === BT Panel: collapsible section headers ===
+  document.querySelectorAll('.bt-section-header').forEach(header => {
+    header.addEventListener('click', () => header.classList.toggle('open'));
+  });
+
+  // === BT Panel: new section elements ===
+  const btSignalsSection = document.getElementById('bt-signals-section');
+  const btSignalsBody = document.getElementById('bt-signals-body');
+  const btLinksSection = document.getElementById('bt-links-section');
+  const btLinksBody = document.getElementById('bt-links-body');
+  const btLinksList = document.getElementById('bt-links-list');
+  const btLinkCount = document.getElementById('bt-link-count');
+  const btRecordingSection = document.getElementById('bt-recording-section');
+
+  // === Live Signals Monitor ===
+  let _signalBarCache = {}; // { key: { fill, val } } for hot-path updates
+
+  function renderSignalBars() {
+    btSignalsBody.innerHTML = '';
+    _signalBarCache = {};
+    for (const group of ['hand', 'face', 'pose']) {
+      if (!mpModeState[group]) continue;
+      const signals = DERIVED_SIGNALS[group] || [];
+      for (const sig of signals) {
+        const row = document.createElement('div');
+        row.className = 'bt-signal-row';
+        row.innerHTML = `
+          <span class="bt-signal-label">${sig.name}</span>
+          <div class="bt-signal-bar"><div class="bt-signal-fill ${group}" data-key="${sig.key}"></div></div>
+          <span class="bt-signal-val" data-key="${sig.key}">0.00</span>
+          <button class="bt-signal-link" data-key="${sig.key}" data-group="${group}" title="Link to parameter">&rarr;</button>
+        `;
+        btSignalsBody.appendChild(row);
+        const fill = row.querySelector('.bt-signal-fill');
+        const val = row.querySelector('.bt-signal-val');
+        _signalBarCache[sig.key] = { fill, val };
+        // Link button
+        row.querySelector('.bt-signal-link').addEventListener('click', (e) => {
+          openDerivedLinkPicker(sig.key, sig.name, e.target);
+        });
+      }
+    }
+  }
+
+  function updateSignalBars() {
+    const d = gestureProcessor.derived;
+    for (const key in _signalBarCache) {
+      const { fill, val } = _signalBarCache[key];
+      const v = d[key] || 0;
+      fill.style.width = (v * 100).toFixed(1) + '%';
+      val.textContent = v.toFixed(2);
+    }
+  }
+
+  // === Active Bindings Dashboard ===
+  function renderLinksDashboard() {
+    btLinksList.innerHTML = '';
+    let count = 0;
+    for (const layer of layers) {
+      if (!layer.mpBindings || !layer.mpBindings.length) continue;
+      for (let bi = 0; bi < layer.mpBindings.length; bi++) {
+        const b = layer.mpBindings[bi];
+        count++;
+        const row = document.createElement('div');
+        row.className = 'bt-link-row';
+        let srcLabel;
+        if (b.source === 'derived') {
+          // Find signal name
+          let sigName = b.signalKey;
+          for (const grp in DERIVED_SIGNALS) {
+            const found = DERIVED_SIGNALS[grp].find(s => s.key === b.signalKey);
+            if (found) { sigName = found.name; break; }
+          }
+          srcLabel = sigName;
+        } else {
+          const part = (MP_BODY_PARTS[b.group] || []).find(p => p.index === b.landmarkIndex);
+          srcLabel = (part ? part.name : b.group) + '.' + (b.axis || 'x');
+        }
+        row.innerHTML = `
+          <span class="bt-link-source">${srcLabel}</span>
+          <span class="bt-link-arrow">&rarr;</span>
+          <span class="bt-link-target">${layer.id}/${b.param}</span>
+          <span class="bt-link-value" data-layer="${layer.id}" data-param="${b.param}">—</span>
+          <button class="bt-link-remove" data-layer="${layer.id}" data-bi="${bi}" title="Remove link">&times;</button>
+        `;
+        btLinksList.appendChild(row);
+        row.querySelector('.bt-link-remove').addEventListener('click', function() {
+          const lid = this.dataset.layer;
+          const idx = parseInt(this.dataset.bi);
+          const l = getLayer(lid);
+          if (l && l.mpBindings) {
+            l.mpBindings.splice(idx, 1);
+            renderLinksDashboard();
+            refreshAllLinksUI();
+          }
+        });
+      }
+    }
+    btLinkCount.textContent = count;
+    btLinkCount.style.display = count > 0 ? '' : 'none';
+  }
+
+  function updateLinksDashboardValues() {
+    const valEls = btLinksList.querySelectorAll('.bt-link-value');
+    for (const el of valEls) {
+      const layer = getLayer(el.dataset.layer);
+      if (layer && layer.inputValues[el.dataset.param] != null) {
+        el.textContent = Number(layer.inputValues[el.dataset.param]).toFixed(2);
+      }
+    }
+  }
+
+  // === Derived Signal Bind Picker (opens from signal bar bind button) ===
+  function openDerivedLinkPicker(signalKey, signalName, anchorEl) {
+    // Build a simple target picker: which layer × which param?
+    const picker = document.createElement('div');
+    picker.className = 'mp-picker';
+    picker.style.display = 'flex';
+    picker.style.width = '200px';
+    let html = '<div style="padding:6px 8px;font-size:10px;color:var(--text);border-bottom:1px solid var(--border);">Link <b>' + signalName + '</b> to:</div>';
+    html += '<div class="mp-picker-list" style="max-height:200px">';
+    for (const layer of layers) {
+      if (!layer.inputs || layer.inputs.length === 0) continue;
+      for (const inp of layer.inputs) {
+        if (inp.TYPE !== 'float' && inp.TYPE !== 'long') continue;
+        html += `<div class="mp-picker-list-item" data-layer="${layer.id}" data-param="${inp.NAME}">${layer.id}/${inp.LABEL || inp.NAME}</div>`;
+      }
+    }
+    html += '</div>';
+    picker.innerHTML = html;
+    document.body.appendChild(picker);
+
+    // Position
+    const rect = anchorEl.getBoundingClientRect();
+    picker.style.position = 'fixed';
+    picker.style.zIndex = '1001';
+    picker.style.left = Math.min(rect.right + 4, window.innerWidth - 210) + 'px';
+    picker.style.top = Math.min(rect.top, window.innerHeight - 240) + 'px';
+
+    // Handle selection
+    picker.querySelectorAll('.mp-picker-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const layerId = item.dataset.layer;
+        const paramName = item.dataset.param;
+        const layer = getLayer(layerId);
+        if (!layer) return;
+        if (!layer.mpBindings) layer.mpBindings = [];
+        // Remove existing binding for this param if any
+        const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+        if (idx >= 0) layer.mpBindings.splice(idx, 1);
+        // Find ISF input for min/max
+        const isfInput = (layer.inputs || []).find(inp => inp.NAME === paramName);
+        const pMin = isfInput && isfInput.MIN != null ? isfInput.MIN : 0;
+        const pMax = isfInput && isfInput.MAX != null ? isfInput.MAX : 1;
+        layer.mpBindings.push({ source: 'derived', signalKey, param: paramName, min: pMin, max: pMax });
+        renderLinksDashboard();
+        refreshAllLinksUI();
+        document.body.removeChild(picker);
+        document.removeEventListener('pointerdown', closePicker, true);
+      });
+    });
+
+    // Close on click outside
+    const closePicker = (e) => {
+      if (!picker.contains(e.target) && e.target !== anchorEl) {
+        if (picker.parentNode) document.body.removeChild(picker);
+        document.removeEventListener('pointerdown', closePicker, true);
+      }
+    };
+    setTimeout(() => document.addEventListener('pointerdown', closePicker, true), 0);
+  }
+
+  // === Quick-Link (Map) mode ===
+  let quickLinkActive = false;
+  const btMapBtn = document.getElementById('bt-map-btn');
+  btMapBtn.addEventListener('click', () => {
+    quickLinkActive = !quickLinkActive;
+    btMapBtn.classList.toggle('active', quickLinkActive);
+    document.body.classList.toggle('quicklink-active', quickLinkActive);
+  });
+
+  // === + Link button: opens target picker then mp-picker ===
+  document.getElementById('bt-add-link-btn').addEventListener('click', () => {
+    // Build a target picker similar to derived link but opens full mp-picker after
+    const picker = document.createElement('div');
+    picker.className = 'mp-picker';
+    picker.style.display = 'flex';
+    picker.style.width = '200px';
+    let html = '<div style="padding:6px 8px;font-size:10px;color:var(--text);border-bottom:1px solid var(--border);">Select target parameter:</div>';
+    html += '<div class="mp-picker-list" style="max-height:220px">';
+    for (const layer of layers) {
+      if (!layer.inputs || layer.inputs.length === 0) continue;
+      for (const inp of layer.inputs) {
+        if (inp.TYPE !== 'float' && inp.TYPE !== 'long') continue;
+        html += `<div class="mp-picker-list-item" data-layer="${layer.id}" data-param="${inp.NAME}">${layer.id}/${inp.LABEL || inp.NAME}</div>`;
+      }
+    }
+    html += '</div>';
+    picker.innerHTML = html;
+    document.body.appendChild(picker);
+
+    const btn = document.getElementById('bt-add-link-btn');
+    const rect = btn.getBoundingClientRect();
+    picker.style.position = 'fixed';
+    picker.style.zIndex = '1001';
+    picker.style.left = Math.min(rect.right + 4, window.innerWidth - 210) + 'px';
+    picker.style.top = Math.min(rect.top, window.innerHeight - 240) + 'px';
+
+    picker.querySelectorAll('.mp-picker-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const layerId = item.dataset.layer;
+        const paramName = item.dataset.param;
+        if (picker.parentNode) document.body.removeChild(picker);
+        document.removeEventListener('pointerdown', closePicker, true);
+        // Now open the main mp-picker for this param
+        const layerCard = document.querySelector(`.layer-params[data-layer="${layerId}"]`);
+        if (!layerCard) return;
+        const mpBtn = layerCard.querySelector(`.mp-map-btn[data-param-name="${paramName}"]`);
+        if (mpBtn) {
+          openMpPicker(mpBtn, paramName, layerCard);
+        }
+      });
+    });
+
+    const closePicker = (e) => {
+      if (!picker.contains(e.target)) {
+        if (picker.parentNode) document.body.removeChild(picker);
+        document.removeEventListener('pointerdown', closePicker, true);
+      }
+    };
+    setTimeout(() => document.addEventListener('pointerdown', closePicker, true), 0);
+  });
+
+  // === Recording System ===
+  let btRecording = null; // { fps, startTime, frames, tracks }
+  let btIsRecording = false;
+  let btIsPlaying = false;
+  let btPlaybackFrame = 0;
+  let btPlaybackId = null;
+
+  const btRecBtn = document.getElementById('bt-rec-btn');
+  const btPlayBtn = document.getElementById('bt-play-btn');
+  const btJsonBtn = document.getElementById('bt-json-btn');
+  const btRecTimer = document.getElementById('bt-rec-timer');
+
+  btRecBtn.addEventListener('click', () => {
+    if (btIsRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  });
+
+  btPlayBtn.addEventListener('click', () => {
+    if (btIsPlaying) {
+      stopPlayback();
+    } else {
+      startPlayback();
+    }
+  });
+
+  btJsonBtn.addEventListener('click', () => {
+    if (btRecording) exportRecording();
+  });
+
+  function startRecording() {
+    btRecording = { fps: 15, startTime: performance.now(), frames: [], tracks: {}, duration: 0 };
+    btIsRecording = true;
+    btRecBtn.classList.add('recording');
+    btPlayBtn.disabled = true;
+    btJsonBtn.disabled = true;
+  }
+
+  function captureFrame() {
+    if (!btRecording || !btIsRecording) return;
+    const frame = {};
+    for (const layer of layers) {
+      if (!layer.mpBindings || !layer.mpBindings.length) continue;
+      for (const b of layer.mpBindings) {
+        const trackKey = layer.id + '/' + b.param;
+        if (!btRecording.tracks[trackKey]) btRecording.tracks[trackKey] = [];
+        const v = layer.inputValues[b.param];
+        btRecording.tracks[trackKey].push(v != null ? v : 0);
+        frame[trackKey] = v;
+      }
+    }
+    btRecording.frames.push(frame);
+    // Update timer
+    const elapsed = (performance.now() - btRecording.startTime) / 1000;
+    const m = Math.floor(elapsed / 60);
+    const s = Math.floor(elapsed % 60);
+    btRecTimer.textContent = m + ':' + String(s).padStart(2, '0');
+  }
+
+  function stopRecording() {
+    btIsRecording = false;
+    btRecBtn.classList.remove('recording');
+    if (btRecording) {
+      btRecording.duration = btRecording.frames.length / btRecording.fps;
+    }
+    btPlayBtn.disabled = false;
+    btJsonBtn.disabled = false;
+  }
+
+  function startPlayback() {
+    if (!btRecording || btRecording.frames.length === 0) return;
+    btIsPlaying = true;
+    btPlayBtn.classList.add('playing');
+    btPlaybackFrame = 0;
+  }
+
+  function applyPlaybackFrame() {
+    if (!btIsPlaying || !btRecording) return;
+    const frame = btRecording.frames[btPlaybackFrame];
+    if (!frame) return;
+    for (const trackKey in frame) {
+      const [layerId, param] = trackKey.split('/');
+      const layer = getLayer(layerId);
+      if (layer) layer.inputValues[param] = frame[trackKey];
+    }
+    btPlaybackFrame = (btPlaybackFrame + 1) % btRecording.frames.length;
+    // Update timer
+    const elapsed = btPlaybackFrame / btRecording.fps;
+    const m = Math.floor(elapsed / 60);
+    const s = Math.floor(elapsed % 60);
+    btRecTimer.textContent = m + ':' + String(s).padStart(2, '0');
+  }
+
+  function stopPlayback() {
+    btIsPlaying = false;
+    btPlayBtn.classList.remove('playing');
+  }
+
+  function exportRecording() {
+    if (!btRecording) return;
+    const json = JSON.stringify(btRecording, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'bt-recording-' + Date.now() + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
   const btScaleRow = document.getElementById('bt-texture-scale-row');
   const btScaleSlider = document.getElementById('bt-texture-scale');
@@ -6080,6 +6793,8 @@ function stopNdiSend() {
           console.warn('MediaPipe reinit failed:', e.message);
         }
       }
+      // Refresh signal bars to show/hide signals for toggled mode
+      renderSignalBars();
     });
   });
 
@@ -6100,12 +6815,19 @@ function stopNdiSend() {
       mediaInputs.push(entry);
       renderMediaList();
       btn.classList.add('active');
+      btPresetRow.style.display = '';
       mpModesRow.style.display = '';
       gestureToggleRow.style.display = '';
       handAsMouseRow.style.display = '';
       btScaleRow.style.display = '';
+      btOverlayRow.style.display = '';
+      btSignalsSection.style.display = '';
+      btLinksSection.style.display = '';
+      btRecordingSection.style.display = '';
       gestureEnabled = true;
       gestureCtrlBtn.classList.add('active');
+      renderSignalBars();
+      renderLinksDashboard();
     } catch (e) {
       console.warn('MediaPipe init failed:', e.message);
     }
@@ -6118,32 +6840,46 @@ function stopNdiSend() {
       const mpEntry = mediaInputs.find(m => m._isMediaPipe);
       if (mpEntry) removeMedia(mpEntry.id);
       btn.classList.remove('active');
+      btPresetRow.style.display = 'none';
       mpModesRow.style.display = 'none';
       gestureToggleRow.style.display = 'none';
       handAsMouseRow.style.display = 'none';
       btScaleRow.style.display = 'none';
+      btOverlayRow.style.display = 'none';
+      btSignalsSection.style.display = 'none';
+      btLinksSection.style.display = 'none';
+      btRecordingSection.style.display = 'none';
+      btOverlayEnabled = false;
+      btOverlayBtn.classList.remove('active');
       gestureEnabled = false;
       gestureCtrlBtn.classList.remove('active');
       handAsMouseEnabled = false;
       handAsMouseBtn.classList.remove('active');
+      if (btIsRecording) stopRecording();
+      if (btIsPlaying) stopPlayback();
       for (const lid of ['text', 'shader', 'scene']) {
         const l = getLayer(lid);
         if (l) l.handAsMouse = false;
       }
-      refreshAllBindingsUI();
+      refreshAllLinksUI();
       return;
     }
+    btPresetRow.style.display = '';
     mpModesRow.style.display = '';
     gestureToggleRow.style.display = '';
     handAsMouseRow.style.display = '';
     btScaleRow.style.display = '';
+    btOverlayRow.style.display = '';
+    btSignalsSection.style.display = '';
+    btLinksSection.style.display = '';
+    btRecordingSection.style.display = '';
     await startMediaPipe();
-    refreshAllBindingsUI();
+    refreshAllLinksUI();
   });
 
   // === MediaPipe Bindings UI ===
   // Builds/refreshes the bindings panel inside each layer card's .layer-controls
-  function buildBindingsUI(layerId) {
+  function buildLinksUI(layerId) {
     const layer = getLayer(layerId);
     if (!layer) return;
     const card = document.querySelector(`.layer-card[data-layer="${layerId}"]`);
@@ -6156,26 +6892,26 @@ function stopNdiSend() {
     if (section) section.remove();
 
     // Sync per-slider MP map button highlights
-    syncMpBoundState(controls, layerId);
+    syncMpLinkedState(controls, layerId);
   }
 
   // Rebuild bindings UI when MediaPipe toggled or layer switches
-  function refreshAllBindingsUI() {
+  function refreshAllLinksUI() {
     for (const lid of ['text', 'shader', 'scene']) {
-      buildBindingsUI(lid);
+      buildLinksUI(lid);
     }
   }
 
   // === MP Map: sync bound state on parameter buttons ===
-  function syncMpBoundState(container, layerId) {
+  function syncMpLinkedState(container, layerId) {
     const layer = getLayer(layerId);
     if (!layer || !container) return;
-    const boundSet = new Set();
+    const linkedSet = new Set();
     if (layer.mpBindings) {
-      for (const b of layer.mpBindings) { if (b.param) boundSet.add(b.param); }
+      for (const b of layer.mpBindings) { if (b.param) linkedSet.add(b.param); }
     }
     for (const btn of container.querySelectorAll('.mp-map-btn')) {
-      btn.classList.toggle('bound', boundSet.has(btn.dataset.paramName));
+      btn.classList.toggle('linked', linkedSet.has(btn.dataset.paramName));
     }
   }
 
@@ -6193,6 +6929,7 @@ function stopNdiSend() {
         <button class="mp-picker-tab active" data-group="hand">Hand</button>
         <button class="mp-picker-tab" data-group="face">Face</button>
         <button class="mp-picker-tab" data-group="pose">Pose</button>
+        <button class="mp-picker-tab" data-group="signals">Signals</button>
       </div>
       <div class="mp-picker-list"></div>
       <div class="mp-picker-axis">
@@ -6200,7 +6937,7 @@ function stopNdiSend() {
         <label><input type="radio" name="mp-axis" value="y"><span>Y</span></label>
         <label><input type="radio" name="mp-axis" value="z"><span>Z</span></label>
       </div>
-      <button class="mp-picker-clear">Clear Binding</button>
+      <button class="mp-picker-clear">Clear Link</button>
     `;
     document.body.appendChild(el);
     _mpPickerEl = el;
@@ -6224,19 +6961,23 @@ function stopNdiSend() {
     const pMin = isfInput && isfInput.MIN != null ? isfInput.MIN : 0;
     const pMax = isfInput && isfInput.MAX != null ? isfInput.MAX : 1;
 
-    let activeGroup = existing ? existing.group : 'hand';
+    let activeGroup = existing ? (existing.source === 'derived' ? 'signals' : existing.group) : 'hand';
     let selectedAxis = existing ? (existing.axis || 'x') : 'x';
 
     // Tabs
     const tabs = picker.querySelectorAll('.mp-picker-tab');
+    const axisRow = picker.querySelector('.mp-picker-axis');
     tabs.forEach(t => {
       t.classList.toggle('active', t.dataset.group === activeGroup);
       t.onclick = () => {
         activeGroup = t.dataset.group;
         tabs.forEach(tt => tt.classList.toggle('active', tt === t));
+        // Hide axis row for signals tab
+        axisRow.style.display = activeGroup === 'signals' ? 'none' : '';
         renderList();
       };
     });
+    axisRow.style.display = activeGroup === 'signals' ? 'none' : '';
 
     // Axis radios
     const axisRadios = picker.querySelectorAll('input[name="mp-axis"]');
@@ -6244,39 +6985,61 @@ function stopNdiSend() {
       r.checked = r.value === selectedAxis;
       r.onchange = () => {
         selectedAxis = r.value;
-        if (existing) { existing.axis = selectedAxis; }
+        if (existing && existing.axis) { existing.axis = selectedAxis; }
       };
     });
 
-    // Landmark list
+    // Landmark / Signals list
     const listEl = picker.querySelector('.mp-picker-list');
     function renderList() {
       listEl.innerHTML = '';
-      const parts = MP_BODY_PARTS[activeGroup] || [];
-      for (const part of parts) {
-        const item = document.createElement('div');
-        item.className = 'mp-picker-list-item';
-        item.textContent = part.name;
-        if (existing && existing.group === activeGroup && existing.landmarkIndex === part.index) {
-          item.classList.add('selected');
+      if (activeGroup === 'signals') {
+        // Derived signals from all groups
+        for (const grp of ['hand', 'face', 'pose']) {
+          const sigs = DERIVED_SIGNALS[grp] || [];
+          for (const sig of sigs) {
+            const item = document.createElement('div');
+            item.className = 'mp-picker-list-item';
+            item.textContent = sig.name;
+            if (existing && existing.source === 'derived' && existing.signalKey === sig.key) {
+              item.classList.add('selected');
+            }
+            item.onclick = () => {
+              // Remove old binding, create derived
+              const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+              if (idx >= 0) layer.mpBindings.splice(idx, 1);
+              existing = { source: 'derived', signalKey: sig.key, param: paramName, min: pMin, max: pMax };
+              layer.mpBindings.push(existing);
+              anchorBtn.classList.add('linked');
+              buildLinksUI(layerId);
+              renderLinksDashboard();
+              closeMpPicker();
+            };
+            listEl.appendChild(item);
+          }
         }
-        item.onclick = () => {
-          // Create or update binding
-          if (!existing) {
+      } else {
+        const parts = MP_BODY_PARTS[activeGroup] || [];
+        for (const part of parts) {
+          const item = document.createElement('div');
+          item.className = 'mp-picker-list-item';
+          item.textContent = part.name;
+          if (existing && existing.group === activeGroup && existing.landmarkIndex === part.index) {
+            item.classList.add('selected');
+          }
+          item.onclick = () => {
+            // Create or update landmark binding
+            const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+            if (idx >= 0) layer.mpBindings.splice(idx, 1);
             existing = { group: activeGroup, landmarkIndex: part.index, param: paramName, axis: selectedAxis, min: pMin, max: pMax };
             layer.mpBindings.push(existing);
-          } else {
-            existing.group = activeGroup;
-            existing.landmarkIndex = part.index;
-            existing.axis = selectedAxis;
-            existing.min = pMin;
-            existing.max = pMax;
-          }
-          anchorBtn.classList.add('bound');
-          buildBindingsUI(layerId);
-          closeMpPicker();
-        };
-        listEl.appendChild(item);
+            anchorBtn.classList.add('linked');
+            buildLinksUI(layerId);
+            renderLinksDashboard();
+            closeMpPicker();
+          };
+          listEl.appendChild(item);
+        }
       }
     }
     renderList();
@@ -6286,8 +7049,8 @@ function stopNdiSend() {
       const idx = layer.mpBindings.findIndex(b => b.param === paramName);
       if (idx >= 0) layer.mpBindings.splice(idx, 1);
       existing = null;
-      anchorBtn.classList.remove('bound');
-      buildBindingsUI(layerId);
+      anchorBtn.classList.remove('linked');
+      buildLinksUI(layerId);
       closeMpPicker();
     };
 
@@ -6314,7 +7077,7 @@ function stopNdiSend() {
   }
 
   // === Live slider feedback for bound parameters (Step 5) ===
-  function updateBoundSliders() {
+  function updateLinkedSliders() {
     for (const layer of layers) {
       if (!layer.mpBindings || layer.mpBindings.length === 0) continue;
       const container = document.querySelector(`.layer-params[data-layer="${layer.id}"]`);
@@ -7319,17 +8082,17 @@ function stopNdiSend() {
     entry.element = video;
     entry.glTexture = createGLTexture(isfRenderer.gl, video);
     const threeTex = new THREE.VideoTexture(video);
-    // Mirror webcam horizontally + vertically
-    threeTex.wrapS = THREE.RepeatWrapping;
+    // Flip vertically only (GL Y-axis convention); no horizontal mirror
+    threeTex.wrapS = THREE.ClampToEdgeWrapping;
     threeTex.wrapT = THREE.RepeatWrapping;
-    threeTex.repeat.x = -1;
+    threeTex.repeat.x = 1;
     threeTex.repeat.y = -1;
-    threeTex.offset.x = 1;
+    threeTex.offset.x = 0;
     threeTex.offset.y = 1;
     threeTex.needsUpdate = true;
     entry.threeTexture = threeTex;
-    entry._webcamFlip = true; // Flag for GL horizontal flip in ISF renderer
-    entry._webcamFlipV = true; // Flag for GL vertical flip
+    entry._webcamFlip = false; // No horizontal mirror by default
+    entry._webcamFlipV = true; // Vertical flip for GL coordinate system
 
     mediaInputs.push(entry);
     renderMediaList();
@@ -7770,7 +8533,7 @@ function stopNdiSend() {
           sceneLayer.inputValues = vals;
           autoBindTextures('scene');
         });
-        syncMpBoundState(paramsContainer, 'scene');
+        syncMpLinkedState(paramsContainer, 'scene');
       }
       sceneRenderer.inputValues = sceneLayer.inputValues;
       autoBindTextures('scene');
@@ -7883,7 +8646,13 @@ function stopNdiSend() {
       }
 
       // Live slider feedback: update sliders for MP-bound params (~15fps)
-      if ((_compFrameCount & 3) === 0) updateBoundSliders();
+      if ((_compFrameCount & 3) === 0) {
+        updateLinkedSliders();
+        updateSignalBars();
+        updateLinksDashboardValues();
+        if (btIsRecording) captureFrame();
+        if (btIsPlaying) applyPlaybackFrame();
+      }
     }
 
     // GestureProcessor: always update so ease-out completes smoothly after tracking drops

@@ -23,6 +23,20 @@ class GestureProcessor {
     this._wasPinching = false;
     this._pinchStartX = 0;
     this._pinchStartMorph = 1.0;
+
+    // Derived signals — high-level gestures computed from raw landmarks, all 0-1
+    this.derived = {
+      // Hand
+      pinchDist: 0, gripStrength: 0, fingerSpread: 0, handAngle: 0.5,
+      thumbCurl: 0, indexCurl: 0, middleCurl: 0, ringCurl: 0, pinkyCurl: 0,
+      // Face
+      headYaw: 0.5, headPitch: 0.5, headRoll: 0.5,
+      mouthOpen: 0, leftBlink: 0, rightBlink: 0, eyebrowRaise: 0,
+      // Pose
+      bodyLean: 0.5, leftArmAngle: 0, rightArmAngle: 0, shoulderWidth: 0,
+    };
+    this._derivedTarget = { ...this.derived };
+    this._DERIVED_LERP = 0.15;
   }
 
   update(mediaPipeMgr) {
@@ -152,6 +166,9 @@ class GestureProcessor {
     const morphDiff = this._targetMorph - this.morphValue;
     this.morphValue += morphDiff * 0.12;
 
+    // --- Derived signals ---
+    this._computeDerived(mediaPipeMgr);
+
     // Check if we've settled back to rest (skip applying if nothing to do)
     const r = this.rest;
     const eps = 0.002;
@@ -164,6 +181,138 @@ class GestureProcessor {
       && Math.abs(s.boost - r.boost) < eps
       && Math.abs(s.alive - r.alive) < eps
       && Math.abs(morphDiff) < 0.001;
+  }
+
+  _computeDerived(mediaPipeMgr) {
+    const dt = this._derivedTarget;
+    const mpActive = mediaPipeMgr && mediaPipeMgr.active;
+
+    // --- Hand signals ---
+    const lm = mpActive && mediaPipeMgr._lastHandLandmarks;
+    if (lm && lm.length > 20) {
+      const wrist = lm[0];
+      const thumbTip = lm[4], indexTip = lm[8], middleTip = lm[12], ringTip = lm[16], pinkyTip = lm[20];
+      const thumbMcp = lm[2], indexMcp = lm[5], middleMcp = lm[9], ringMcp = lm[13], pinkyMcp = lm[17];
+      const indexPip = lm[6], middlePip = lm[10], ringPip = lm[14], pinkyPip = lm[18];
+      const thumbIp = lm[3];
+
+      // Pinch distance: thumb tip to index tip, normalized 0-1
+      dt.pinchDist = Math.min(1, Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y) * 5);
+
+      // Finger curl: distance from tip to MCP relative to pip-to-MCP (1=curled, 0=extended)
+      const _curl = (tip, pip, mcp) => {
+        const extended = Math.hypot(pip.x - mcp.x, pip.y - mcp.y);
+        const tipDist = Math.hypot(tip.x - mcp.x, tip.y - mcp.y);
+        return Math.max(0, Math.min(1, 1 - tipDist / Math.max(extended * 2.5, 0.01)));
+      };
+      dt.thumbCurl = Math.max(0, Math.min(1, 1 - Math.hypot(thumbTip.x - thumbMcp.x, thumbTip.y - thumbMcp.y) / Math.max(Math.hypot(thumbIp.x - thumbMcp.x, thumbIp.y - thumbMcp.y) * 2.5, 0.01)));
+      dt.indexCurl = _curl(indexTip, indexPip, indexMcp);
+      dt.middleCurl = _curl(middleTip, middlePip, middleMcp);
+      dt.ringCurl = _curl(ringTip, ringPip, ringMcp);
+      dt.pinkyCurl = _curl(pinkyTip, pinkyPip, pinkyMcp);
+
+      // Grip strength: average finger curl
+      dt.gripStrength = (dt.thumbCurl + dt.indexCurl + dt.middleCurl + dt.ringCurl + dt.pinkyCurl) / 5;
+
+      // Finger spread: average distance between adjacent fingertips, normalized
+      const s1 = Math.hypot(indexTip.x - middleTip.x, indexTip.y - middleTip.y);
+      const s2 = Math.hypot(middleTip.x - ringTip.x, middleTip.y - ringTip.y);
+      const s3 = Math.hypot(ringTip.x - pinkyTip.x, ringTip.y - pinkyTip.y);
+      dt.fingerSpread = Math.min(1, (s1 + s2 + s3) / 3 * 8);
+
+      // Hand angle: wrist-to-middle-MCP angle in frame plane, normalized 0-1
+      const dx = middleMcp.x - wrist.x;
+      const dy = middleMcp.y - wrist.y;
+      dt.handAngle = (Math.atan2(dy, dx) / Math.PI + 1) * 0.5; // 0-1
+    }
+
+    // --- Face signals ---
+    const face = mpActive && mediaPipeMgr._lastFaceLandmarks;
+    if (face && face.length > 454) {
+      const noseTip = face[1], leftEar = face[234], rightEar = face[454];
+      const forehead = face[10], chin = face[152];
+      const leftEyeInner = face[133], leftEyeOuter = face[33];
+      const rightEyeInner = face[362], rightEyeOuter = face[263];
+      const upperLip = face[13], lowerLip = face[14];
+
+      const faceCX = (leftEar.x + rightEar.x) / 2;
+      const faceCY = (forehead.y + chin.y) / 2;
+      const faceW = Math.abs(rightEar.x - leftEar.x);
+      const faceH = Math.abs(forehead.y - chin.y);
+
+      // Head yaw: nose offset from face center, 0.5=center
+      dt.headYaw = 0.5 + (noseTip.x - faceCX) / Math.max(faceW, 0.01) * 0.8;
+      dt.headYaw = Math.max(0, Math.min(1, dt.headYaw));
+
+      // Head pitch: nose offset vertically, 0.5=center
+      dt.headPitch = 0.5 + (noseTip.y - faceCY) / Math.max(faceH, 0.01) * 0.8;
+      dt.headPitch = Math.max(0, Math.min(1, dt.headPitch));
+
+      // Head roll: angle between eyes, 0.5=level
+      const eyeLX = (leftEyeInner.x + leftEyeOuter.x) / 2;
+      const eyeLY = (leftEyeInner.y + leftEyeOuter.y) / 2;
+      const eyeRX = (rightEyeInner.x + rightEyeOuter.x) / 2;
+      const eyeRY = (rightEyeInner.y + rightEyeOuter.y) / 2;
+      const eyeAngle = Math.atan2(eyeRY - eyeLY, eyeRX - eyeLX);
+      dt.headRoll = Math.max(0, Math.min(1, 0.5 + eyeAngle / (Math.PI * 0.5)));
+
+      // Mouth open: jaw distance normalized by face height
+      const mouthGap = Math.abs(upperLip.y - lowerLip.y);
+      dt.mouthOpen = Math.min(1, mouthGap / Math.max(faceH, 0.01) * 6);
+
+      // Eye aspect ratio (EAR) for blink detection
+      // Left eye: landmarks 159(top), 145(bottom), 33(outer), 133(inner)
+      const _ear = (top, bottom, inner, outer) => {
+        const vDist = Math.abs(top.y - bottom.y);
+        const hDist = Math.hypot(outer.x - inner.x, outer.y - inner.y);
+        return Math.max(0, Math.min(1, 1 - vDist / Math.max(hDist * 0.4, 0.001)));
+      };
+      dt.leftBlink = _ear(face[159], face[145], face[133], face[33]);
+      dt.rightBlink = _ear(face[386], face[374], face[362], face[263]);
+
+      // Eyebrow raise: distance from brow to eye, normalized
+      const leftBrow = face[70], rightBrow = face[300];
+      const leftEye = face[159], rightEye = face[386];
+      const browDist = ((leftBrow.y - leftEye.y) + (rightBrow.y - rightEye.y)) / 2;
+      dt.eyebrowRaise = Math.max(0, Math.min(1, browDist / Math.max(faceH, 0.01) * 8));
+    }
+
+    // --- Pose signals ---
+    const pose = mpActive && mediaPipeMgr._lastPoseLandmarks;
+    if (pose && pose.length > 28) {
+      const lS = pose[11], rS = pose[12]; // shoulders
+      const lE = pose[13], rE = pose[14]; // elbows
+      const lW = pose[15], rW = pose[16]; // wrists
+      const lH = pose[23], rH = pose[24]; // hips
+
+      // Body lean: shoulder midpoint X relative to hip midpoint X, 0.5=centered
+      const shoulderMidX = (lS.x + rS.x) / 2;
+      const hipMidX = (lH.x + rH.x) / 2;
+      dt.bodyLean = Math.max(0, Math.min(1, 0.5 + (shoulderMidX - hipMidX) * 4));
+
+      // Arm angle: elbow bend (0=straight, 1=fully bent)
+      const _armAngle = (shoulder, elbow, wrist) => {
+        const ux = shoulder.x - elbow.x, uy = shoulder.y - elbow.y;
+        const vx = wrist.x - elbow.x, vy = wrist.y - elbow.y;
+        const dot = ux * vx + uy * vy;
+        const magU = Math.hypot(ux, uy), magV = Math.hypot(vx, vy);
+        const cosAngle = dot / Math.max(magU * magV, 0.0001);
+        // cosAngle=1 means straight (180°), cosAngle=-1 means fully bent (0°)
+        return Math.max(0, Math.min(1, (1 - cosAngle) * 0.5));
+      };
+      dt.leftArmAngle = _armAngle(lS, lE, lW);
+      dt.rightArmAngle = _armAngle(rS, rE, rW);
+
+      // Shoulder width: normalized distance between shoulders
+      dt.shoulderWidth = Math.min(1, Math.hypot(rS.x - lS.x, rS.y - lS.y) * 3);
+    }
+
+    // --- Smooth all derived signals ---
+    const d = this.derived;
+    const lerpF = this._DERIVED_LERP;
+    for (const key in d) {
+      d[key] += (dt[key] - d[key]) * lerpF;
+    }
   }
 
   getValues() {

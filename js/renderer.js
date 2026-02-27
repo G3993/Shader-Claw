@@ -486,7 +486,8 @@ export class Renderer {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, layer.fbo.fbo);
     gl.viewport(0, 0, layer.fbo.width, layer.fbo.height);
-    gl.clearColor(0, 0, 0, 0);
+    const bgC = layer._bgColor;
+    gl.clearColor(bgC ? bgC[0] : 0, bgC ? bgC[1] : 0, bgC ? bgC[2] : 0, bgC ? 1 : 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.disable(gl.BLEND);
 
