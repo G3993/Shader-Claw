@@ -5559,16 +5559,22 @@ function stopNdiSend() {
           }
           autoBindTextures(layerId);
         });
+        // Clean up any previously-moved direction D-pad (lives outside .layer-params after move)
+        const layerCard = paramsContainer.closest('.layer-card');
+        if (layerCard) {
+          layerCard.querySelectorAll('.control-row[data-name="direction"]').forEach(old => {
+            if (!paramsContainer.contains(old)) old.remove();
+          });
+        }
         // Move direction D-pad under transparent bg toggle
         const dirRow = paramsContainer.querySelector('.control-row[data-name="direction"]');
         if (dirRow) {
-          // Find the transparent bg toggle — either generated inside params or the hardcoded one
           const tbInParams = paramsContainer.querySelector('.cam-toggle-row[data-name="transparentBg"]');
-          const tbHardcoded = paramsContainer.closest('.layer-card')?.querySelector('#shader-transparent-bg-btn')?.closest('.cam-toggle-row');
+          const tbHardcoded = layerCard?.querySelector('#shader-transparent-bg-btn')?.closest('.cam-toggle-row');
           const tbToggle = tbInParams || tbHardcoded;
           if (tbToggle) {
             dirRow.style.justifyContent = 'center';
-            dirRow.querySelector('label')?.remove();
+            dirRow.style.marginBottom = '10px';
             tbToggle.after(dirRow);
           }
         }
