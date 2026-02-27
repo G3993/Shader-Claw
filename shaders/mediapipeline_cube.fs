@@ -6,7 +6,6 @@
     { "NAME": "texMix", "LABEL": "Texture Mix", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.8 },
     { "NAME": "rotationX", "LABEL": "Rotation X", "TYPE": "float", "MIN": -3.14159, "MAX": 3.14159, "DEFAULT": 0.0 },
     { "NAME": "rotationY", "LABEL": "Rotation Y", "TYPE": "float", "MIN": -3.14159, "MAX": 3.14159, "DEFAULT": 0.0 },
-    { "NAME": "shapeScale", "LABEL": "Scale", "TYPE": "float", "MIN": 0.1, "MAX": 2.0, "DEFAULT": 0.7 },
     { "NAME": "glow", "LABEL": "Glow", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
     { "NAME": "morph", "LABEL": "Morph", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.0 },
     { "NAME": "alive", "LABEL": "Alive", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.0 }
@@ -57,7 +56,7 @@ vec3 toLocal(vec3 p) {
 float map(vec3 p) {
   p = toLocal(p);
   float al = alive * 0.03 * sin(TIME * 3.0);
-  float sc = shapeScale;
+  float sc = 0.7;
   float b = sdBox(p, vec3(0.55 * sc, 0.55 * sc + al, 0.55 * sc));
   float o = sdOctahedron(p, 0.9 * sc);
   float blend = alive * 0.3 + morph * 0.6;
@@ -120,7 +119,7 @@ void main() {
     // Texture mapping: triplanar projection in rotated local space
     vec3 localP = toLocal(p);
     vec3 localN = normalize(toLocal(p + n * 0.01) - localP);
-    vec3 texCol = triplanar(localP / max(shapeScale, 0.1), localN);
+    vec3 texCol = triplanar(localP / 0.7, localN);
     bc = mix(bc, texCol, texMix);
 
     // Lighting: keep texture colors true, just add subtle shading
