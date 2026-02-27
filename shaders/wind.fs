@@ -49,8 +49,8 @@ void main() {
 
     // Wind direction vector
     vec2 windDir;
-    if (direction < 0.5) windDir = vec2(1.0, 0.0);
-    else if (direction < 1.5) windDir = vec2(-1.0, 0.0);
+    if (direction < 0.5) windDir = vec2(-1.0, 0.0);
+    else if (direction < 1.5) windDir = vec2(1.0, 0.0);
     else if (direction < 2.5) windDir = vec2(0.0, 1.0);
     else windDir = vec2(0.0, -1.0);
 

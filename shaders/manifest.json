@@ -229,7 +229,7 @@
   },
   {
     "id": 101,
-    "title": "Spinning Heads",
+    "title": "Shape",
     "description": "3D head gallery with 7 material presets — Standard, Wireframe, Flat, Chrome, Glass, X-Ray, Normal. Auto-loads LeePerrySmith bust or use your own model.",
     "type": "scene",
     "categories": ["3D"],

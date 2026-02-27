@@ -153,7 +153,7 @@ vec4 effectEtherea(vec2 uv) {
 
         // Cell position + bounce
         float cx = rowStartX + float(_c) * cellStep;
-        float cy = startY + float(_r) * lnH;
+        float cy = startY + totalH - charH - float(_r) * lnH;
         float bp = float(i) * 0.8 + TIME * _sp * 2.5;
         cy += sin(bp) * 0.015 * intensity;
         float sp2 = 1.0 + sin(bp + 1.0) * 0.05 * intensity;

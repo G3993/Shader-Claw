@@ -211,7 +211,9 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 3px 16px 3px 6px;
+  padding: 5px 16px 5px 6px;
+  min-height: 28px;
+  box-sizing: border-box;
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
@@ -271,7 +273,9 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 3px 16px 3px 6px;
+  padding: 5px 16px 5px 6px;
+  min-height: 28px;
+  box-sizing: border-box;
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
@@ -438,7 +442,9 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 4px 16px 4px 6px;
+  padding: 5px 16px 5px 6px;
+  min-height: 28px;
+  box-sizing: border-box;
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
@@ -512,13 +518,23 @@ body {
 }
 
 .canvas-bg-extra input[type="color"] {
-  width: 32px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border: 1px solid var(--border);
-  border-radius: 3px;
-  background: var(--bg);
+  border-radius: 50%;
+  background: none;
   cursor: pointer;
   padding: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.canvas-bg-extra input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.canvas-bg-extra input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
 }
 
 .canvas-bg-extra select {
@@ -783,13 +799,60 @@ body {
 }
 
 .control-row input[type="color"] {
-  width: 34px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 50%;
   background: none;
   cursor: pointer;
   padding: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.control-row input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+.control-row input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+#shader-bg-color::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+#shader-bg-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.direction-arrows {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.direction-arrow-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.direction-arrow-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+}
+.direction-arrow-btn.active {
+  background: rgba(232,64,87,0.15);
+  border-color: #e84057;
+  color: #e84057;
 }
 
 .control-row select {
@@ -799,7 +862,9 @@ body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 4px 16px 4px 8px;
+  padding: 5px 16px 5px 8px;
+  min-height: 28px;
+  box-sizing: border-box;
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
@@ -845,8 +910,10 @@ body {
   color: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 5px 10px;
+  padding: 12px 10px;
   font-size: 13px;
+  min-height: 42px;
+  box-sizing: border-box;
   font-family: monospace;
   font-weight: 600;
   letter-spacing: 2px;
@@ -864,19 +931,23 @@ body {
   color: var(--text-dim);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 5px 10px;
+  padding: 12px 10px;
   font-size: 11px;
+  min-height: 42px;
+  box-sizing: border-box;
   font-family: monospace;
   letter-spacing: 1px;
   text-transform: uppercase;
   cursor: default;
 }
 .overlay-upload-btn, .overlay-clear-btn {
-  background: var(--bg);
+  background: transparent;
   color: var(--text-dim);
-  border: 1px solid var(--border);
+  border: 1px dashed var(--border);
   border-radius: 4px;
-  padding: 3px 10px;
+  padding: 6px 10px;
+  min-height: 28px;
+  box-sizing: border-box;
   font-size: 10px;
   font-family: inherit;
   cursor: pointer;
@@ -888,9 +959,51 @@ body {
   color: var(--text);
   border-color: var(--text-dim);
 }
+.overlay-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  min-height: 28px;
+  box-sizing: border-box;
+  margin: -2px 0 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.overlay-file-icon {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+}
+.overlay-file-name {
+  flex: 1;
+  font-size: 10px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.overlay-file-remove {
+  background: none;
+  border: none;
+  color: rgba(255,80,80,0.5);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.overlay-file-remove:hover {
+  color: #ff5050;
+}
 #scene-model-btn {
   width: 100%;
-  padding: 8px;
+  padding: 6px 10px;
+  min-height: 28px;
+  box-sizing: border-box;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1682,11 +1795,94 @@ body {
     min-height: 40px;
   }
 
-  /* Overlay buttons */
+  /* Overlay buttons + file info */
   .overlay-upload-btn, .overlay-clear-btn {
-    padding: 6px 14px;
+    padding: 8px 14px;
     font-size: 11px;
-    min-height: 32px;
+    min-height: 36px;
+  }
+
+  .overlay-file-info {
+    padding: 8px 12px;
+    min-height: 36px;
+  }
+
+  .overlay-file-name {
+    font-size: 11px;
+  }
+
+  .overlay-file-remove {
+    font-size: 16px;
+    padding: 4px;
+  }
+
+  /* Scene model button */
+  #scene-model-btn {
+    padding: 8px 14px;
+    font-size: 11px;
+    min-height: 36px;
+  }
+
+  /* Body Tracking panel — touch-friendly */
+  .bt-section-header {
+    padding: 10px 12px;
+    font-size: 11px;
+    min-height: 36px;
+  }
+
+  .bt-section-body {
+    padding: 0 12px 8px;
+  }
+
+  .bt-signal-row {
+    height: 24px;
+    margin-bottom: 4px;
+  }
+
+  .bt-signal-label {
+    width: 80px;
+    font-size: 10px;
+  }
+
+  .bt-signal-bar {
+    height: 10px;
+  }
+
+  .bt-signal-val {
+    font-size: 10px;
+  }
+
+  .bt-signal-link {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .bt-link-row {
+    padding: 6px 0;
+    font-size: 10px;
+  }
+
+  .bt-link-remove {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .bt-action-btn {
+    padding: 8px 10px;
+    font-size: 10px;
+    min-height: 36px;
+  }
+
+  .bt-rec-btn {
+    width: 36px;
+    height: 32px;
+    font-size: 10px;
+  }
+
+  .bt-rec-timer {
+    font-size: 11px;
   }
 
   /* Canvas panel */
@@ -2013,6 +2209,11 @@ body {
           <div class="layer-control-row">
             <button class="overlay-upload-btn" id="overlay-upload-btn" title="Upload image or GIF" style="width:100%">+ Add Image</button>
           </div>
+          <div id="overlay-file-info" class="overlay-file-info" style="display:none">
+            <span class="overlay-file-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <span id="overlay-file-name" class="overlay-file-name"></span>
+            <button id="overlay-file-remove" class="overlay-file-remove" title="Remove image">&times;</button>
+          </div>
           <div class="layer-control-row">
             <label>X</label>
             <input type="range" id="overlay-tx" min="-1" max="1" step="0.01" value="0">
@@ -2088,7 +2289,7 @@ body {
       <div class="layer-card" data-layer="scene">
         <div class="layer-header">
           <button class="layer-vis" data-layer="scene" title="Toggle visibility">&#x1F441;</button>
-          <span class="layer-name">Shape</span>
+          <span class="layer-name">3D</span>
         </div>
         <div class="layer-preset-row">
           <label>Preset</label>
@@ -2150,7 +2351,7 @@ body {
           </div>
           <div class="layer-control-row">
             <label>Background</label>
-            <input type="color" id="shader-bg-color" value="#000000" style="width:28px;height:20px;padding:0;border:1px solid var(--border);border-radius:3px;background:none;cursor:pointer;">
+            <input type="color" id="shader-bg-color" value="#000000" style="width:24px;height:24px;padding:0;border:1px solid var(--border);border-radius:50%;background:none;cursor:pointer;margin-left:auto;-webkit-appearance:none;appearance:none;">
           </div>
           <div class="cam-toggle-row">
             <label>Transparent BG</label>
@@ -4253,6 +4454,32 @@ function generateControls(inputs, container, onChange) {
 
       row.appendChild(cb);
 
+    } else if (inp.TYPE === 'long' && inp.NAME === 'direction' && inp.LABELS &&
+               inp.LABELS.some(l => /right|left|up|down/i.test(l))) {
+      // Direction arrows instead of dropdown
+      const vals = inp.VALUES || [];
+      const labels = inp.LABELS || vals.map(String);
+      const def = inp.DEFAULT != null ? inp.DEFAULT : (vals[0] || 0);
+      values[inp.NAME] = def;
+      const arrows = { right: '\u2192', left: '\u2190', up: '\u2191', down: '\u2193' };
+      const group = document.createElement('div');
+      group.className = 'direction-arrows';
+      for (let i = 0; i < vals.length; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'direction-arrow-btn' + (vals[i] === def ? ' active' : '');
+        btn.textContent = arrows[labels[i].toLowerCase()] || labels[i];
+        btn.title = labels[i];
+        btn.dataset.value = vals[i];
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.direction-arrow-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          values[inp.NAME] = parseFloat(btn.dataset.value);
+          onChange(values);
+        });
+        group.appendChild(btn);
+      }
+      row.appendChild(group);
+
     } else if (inp.TYPE === 'long') {
       const vals = inp.VALUES || [];
       const labels = inp.LABELS || vals.map(String);
@@ -5515,6 +5742,12 @@ function stopNdiSend() {
         if (cb && typeof value === 'boolean') cb.checked = value;
         const sel = row.querySelector('select');
         if (sel && typeof value === 'number') sel.value = value;
+        const arrows = row.querySelector('.direction-arrows');
+        if (arrows && typeof value === 'number') {
+          arrows.querySelectorAll('.direction-arrow-btn').forEach(b => {
+            b.classList.toggle('active', parseFloat(b.dataset.value) === value);
+          });
+        }
         break;
       }
     },
@@ -5638,6 +5871,16 @@ function stopNdiSend() {
   document.getElementById('fs-btn').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.getElementById('preview').requestFullscreen();
+  });
+
+  // Fullscreen change — refresh cached rects, resize Three.js, update gizmo
+  document.addEventListener('fullscreenchange', () => {
+    _glCanvasRect = _glCanvasEl.getBoundingClientRect();
+    if (sceneRenderer) sceneRenderer.resize();
+    // Force gizmo canvas to re-measure on next frame
+    requestAnimationFrame(() => {
+      _glCanvasRect = _glCanvasEl.getBoundingClientRect();
+    });
   });
 
   document.getElementById('new-btn').addEventListener('click', () => {
@@ -5910,10 +6153,24 @@ function stopNdiSend() {
     overlayFileInput.click();
   });
 
+  function showOverlayFileInfo(name) {
+    const info = document.getElementById('overlay-file-info');
+    document.getElementById('overlay-file-name').textContent = name;
+    info.style.display = 'flex';
+  }
+  function hideOverlayFileInfo() {
+    document.getElementById('overlay-file-info').style.display = 'none';
+    document.getElementById('overlay-file-name').textContent = '';
+  }
+  document.getElementById('overlay-file-remove').addEventListener('click', () => {
+    clearOverlay();
+  });
+
   overlayFileInput.addEventListener('change', () => {
     const file = overlayFileInput.files[0];
     if (!file) return;
     const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    const fileName = file.name;
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
@@ -5935,6 +6192,8 @@ function stopNdiSend() {
       oLayer._rotate = 0;
       syncTransformSliders();
       updateLayerCardUI('overlay');
+      gizmoSelected = true;
+      showOverlayFileInfo(fileName);
       if (isGif) {
         // Keep img alive for animated GIF re-upload each frame
         oLayer._gifElement = img;
@@ -5960,6 +6219,7 @@ function stopNdiSend() {
         e.preventDefault();
         const blob = item.getAsFile();
         if (!blob) continue;
+        const pasteName = blob.name || 'Pasted image';
         const img = new Image();
         const url = URL.createObjectURL(blob);
         img.onload = () => {
@@ -5983,6 +6243,8 @@ function stopNdiSend() {
           URL.revokeObjectURL(url);
           syncTransformSliders();
           updateLayerCardUI('overlay');
+          gizmoSelected = true;
+          showOverlayFileInfo(pasteName);
         };
         img.src = url;
         break; // Only handle first image item
@@ -6003,6 +6265,8 @@ function stopNdiSend() {
     oLayer._imgAspect = null;
     oLayer._gifElement = null;
     if (oLayer._gifUrl) { URL.revokeObjectURL(oLayer._gifUrl); oLayer._gifUrl = null; }
+    hideOverlayFileInfo();
+    gizmoSelected = false;
     updateLayerCardUI('overlay');
   }
 
@@ -6032,6 +6296,7 @@ function stopNdiSend() {
   const gizmoCanvas = document.getElementById('overlay-gizmo');
   const gCtx = gizmoCanvas.getContext('2d');
   let gizmoDrag = null;
+  let gizmoSelected = true;
 
   // Cached DOM references for gizmo (avoid per-frame getElementById + getBoundingClientRect)
   const _glCanvasEl = document.getElementById('gl-canvas');
@@ -6061,8 +6326,8 @@ function stopNdiSend() {
     const o = getLayer('overlay');
     const r = _glCanvasRect;
     const cw = r.width, ch = r.height;
-    const cx = (0.5 + (o._tx || 0)) * cw;
-    const cy = (0.5 - (o._ty || 0)) * ch;
+    const cx = (0.5 + (o._tx || 0) * 0.5) * cw;
+    const cy = (0.5 - (o._ty || 0) * 0.5) * ch;
     const sc = o._scale || 1;
     const imgAsp = o._imgAspect || (cw / ch);
     const hw = 0.5 * sc * imgAsp * ch, hh = 0.5 * sc * ch;
@@ -6107,26 +6372,28 @@ function stopNdiSend() {
       drawLandmarkOverlay(gCtx, gizmoCanvas.width, gizmoCanvas.height);
     }
 
-    if (o._hasImage && o.visible) {
+    if (o._hasImage && o.visible && gizmoSelected) {
       const { cx, cy, hw, hh, ang } = gizmoGeometry();
       gCtx.save();
       gCtx.translate(cx, cy);
       gCtx.rotate(ang);
       // Dashed bounding box
-      gCtx.strokeStyle = 'rgba(78,205,196,0.7)';
-      gCtx.lineWidth = 1.5;
+      gCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+      gCtx.lineWidth = 1;
       gCtx.setLineDash([6, 4]);
       gCtx.strokeRect(-hw, -hh, hw*2, hh*2);
-      // Corner handles
+      // Corner handles (circles)
       gCtx.setLineDash([]);
-      const hs = 7;
+      const hr = 4;
       const pts = [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
       for (const [hx,hy] of pts) {
         gCtx.fillStyle = '#fff';
-        gCtx.strokeStyle = '#4ecdc4';
-        gCtx.lineWidth = 2;
-        gCtx.fillRect(hx-hs, hy-hs, hs*2, hs*2);
-        gCtx.strokeRect(hx-hs, hy-hs, hs*2, hs*2);
+        gCtx.strokeStyle = '#fff';
+        gCtx.lineWidth = 1.5;
+        gCtx.beginPath();
+        gCtx.arc(hx, hy, hr, 0, Math.PI * 2);
+        gCtx.fill();
+        gCtx.stroke();
       }
       gCtx.restore();
     }
@@ -6139,25 +6406,30 @@ function stopNdiSend() {
 
   previewEl.addEventListener('pointerdown', (e) => {
     const o = getLayer('overlay');
-    if (!o._hasImage || !o.visible) return;
+    if (!o._hasImage || !o.visible) { gizmoSelected = false; return; }
     const r = _glCanvasRect;
     const mx = e.clientX - r.left, my = e.clientY - r.top;
     const geo = gizmoGeometry();
-    const ci = hitCorner(mx, my, geo.corners);
-    if (ci >= 0) {
-      e.preventDefault(); e.stopPropagation();
-      const dist = Math.sqrt((mx-geo.cx)**2 + (my-geo.cy)**2);
-      const ang = Math.atan2(my-geo.cy, mx-geo.cx);
-      gizmoDrag = { type:'scale', startDist:dist, startAngle:ang, startScale:o._scale, startRotate:o._rotate };
-      previewEl.setPointerCapture(e.pointerId);
-      return;
+    if (gizmoSelected) {
+      const ci = hitCorner(mx, my, geo.corners);
+      if (ci >= 0) {
+        e.preventDefault(); e.stopPropagation();
+        const dist = Math.sqrt((mx-geo.cx)**2 + (my-geo.cy)**2);
+        const ang = Math.atan2(my-geo.cy, mx-geo.cx);
+        gizmoDrag = { type:'scale', startDist:dist, startAngle:ang, startScale:o._scale, startRotate:o._rotate };
+        previewEl.setPointerCapture(e.pointerId);
+        return;
+      }
     }
     if (hitBox(mx, my, geo)) {
       e.preventDefault(); e.stopPropagation();
+      if (!gizmoSelected) { gizmoSelected = true; return; }
       gizmoDrag = { type:'move', startX:mx, startY:my, startTx:o._tx, startTy:o._ty, cw:geo.cw, ch:geo.ch };
       previewEl.setPointerCapture(e.pointerId);
       return;
     }
+    // Clicked empty canvas — deselect
+    gizmoSelected = false;
   }, true);
 
   previewEl.addEventListener('pointermove', (e) => {
@@ -6169,15 +6441,20 @@ function stopNdiSend() {
     if (gizmoDrag) {
       e.preventDefault();
       if (gizmoDrag.type === 'move') {
-        o._tx = gizmoDrag.startTx + (mx - gizmoDrag.startX) / gizmoDrag.cw;
-        o._ty = gizmoDrag.startTy - (my - gizmoDrag.startY) / gizmoDrag.ch;
+        o._tx = gizmoDrag.startTx + 2 * (mx - gizmoDrag.startX) / gizmoDrag.cw;
+        o._ty = gizmoDrag.startTy - 2 * (my - gizmoDrag.startY) / gizmoDrag.ch;
         syncTransformSliders();
       } else if (gizmoDrag.type === 'scale') {
         const geo = gizmoGeometry();
         const dist = Math.sqrt((mx-geo.cx)**2 + (my-geo.cy)**2);
         o._scale = Math.max(0.1, Math.min(5, gizmoDrag.startScale * (dist / gizmoDrag.startDist)));
         const ang = Math.atan2(my-geo.cy, mx-geo.cx);
-        o._rotate = gizmoDrag.startRotate + (gizmoDrag.startAngle - ang);
+        let rawRot = gizmoDrag.startRotate + (gizmoDrag.startAngle - ang);
+        // Snap rotation to nearest 10 degrees
+        const snapDeg = 10;
+        const snapRad = snapDeg * Math.PI / 180;
+        rawRot = Math.round(rawRot / snapRad) * snapRad;
+        o._rotate = rawRot;
         syncTransformSliders();
       }
       return;
@@ -6185,10 +6462,10 @@ function stopNdiSend() {
 
     // Cursor hints
     const geo = gizmoGeometry();
-    if (hitCorner(mx, my, geo.corners) >= 0) {
+    if (gizmoSelected && hitCorner(mx, my, geo.corners) >= 0) {
       previewEl.style.cursor = 'nwse-resize';
     } else if (hitBox(mx, my, geo)) {
-      previewEl.style.cursor = 'move';
+      previewEl.style.cursor = gizmoSelected ? 'move' : 'pointer';
     } else {
       previewEl.style.cursor = '';
     }
@@ -6225,7 +6502,10 @@ function stopNdiSend() {
     const dist = Math.sqrt(dx*dx + dy*dy);
     const ang = Math.atan2(dy, dx);
     o._scale = Math.max(0.1, Math.min(5, touchState.startScale * (dist / touchState.startDist)));
-    o._rotate = touchState.startRotate + (touchState.startAngle - ang);
+    let rawRot = touchState.startRotate + (touchState.startAngle - ang);
+    const snapRad = 10 * Math.PI / 180;
+    rawRot = Math.round(rawRot / snapRad) * snapRad;
+    o._rotate = rawRot;
     syncTransformSliders();
     e.preventDefault();
   }, { passive: false, capture: true });
