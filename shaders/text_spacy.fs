@@ -101,7 +101,7 @@ vec4 effectSpacy(vec2 uv, int sub) {
     float px = uv.x;
     if (mirror && rn < 0.5) px = 1.0 - px;
 
-    float piw = mod(px, wordW);
+    float piw = mod(px - 0.5 + wordW * 0.5, wordW);
     if (piw < 0.0) piw += wordW;
     float cs = cW+gW, csF = piw/cs;
     int slot = int(floor(csF));

@@ -8,7 +8,8 @@
       "Generator"
     ],
     "file": "no_mans_sky_gradients.fs",
-    "hasVertex": true
+    "hasVertex": true,
+    "hidden": true
   },
   {
     "id": 2,
@@ -31,7 +32,8 @@
       "Generator"
     ],
     "file": "phipiplanet.fs",
-    "hasVertex": true
+    "hasVertex": true,
+    "hidden": true
   },
   {
     "id": 11,
@@ -87,7 +89,8 @@
       "Distortion Effect"
     ],
     "file": "black_hole_sun.fs",
-    "hasVertex": true
+    "hasVertex": true,
+    "hidden": true
   },
   {
     "id": 20,
@@ -99,7 +102,8 @@
       "Nature"
     ],
     "file": "moonwater.fs",
-    "hasVertex": true
+    "hasVertex": true,
+    "hidden": true
   },
   {
     "id": 21,
@@ -204,7 +208,8 @@
       "Simulation"
     ],
     "file": "bioluminescent_fluid.fs",
-    "hasVertex": true
+    "hasVertex": true,
+    "hidden": true
   },
   {
     "id": 25,
@@ -219,9 +224,18 @@
     "hasVertex": true
   },
   {
+    "id": 103,
+    "title": "Tesseract",
+    "description": "4D hypercube — 16 vertices and 32 edges rotating through four-dimensional space, projected to 3D",
+    "type": "scene",
+    "categories": ["3D"],
+    "file": "tesseract.scene.js",
+    "folder": "scenes"
+  },
+  {
     "id": 100,
-    "title": "Spinning Shape",
-    "description": "Rotating cube with adjustable speed, color, and size",
+    "title": "Shape",
+    "description": "Rotating geometric shapes with adjustable speed, color, and size. Import your own 3D model.",
     "type": "scene",
     "categories": ["3D"],
     "file": "spinning_cube.scene.js",
@@ -229,21 +243,12 @@
   },
   {
     "id": 101,
-    "title": "Shape",
+    "title": "Spinning Heads",
     "description": "3D head gallery with 7 material presets — Standard, Wireframe, Flat, Chrome, Glass, X-Ray, Normal. Auto-loads LeePerrySmith bust or use your own model.",
     "type": "scene",
     "categories": ["3D"],
     "file": "spinning_heads.scene.js",
     "folder": "scenes"
-  },
-  {
-    "id": 102,
-    "title": "Birds",
-    "description": "Flocking birds — procedural boid flocks with wing-flapping V-shaped silhouettes against an atmospheric sky",
-    "type": "generator",
-    "categories": ["Generator", "Nature"],
-    "file": "birds.fs",
-    "hasVertex": true
   },
   {
     "id": 27,
@@ -252,7 +257,8 @@
     "type": "generator",
     "categories": ["Generator", "Nature", "3D"],
     "file": "cube_in_water.fs",
-    "hasVertex": true
+    "hasVertex": true,
+    "hidden": true
   },
   {
     "id": 38,
@@ -280,15 +286,6 @@
     "hasVertex": true
   },
   {
-    "id": 103,
-    "title": "Tesseract",
-    "description": "4D hypercube — 16 vertices and 32 edges rotating through four-dimensional space, projected to 3D",
-    "type": "scene",
-    "categories": ["3D"],
-    "file": "tesseract.scene.js",
-    "folder": "scenes"
-  },
-  {
     "id": 40,
     "title": "Wind",
     "description": "Minimal gradient movements — soft drifting color fields like a gentle breeze",
@@ -303,5 +300,149 @@
     "type": "generator",
     "categories": ["Generator", "3D"],
     "file": "mediapipeline_cube.fs"
+  },
+  {
+    "id": 43,
+    "title": "Laser",
+    "description": "RGB laser globe — swirling neon light blobs with separate R/G/B interference patterns",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "laser.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 44,
+    "title": "Bars",
+    "description": "Animated gradient bars with 30 easing functions, adjustable columns and phase",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "bars.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 45,
+    "title": "Decagon Morph",
+    "description": "Morphable decagon with 10 vertices — audio-reactive, hand-tracking, or manual control",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "decagon_morph.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 46,
+    "title": "Fluid Pixels",
+    "description": "Dynamic pixel grid with procedural simplex noise, 3-stop color ramp, and 4 noise styles",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "fluid_pixels.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 47,
+    "title": "Flower",
+    "description": "Ray marched morphing flower with polar coordinate warping and ambient occlusion",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "flower.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 48,
+    "title": "Stained Glass",
+    "description": "Morphing stained glass — Voronoi cells with drifting centers, dark lead borders, and luminous colors",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "stained_glass.fs",
+    "hasVertex": true
+  },
+{
+    "id": 50,
+    "title": "Color Cube",
+    "description": "Morphing 3D shape — box, prism, torus, knots with refraction and mouse orbit",
+    "type": "generator",
+    "categories": ["Generator", "3D"],
+    "file": "color_cube.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 51,
+    "title": "Electricity",
+    "description": "Electric arc — simplex noise plasma with glowing discharge line",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "electricity.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 52,
+    "title": "Shapes",
+    "description": "Icosahedral crystal with refraction — inner morphing solid, Cook-Torrance shading, mouse orbit",
+    "type": "generator",
+    "categories": ["Generator", "3D"],
+    "file": "shapes.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 53,
+    "title": "SoundTemple",
+    "description": "Bouncing ember particles on a reflective floor — orbiting camera, cycling colors",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "sound_temple.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 54,
+    "title": "Morphus",
+    "description": "Smooth-blended raymarched shapes — spheres, cube, torus melting together on a reflective plane",
+    "type": "generator",
+    "categories": ["Generator", "3D"],
+    "file": "morphus.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 55,
+    "title": "Veroni",
+    "description": "Self-healing voronoi particles advected by fluid simulation — colorful mosaic with mouse interaction",
+    "type": "generator",
+    "categories": ["Generator", "Simulation"],
+    "file": "veroni.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 56,
+    "title": "Blob",
+    "description": "Raymarched deformed sphere with sinusoidal distortion, hue control, and fluid 4D animation",
+    "type": "generator",
+    "categories": ["Generator", "3D"],
+    "file": "blob.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 57,
+    "title": "Wet Paper",
+    "description": "Single-pass computational fluid dynamics with specular lighting — ink-on-water effect",
+    "type": "generator",
+    "categories": ["Generator", "Simulation"],
+    "file": "wet_paper.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 58,
+    "title": "Squares",
+    "description": "Cellular Voronoi noise with drifting centers, isolines, and two-tone coloring",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "squares.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 59,
+    "title": "Robot Arm",
+    "description": "2-link inverse kinematics robot arm — follows hand tracking or mouse, pinch to grip",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "robot_arm.fs",
+    "hasVertex": true
   }
 ]

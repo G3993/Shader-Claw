@@ -58,6 +58,84 @@ int charCount() {
     return n;
 }
 
+// Integer character lookup (for word-wrap helpers)
+int getChar(int slot) {
+    if (slot == 0)  return int(msg_0);
+    if (slot == 1)  return int(msg_1);
+    if (slot == 2)  return int(msg_2);
+    if (slot == 3)  return int(msg_3);
+    if (slot == 4)  return int(msg_4);
+    if (slot == 5)  return int(msg_5);
+    if (slot == 6)  return int(msg_6);
+    if (slot == 7)  return int(msg_7);
+    if (slot == 8)  return int(msg_8);
+    if (slot == 9)  return int(msg_9);
+    if (slot == 10) return int(msg_10);
+    if (slot == 11) return int(msg_11);
+    if (slot == 12) return int(msg_12);
+    if (slot == 13) return int(msg_13);
+    if (slot == 14) return int(msg_14);
+    if (slot == 15) return int(msg_15);
+    if (slot == 16) return int(msg_16);
+    if (slot == 17) return int(msg_17);
+    if (slot == 18) return int(msg_18);
+    if (slot == 19) return int(msg_19);
+    if (slot == 20) return int(msg_20);
+    if (slot == 21) return int(msg_21);
+    if (slot == 22) return int(msg_22);
+    return int(msg_23);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Word-wrap helpers — keep whole words together when wrapping lines
+// ═══════════════════════════════════════════════════════════════════════
+
+bool _isSp(int i, int nc) {
+    if (i < 0 || i >= nc) return true;
+    int ch = getChar(i);
+    return (ch < 0 || ch > 25);
+}
+
+int _wLen(int from, int nc) {
+    int w = 0;
+    for (int j = 0; j < 24; j++) {
+        if (from + j >= nc) break;
+        int ch = getChar(from + j);
+        if (ch < 0 || ch > 25) break;
+        w++;
+    }
+    return w;
+}
+
+int _wwRows(int mc, int nc) {
+    int c = 0, r = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return r + 1;
+}
+
+int _wwRowLen(int tr, int mc, int nc) {
+    int c = 0, r = 0, n = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        if (r == tr) n++;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return n;
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Font atlas sampling
 // ═══════════════════════════════════════════════════════════════════════
@@ -108,11 +186,11 @@ vec4 effectEtherea(vec2 uv) {
     float gap = charW * 0.25 * _kn;
     float cellStep = charW + gap;
 
-    // Line wrapping
+    // Line wrapping (word-aware)
     int maxCols = int(floor((maxW + gap) / cellStep));
     if (maxCols > numChars) maxCols = numChars;
     if (maxCols < 1) maxCols = 1;
-    int numRows = (numChars + maxCols - 1) / maxCols;
+    int numRows = _wwRows(maxCols, numChars);
 
     // Scale down if still too wide
     float rw = float(maxCols) * cellStep - gap;
@@ -132,7 +210,7 @@ vec4 effectEtherea(vec2 uv) {
     vec3 textCol = vec3(0.0);
     float glowAccum = 0.0;
 
-    // Iterate ALL 24 slots — no dynamic break (ANGLE-safe)
+    // Iterate ALL 24 slots with word-aware wrapping
     int _c = 0, _r = 0;
     float rowStartX = 0.5;
 
@@ -140,54 +218,66 @@ vec4 effectEtherea(vec2 uv) {
         // Compute active mask instead of break
         float active = step(float(i) + 0.5, float(numChars));
 
-        // Row centering
-        if (_c == 0) {
-            int charsInRow = numChars - _r * maxCols;
-            if (charsInRow > maxCols) charsInRow = maxCols;
-            float rwRow = float(charsInRow) * cellStep - gap;
-            rowStartX = 0.5 - rwRow * 0.5;
-        }
-
         // Character lookup (tent function — all uniforms always evaluated)
         int ch = int(getCharF(float(i)) + 0.5);
+        bool isSp = (ch < 0 || ch > 25);
 
-        // Cell position + bounce
-        float cx = rowStartX + float(_c) * cellStep;
-        float cy = startY + totalH - charH - float(_r) * lnH;
-        float bp = float(i) * 0.8 + TIME * _sp * 2.5;
-        cy += sin(bp) * 0.015 * intensity;
-        float sp2 = 1.0 + sin(bp + 1.0) * 0.05 * intensity;
-
-        // UV within this character cell
-        vec2 cellUV = vec2((p.x - cx) / (charW * sp2), (p.y - cy) / (charH * sp2));
-
-        // Skip pixels far from this cell (but no break/continue — just mask)
-        float inBounds = step(-0.15, cellUV.x) * step(cellUV.x, 1.15)
-                       * step(-0.15, cellUV.y) * step(cellUV.y, 1.15);
-
-        if (active * inBounds > 0.5) {
-            float raw = sampleAtlas(ch, cellUV);
-            if (raw > 0.05) {
-                float edgeAA = smoothstep(0.1, 0.5, raw);
-                float phase = float(i) * 1.3 + TIME * _sp * cycleSpd;
-                int style = int(mod(floor(phase), 6.0));
-                vec2 lp = fract(cellUV * vec2(5.0, 7.0));
-                float inten = fillStyle(style, lp);
-
-                textCol = max(textCol, textColor.rgb * inten * edgeAA);
-                textMask = max(textMask, inten * edgeAA);
+        // Word-wrap: if starting a new word that won't fit, break to next line
+        if (active > 0.5 && !isSp && _isSp(i - 1, numChars) && _c > 0) {
+            if (_c + _wLen(i, numChars) > maxCols) {
+                _c = 0; _r++;
             }
         }
 
-        // Glow (always accumulate for active chars, even if pixel is outside cell)
-        if (active > 0.5) {
-            vec2 cc = vec2(cx + charW * 0.5, cy + charH * 0.5);
-            float gd = length((p - cc) * vec2(1.0, 0.7));
-            glowAccum += exp(-gd * gd / (charW * charW * 2.0)) * 0.15;
-        }
+        // Skip leading spaces at the start of a wrapped line
+        bool skipThis = (isSp && _c == 0 && i > 0 && active > 0.5);
 
-        _c++;
-        if (_c >= maxCols) { _c = 0; _r++; }
+        if (!skipThis) {
+            // Row centering (recalculate at column 0)
+            if (_c == 0) {
+                int charsInRow = _wwRowLen(_r, maxCols, numChars);
+                float rwRow = float(charsInRow) * cellStep - gap;
+                rowStartX = 0.5 - rwRow * 0.5;
+            }
+
+            // Cell position + bounce
+            float cx = rowStartX + float(_c) * cellStep;
+            float cy = startY + totalH - charH - float(_r) * lnH;
+            float bp = float(i) * 0.8 + TIME * _sp * 2.5;
+            cy += sin(bp) * 0.015 * intensity;
+            float sp2 = 1.0 + sin(bp + 1.0) * 0.05 * intensity;
+
+            // UV within this character cell
+            vec2 cellUV = vec2((p.x - cx) / (charW * sp2), (p.y - cy) / (charH * sp2));
+
+            // Skip pixels far from this cell (but no break/continue — just mask)
+            float inBounds = step(-0.15, cellUV.x) * step(cellUV.x, 1.15)
+                           * step(-0.15, cellUV.y) * step(cellUV.y, 1.15);
+
+            if (active * inBounds > 0.5) {
+                float raw = sampleAtlas(ch, cellUV);
+                if (raw > 0.05) {
+                    float edgeAA = smoothstep(0.1, 0.5, raw);
+                    float phase = float(i) * 1.3 + TIME * _sp * cycleSpd;
+                    int style = int(mod(floor(phase), 6.0));
+                    vec2 lp = fract(cellUV * vec2(5.0, 7.0));
+                    float inten = fillStyle(style, lp);
+
+                    textCol = max(textCol, textColor.rgb * inten * edgeAA);
+                    textMask = max(textMask, inten * edgeAA);
+                }
+            }
+
+            // Glow (always accumulate for active chars, even if pixel is outside cell)
+            if (active > 0.5) {
+                vec2 cc = vec2(cx + charW * 0.5, cy + charH * 0.5);
+                float gd = length((p - cc) * vec2(1.0, 0.7));
+                glowAccum += exp(-gd * gd / (charW * charW * 2.0)) * 0.15;
+            }
+
+            _c++;
+            if (_c >= maxCols) { _c = 0; _r++; }
+        }
     }
 
     col = mix(col, textCol, clamp(textMask, 0.0, 1.0));

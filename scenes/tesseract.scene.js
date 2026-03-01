@@ -113,6 +113,25 @@
         var dots = new THREE.Points(dotGeom, dotMat);
         scene.add(dots);
 
+        // Custom model support
+        var customModel = null;
+        var customModelId = null;
+        var modelPivot = new THREE.Group();
+        scene.add(modelPivot);
+
+        // Lighting for imported models (tesseract is wireframe so needs no lights by default)
+        var modelLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        modelLight.position.set(3, 4, 5);
+        modelLight.visible = false;
+        scene.add(modelLight);
+        var modelFill = new THREE.DirectionalLight(0x6688aa, 0.4);
+        modelFill.position.set(-3, 1, -2);
+        modelFill.visible = false;
+        scene.add(modelFill);
+        var modelAmbient = new THREE.AmbientLight(0x404060, 0.5);
+        modelAmbient.visible = false;
+        scene.add(modelAmbient);
+
         return {
             scene: scene,
             camera: camera,
@@ -135,6 +154,36 @@
                         _bgColor.setRGB(bg[0], bg[1], bg[2]);
                     }
                     scene.background = _bgColor;
+                }
+
+                // Custom model from media
+                var modelMedia = mediaList && mediaList.find(function(e) {
+                    return e.type === 'model' && e.threeModel;
+                });
+                if (modelMedia && modelMedia.id !== customModelId) {
+                    if (customModel) modelPivot.remove(customModel);
+                    customModel = modelMedia.threeModel.clone();
+                    customModelId = modelMedia.id;
+                    var box = new THREE.Box3().setFromObject(customModel);
+                    var center = box.getCenter(new THREE.Vector3());
+                    var extent = box.getSize(new THREE.Vector3()).length();
+                    var s = extent > 0 ? 2.5 / extent : 1;
+                    customModel.scale.multiplyScalar(s);
+                    customModel.position.copy(center).multiplyScalar(-s);
+                    modelPivot.add(customModel);
+                    modelLight.visible = true;
+                    modelFill.visible = true;
+                    modelAmbient.visible = true;
+                } else if (!modelMedia && customModel) {
+                    modelPivot.remove(customModel);
+                    customModel = null;
+                    customModelId = null;
+                    modelLight.visible = false;
+                    modelFill.visible = false;
+                    modelAmbient.visible = false;
+                }
+                if (customModel) {
+                    modelPivot.rotation.y = t * 0.3;
                 }
 
                 // Apply 4D rotations and project to 3D
@@ -184,20 +233,21 @@
                     groups[g].material.linewidth = thick;
                 }
 
-                // Auto-orbit camera
+                // Mouse-interactive camera orbit
                 var orbit = (values.movement != null) ? values.movement : 0.6;
-                if (orbit > 0.001) {
-                    var ot = time * 0.2 * orbit;
-                    var angle = ot + 0.4 * Math.sin(ot * 0.7) + 0.2 * Math.sin(ot * 1.3);
-                    var dist = 5 + 0.8 * Math.sin(ot * 0.5) * orbit;
-                    var camY = 1.5 + 1.0 * Math.sin(ot * 0.35) * orbit;
-                    camera.position.set(
-                        Math.sin(angle) * dist,
-                        camY,
-                        Math.cos(angle) * dist
-                    );
-                    camera.lookAt(0, 0, 0);
-                }
+                var mp = values._mousePos || [0.5, 0.5];
+                var mx = (mp[0] - 0.5) * 2.0; // -1 to 1
+                var my = (mp[1] - 0.5) * 2.0;
+                var ot = time * 0.2 * orbit;
+                var angle = ot + mx * 3.14 + 0.4 * Math.sin(ot * 0.7);
+                var dist = 5 + 0.8 * Math.sin(ot * 0.5) * orbit;
+                var camY = 1.5 + my * 2.5 + 1.0 * Math.sin(ot * 0.35) * orbit;
+                camera.position.set(
+                    Math.sin(angle) * dist,
+                    camY,
+                    Math.cos(angle) * dist
+                );
+                camera.lookAt(0, 0, 0);
             },
             resize: function(w, h) {
                 camera.aspect = w / h;

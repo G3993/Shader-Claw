@@ -16,18 +16,10 @@ class GestureProcessor {
     this.wasTracking = false;
     this.settled = true;    // true when smooth ≈ rest (nothing to apply)
 
-    // Pinch-drag shape morph (compositor-level)
-    this.morphValue = 1.0;   // 0=square, 1=full rectangle
-    this._targetMorph = 1.0;
-    this.textureScale = 1.0; // driven by slider
-    this._wasPinching = false;
-    this._pinchStartX = 0;
-    this._pinchStartMorph = 1.0;
-
     // Derived signals — high-level gestures computed from raw landmarks, all 0-1
     this.derived = {
       // Hand
-      pinchDist: 0, gripStrength: 0, fingerSpread: 0, handAngle: 0.5,
+      pinchDist: 0, pinchHold: 0, gripStrength: 0, fingerSpread: 0, handAngle: 0.5,
       thumbCurl: 0, indexCurl: 0, middleCurl: 0, ringCurl: 0, pinkyCurl: 0,
       // Face
       headYaw: 0.5, headPitch: 0.5, headRoll: 0.5,
@@ -151,21 +143,6 @@ class GestureProcessor {
     s.boost += (t.boost - s.boost) * L;
     s.alive += (t.alive - s.alive) * (gotData ? 0.1 : 0.03);
 
-    // --- Pinch-drag shape morph (compositor-level) ---
-    if (mediaPipeMgr && mediaPipeMgr.isPinching && mediaPipeMgr.handCount > 0) {
-      if (!this._wasPinching) {
-        this._pinchStartX = mediaPipeMgr.pinchPos[0];
-        this._pinchStartMorph = this.morphValue;
-      }
-      const dx = mediaPipeMgr.pinchPos[0] - this._pinchStartX;
-      this._targetMorph = Math.max(0, Math.min(1, this._pinchStartMorph + dx * 2.5));
-      this._wasPinching = true;
-    } else {
-      this._wasPinching = false;
-    }
-    const morphDiff = this._targetMorph - this.morphValue;
-    this.morphValue += morphDiff * 0.12;
-
     // --- Derived signals ---
     this._computeDerived(mediaPipeMgr);
 
@@ -179,8 +156,7 @@ class GestureProcessor {
       && Math.abs(s.open - r.open) < eps
       && Math.abs(s.morph - r.morph) < eps
       && Math.abs(s.boost - r.boost) < eps
-      && Math.abs(s.alive - r.alive) < eps
-      && Math.abs(morphDiff) < 0.001;
+      && Math.abs(s.alive - r.alive) < eps;
   }
 
   _computeDerived(mediaPipeMgr) {
@@ -198,6 +174,13 @@ class GestureProcessor {
 
       // Pinch distance: thumb tip to index tip, normalized 0-1
       dt.pinchDist = Math.min(1, Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y) * 5);
+
+      // Pinch hold: accumulated pinch state (ramps up while pinching, decays when released)
+      if (dt.pinchDist < 0.25) {
+        dt.pinchHold = Math.min(1, (this.derived.pinchHold || 0) + 0.03);
+      } else {
+        dt.pinchHold = Math.max(0, (this.derived.pinchHold || 0) - 0.02);
+      }
 
       // Finger curl: distance from tip to MCP relative to pip-to-MCP (1=curled, 0=extended)
       const _curl = (tip, pip, mcp) => {

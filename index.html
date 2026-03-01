@@ -74,6 +74,124 @@ body {
 #sidebar-scroll::-webkit-scrollbar { width: 4px; }
 #sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+/* Sidebar Tabs */
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sidebar-tab {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: inherit;
+  transition: color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.sidebar-tab:hover { color: var(--text); }
+.sidebar-tab.active {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--text);
+}
+.sidebar-tab-content { display: none; }
+.sidebar-tab-content.active { display: block; }
+
+/* Gallery Tab */
+#gallery-tab-content {
+  padding: 8px;
+}
+#gallery-tab-content .gallery-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 8px;
+}
+#gallery-tab-content .gallery-search:focus { border-color: var(--accent); }
+#gallery-tab-content .gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.gallery-card {
+  background: rgba(30, 30, 42, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.gallery-card:hover {
+  background: rgba(40, 40, 56, 0.8);
+  border-color: var(--text-dim);
+}
+.gallery-card .gc-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 8px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+.gallery-category-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding: 6px 2px 4px;
+  grid-column: 1 / -1;
+}
+
+/* Export Tab */
+#export-tab-content {
+  padding: 12px;
+}
+#export-tab-content .export-tab-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.export-tab-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.export-tab-tile:hover {
+  background: rgba(255,255,255,0.07);
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+.export-tab-tile svg { opacity: 0.7; }
+.export-tab-tile:hover svg { opacity: 1; }
+
 #canvas-logo {
   position: absolute;
   top: 12px;
@@ -250,6 +368,9 @@ body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .layer-control-row input[type="range"] {
@@ -500,7 +621,7 @@ body {
   background: rgba(0,0,0,0.55); border: 1px solid var(--border);
   font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
   color: var(--text-dim); transition: border-color 0.3s, color 0.3s;
-  pointer-events: none; user-select: none;
+  pointer-events: auto; cursor: pointer; user-select: none;
 }
 .ndi-indicator.active { border-color: #e84057; }
 .ndi-indicator.active .ndi-label { color: #e84057; }
@@ -712,6 +833,7 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  object-fit: contain;
 }
 
 #three-canvas { display: none; }
@@ -925,6 +1047,7 @@ body {
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
+  text-align: center;
 }
 .text-msg-bar input[type="text"]:focus {
   outline: none;
@@ -1066,6 +1189,35 @@ body {
 .cam-switch.active::after {
   transform: translateX(16px);
   background: #e84057;
+}
+
+.hand-pos-widget { display: none; margin: 0 0 12px 0; }
+.hand-pos-widget.active { display: flex; gap: 8px; align-items: flex-start; }
+
+.hand-pos-pad {
+  width: 64px; height: 64px; flex-shrink: 0;
+  background: #1a1a2e; border: 1px solid var(--border); border-radius: 4px;
+  position: relative; cursor: crosshair;
+}
+.hand-pos-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #4ade80; box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; transition: left 0.06s, top 0.06s;
+}
+
+.hand-pos-sliders { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.hand-pos-axis {
+  display: flex; align-items: center; gap: 6px; font-size: 10px;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.hand-pos-axis label { width: 10px; }
+.hand-pos-axis input[type="range"] {
+  flex: 1; height: 3px; accent-color: #4ade80;
+}
+.hand-pos-axis .val {
+  width: 28px; text-align: right; font-family: monospace; font-size: 10px; color: #4ade80;
 }
 
 .mp-modes-row {
@@ -2028,10 +2180,97 @@ body {
   <!-- SIDEBAR -->
   <div id="sidebar-resize"></div>
   <div id="sidebar">
+    <div class="sidebar-tabs" id="sidebar-tabs">
+      <button class="sidebar-tab active" data-tab="canvas">Canvas</button>
+      <button class="sidebar-tab" data-tab="gallery">Gallery</button>
+      <button class="sidebar-tab" data-tab="export">Export</button>
+    </div>
     <div id="sidebar-scroll">
+
+    <!-- Gallery Tab Content -->
+    <div id="gallery-tab-content" class="sidebar-tab-content">
+      <input type="text" class="gallery-search" id="gallery-search" placeholder="Search effects...">
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+
+    <!-- Export Tab Content -->
+    <div id="export-tab-content" class="sidebar-tab-content">
+      <div class="export-tab-grid">
+        <button class="export-tab-tile" data-action="window">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Window</span>
+        </button>
+        <button class="export-tab-tile" data-action="screenshot">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M5 3L3 5"/></svg>
+          <span>Screenshot</span>
+        </button>
+        <button class="export-tab-tile" data-action="gif">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><text x="12" y="15" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">GIF</text></svg>
+          <span>GIF</span>
+        </button>
+        <button class="export-tab-tile" data-action="video">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span>Video</span>
+        </button>
+        <button class="export-tab-tile" data-action="ndi">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h4l3-9 3 18 3-9h4"/></svg>
+          <span>NDI</span>
+        </button>
+        <button class="export-tab-tile" data-action="copy">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          <span>Copy .fs</span>
+        </button>
+        <button class="export-tab-tile" data-action="download">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Canvas Tab Content (existing panels) -->
+    <div id="canvas-tab-content" class="sidebar-tab-content active">
+
+    <!-- Inputs Section (moved to top) -->
+    <div id="inputs-section">
+      <div class="section-header"><span class="section-chevron">&#x25BC;</span> Inputs</div>
+      <div class="section-body">
+      <div class="import-grid">
+        <button class="import-tile" id="tile-image" title="Import image">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>Image</span>
+        </button>
+        <button class="import-tile" id="tile-video" title="Import video">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"/></svg>
+          <span>Video</span>
+        </button>
+        <button class="import-tile" id="tile-model" title="Import 3D model">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>3D Model</span>
+        </button>
+        <button class="import-tile" id="tile-sound" title="Import audio">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+          <span>Sound</span>
+        </button>
+        <button class="import-tile" id="tile-webcam" title="Webcam input">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span>Webcam</span>
+        </button>
+        <button class="import-tile" id="tile-ndi" title="NDI input">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4"/><path d="M12 19v4"/><path d="M1 12h4"/><path d="M19 12h4"/><path d="M4.22 4.22l2.83 2.83"/><path d="M16.95 16.95l2.83 2.83"/><path d="M4.22 19.78l2.83-2.83"/><path d="M16.95 7.05l2.83-2.83"/></svg>
+          <span>NDI</span>
+        </button>
+        <button class="import-tile" id="tile-code" title="Import shader code (.fs)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Code</span>
+        </button>
+      </div>
+      <div class="media-list" id="media-list"></div>
+      </div><!-- /section-body -->
+    </div>
+
     <!-- Canvas Panel -->
     <div id="canvas-panel" class="open">
-      <div class="section-header">Canvas <span style="flex:1"></span><button id="export-hub-btn" style="font-size:10px;padding:3px 12px;letter-spacing:0.8px;font-weight:600;font-family:inherit;background:#000000;color:#ffffff;border:none;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:background 0.15s,color 0.15s">EXPORT</button></div>
+      <div class="section-header"><span style="flex:1"></span><button id="export-hub-btn" style="display:none;font-size:10px;padding:3px 12px;letter-spacing:0.8px;font-weight:600;font-family:inherit;background:#000000;color:#ffffff;border:none;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:background 0.15s,color 0.15s">EXPORT</button></div>
       <div class="section-body">
         <div class="canvas-option-row">
           <label>Background</label>
@@ -2165,6 +2404,23 @@ body {
           <div class="cam-toggle-row" id="hand-as-mouse-row" style="display:none">
             <label>Hand as Mouse</label>
             <button class="cam-switch" id="hand-as-mouse-btn" title="Use hand position as mouse input"></button>
+          </div>
+          <div class="hand-pos-widget" id="hand-pos-widget">
+            <div class="hand-pos-pad" id="hand-pos-pad">
+              <div class="hand-pos-dot" id="hand-pos-dot"></div>
+            </div>
+            <div class="hand-pos-sliders">
+              <div class="hand-pos-axis">
+                <label>x</label>
+                <input type="range" id="hand-pos-x" min="0" max="1" step="0.001" value="0.5" disabled>
+                <span class="val" id="hand-pos-x-val">0.5</span>
+              </div>
+              <div class="hand-pos-axis">
+                <label>y</label>
+                <input type="range" id="hand-pos-y" min="0" max="1" step="0.001" value="0.5" disabled>
+                <span class="val" id="hand-pos-y-val">0.5</span>
+              </div>
+            </div>
           </div>
           <!-- Scale slider removed -->
           <!-- Skeleton Overlay toggle -->
@@ -2376,43 +2632,7 @@ body {
       </div>
     </div>
 
-    <!-- Inputs Section -->
-    <div id="inputs-section">
-      <div class="section-header"><span class="section-chevron">&#x25BC;</span> Inputs</div>
-      <div class="section-body">
-      <div class="import-grid">
-        <button class="import-tile" id="tile-image" title="Import image">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          <span>Image</span>
-        </button>
-        <button class="import-tile" id="tile-video" title="Import video">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"/></svg>
-          <span>Video</span>
-        </button>
-        <button class="import-tile" id="tile-model" title="Import 3D model">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span>3D Model</span>
-        </button>
-        <button class="import-tile" id="tile-sound" title="Import audio">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
-          <span>Sound</span>
-        </button>
-        <button class="import-tile" id="tile-webcam" title="Webcam input">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-          <span>Webcam</span>
-        </button>
-        <button class="import-tile" id="tile-mediapipe" title="MediaPipe ML inputs">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 8v4"/><circle cx="6" cy="16" r="2"/><circle cx="18" cy="16" r="2"/><path d="M12 12l-6 4M12 12l6 4"/><circle cx="12" cy="20" r="2"/><path d="M12 14v6"/></svg>
-          <span>MediaPipe</span>
-        </button>
-        <button class="import-tile" id="tile-ndi" title="NDI input">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4"/><path d="M12 19v4"/><path d="M1 12h4"/><path d="M19 12h4"/><path d="M4.22 4.22l2.83 2.83"/><path d="M16.95 16.95l2.83 2.83"/><path d="M4.22 19.78l2.83-2.83"/><path d="M16.95 7.05l2.83-2.83"/></svg>
-          <span>NDI</span>
-        </button>
-      </div>
-      <div class="media-list" id="media-list"></div>
-      </div><!-- /section-body -->
-    </div>
+    </div><!-- /canvas-tab-content -->
     </div><!-- /sidebar-scroll -->
   </div>
 
@@ -2445,12 +2665,13 @@ body {
         <button class="canvas-btn" id="fs-btn" title="Fullscreen">&#x26F6;</button>
       </div>
       <div id="error-bar"></div>
-      <div id="debug-overlay" style="display:none;position:absolute;top:50px;left:12px;z-index:999;color:#999;font:11px monospace;background:rgba(0,0,0,0.7);padding:8px;border-radius:4px;pointer-events:none;white-space:pre;max-width:60%;overflow:hidden"></div>
+      <div id="debug-overlay" style="display:none;position:absolute;top:50px;left:12px;z-index:999;color:#0f0;font:12px monospace;background:rgba(0,0,0,0.85);padding:12px;border-radius:4px;pointer-events:none;white-space:pre;max-width:70%;overflow:hidden;max-height:60vh"></div>
       <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/gif,image/webp" multiple style="display:none">
       <input type="file" id="video-file-input" accept="video/mp4,video/webm" multiple style="display:none">
       <input type="file" id="model-file-input" accept=".glb,.gltf,.stl,.fbx,.obj" multiple style="display:none">
       <input type="file" id="sound-file-input" accept="audio/mpeg,audio/wav,audio/ogg,.mp3,.wav,.ogg" multiple style="display:none">
       <input type="file" id="vector-file-input" accept=".svg,image/svg+xml" style="display:none">
+      <input type="file" id="code-file-input" accept=".fs,.glsl,.frag,.txt" style="display:none">
       <input type="file" id="bg-image-input" accept="image/*" style="display:none">
       <input type="file" id="bg-video-input" accept="video/*" style="display:none">
 
@@ -2681,6 +2902,9 @@ function buildFragmentShader(source) {
     // Mouse uniforms
     'uniform vec2 mousePos;',
     'uniform vec2 mouseDelta;',
+    'uniform float mouseDown;',
+    'uniform float pinchHold;',
+    'uniform float inputActivity;',
     // Audio-reactive uniforms (always declared, zero when no audio)
     'uniform sampler2D audioFFT;',
     'uniform float audioLevel;',
@@ -2701,6 +2925,7 @@ function buildFragmentShader(source) {
     'uniform sampler2D mpSegMask;',
     'uniform float mpHandCount;',
     'uniform vec3 mpHandPos;',
+    'uniform vec3 mpHandPos2;',
     // Layer compositing
     'uniform float _transparentBg;',
     ...uniformLines,
@@ -2719,18 +2944,28 @@ function buildFragmentShader(source) {
 
   const header = headerParts.join('\n');
 
-  const cleaned = parsed.glsl.replace(/#version\s+\d+.*/g, '');
+  // Strip #version and redundant #ifdef GL_ES precision blocks (header already provides precision)
+  const cleaned = parsed.glsl
+    .replace(/#version\s+\d+.*/g, '')
+    .replace(/#ifdef\s+GL_ES\s*\r?\nprecision\s+\w+\s+float\s*;\s*\r?\n#endif\s*\r?\n?/g, '');
 
   // Wrap shader main() to inject transparent background support for layer compositing
   // Skip wrapper if the shader already declares a 'transparentBg' input (it handles alpha itself)
   const shaderHandlesTransparency = (parsed.inputs || []).some(inp => inp.NAME === 'transparentBg');
   let body = header + cleaned;
-  const mainRe = /void\s+main\s*\(\s*\)/;
+  const mainRe = /void\s+main\s*\(\s*(void)?\s*\)/;
   if (mainRe.test(body) && !shaderHandlesTransparency) {
     body = body.replace(mainRe, 'void _shaderMain()');
     body += `
 void main() {
     _shaderMain();
+    // Global mouse spotlight — subtle interactive light on all shaders
+    vec2 _muv = gl_FragCoord.xy / RENDERSIZE.xy;
+    vec2 _md = _muv - mousePos;
+    _md.x *= RENDERSIZE.x / RENDERSIZE.y;
+    float _mr = length(_md);
+    float _mspot = exp(-_mr * _mr * 6.0) * 0.25;
+    gl_FragColor.rgb += gl_FragColor.rgb * _mspot;
     if (_transparentBg > 0.5) {
         float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
         gl_FragColor.a = smoothstep(0.02, 0.15, _lum);
@@ -3115,6 +3350,8 @@ class Renderer {
     // Mouse state for interactive shaders
     this.mousePos = [0.5, 0.5];
     this.mouseDelta = [0, 0];
+    this.mouseDown = 0;
+    this.pinchHold = 0;
     this._lastMousePos = [0.5, 0.5];
     this._initGeometry();
     this.resize();
@@ -3404,21 +3641,6 @@ class Renderer {
     const ahLoc = this._getLoc('audioHigh');
     if (ahLoc) gl.uniform1f(ahLoc, audioHigh);
 
-    // Audio reactivity: modulate shader params with audio levels
-    if (this.inputValues['audioReactive']) {
-      const sp = this.inputValues['speed'];
-      const spLoc = this._getLoc('speed');
-      if (sp != null && spLoc) gl.uniform1f(spLoc, sp + audioLevel * 1.5);
-
-      const int_ = this.inputValues['intensity'];
-      const intLoc = this._getLoc('intensity');
-      if (int_ != null && intLoc) gl.uniform1f(intLoc, Math.min(1, int_ + audioBass * 0.7));
-
-      const ts = this.inputValues['textScale'];
-      const tsLoc = this._getLoc('textScale');
-      if (ts != null && tsLoc) gl.uniform1f(tsLoc, ts * (1 + audioBass * 0.3));
-    }
-
     // Variable font texture (for Text shader effects 20 + 22)
     const vfLoc = this._getLoc('varFontTex');
     if (vfLoc) {
@@ -3540,7 +3762,12 @@ class Renderer {
           this._useHalfFloat = true;
           this.gl.deleteTexture(test.texture);
           this.gl.deleteFramebuffer(test.fbo);
+          console.log('[ShaderClaw] Half-float FBOs: OK' + (this._halfFloatLinear ? ' (LINEAR filtering)' : ' (NEAREST only)'));
+        } else {
+          console.warn('[ShaderClaw] Half-float FBOs: not renderable — falling back to UNSIGNED_BYTE');
         }
+      } else {
+        console.warn('[ShaderClaw] OES_texture_half_float not available — using UNSIGNED_BYTE FBOs');
       }
     }
     if (this._useHalfFloat) {
@@ -3609,7 +3836,7 @@ class Renderer {
         return { ok: false, errors: 'Link: ' + log };
       }
     }
-    if (layer.program) gl.deleteProgram(layer.program);
+    if (layer.program && layer.program !== prog) gl.deleteProgram(layer.program);
     layer.program = prog;
     layer.uniformLocs = {};
     return { ok: true, errors: null };
@@ -3712,7 +3939,7 @@ class Renderer {
     if (vgLoc) gl.uniform1f(vgLoc, layer._voiceGlitch || 0.0);
 
     // Resolve MediaPipe bindings before setting input values
-    if (layer.mpBindings && layer.mpBindings.length > 0 && mediaPipeMgr && mediaPipeMgr.active) {
+    if (layer.mpBindings && layer.mpBindings.length > 0) {
       resolveBindings(layer, mediaPipeMgr);
     }
 
@@ -3788,14 +4015,29 @@ class Renderer {
 
     // Mouse uniforms — hand-as-mouse override when enabled
     let mx = this.mousePos[0], my = this.mousePos[1];
+    let mdx = this.mouseDelta[0], mdy = this.mouseDelta[1];
+    let mdown = this.mouseDown;
     if (layer.handAsMouse && mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.handCount > 0) {
-      mx = mediaPipeMgr.handPos[0];
-      my = mediaPipeMgr.handPos[1];
+      const hx = 1.0 - mediaPipeMgr.handPos[0]; // mirror X to match flipped webcam
+      const hy = mediaPipeMgr.handPos[1];
+      mdx = hx - (layer._prevHandX ?? hx);
+      mdy = hy - (layer._prevHandY ?? hy);
+      layer._prevHandX = hx;
+      layer._prevHandY = hy;
+      mx = hx;
+      my = hy;
+      mdown = mediaPipeMgr.isPinching ? 1.0 : 0.0;
     }
     const mousePLoc = this._getLayerLoc(layer, 'mousePos');
     if (mousePLoc) gl.uniform2f(mousePLoc, mx, my);
     const mouseDLoc = this._getLayerLoc(layer, 'mouseDelta');
-    if (mouseDLoc) gl.uniform2f(mouseDLoc, this.mouseDelta[0], this.mouseDelta[1]);
+    if (mouseDLoc) gl.uniform2f(mouseDLoc, mdx, mdy);
+    const mouseDownLoc = this._getLayerLoc(layer, 'mouseDown');
+    if (mouseDownLoc) gl.uniform1f(mouseDownLoc, mdown);
+    const pinchHoldLoc = this._getLayerLoc(layer, 'pinchHold');
+    if (pinchHoldLoc) gl.uniform1f(pinchHoldLoc, this.pinchHold);
+    const iaLoc = this._getLayerLoc(layer, 'inputActivity');
+    if (iaLoc) gl.uniform1f(iaLoc, this.inputActivity || 0.0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuf);
     gl.enableVertexAttribArray(0);
@@ -3825,19 +4067,6 @@ class Renderer {
     if (amLoc) gl.uniform1f(amLoc, audioMid);
     const ahLoc = this._getLayerLoc(layer, 'audioHigh');
     if (ahLoc) gl.uniform1f(ahLoc, audioHigh);
-
-    // Audio reactivity modulation
-    if (layer.inputValues && layer.inputValues['audioReactive']) {
-      const sp = layer.inputValues['speed'];
-      const spLoc = this._getLayerLoc(layer, 'speed');
-      if (sp != null && spLoc) gl.uniform1f(spLoc, sp + audioLevel * 1.5);
-      const int_ = layer.inputValues['intensity'];
-      const intLoc = this._getLayerLoc(layer, 'intensity');
-      if (int_ != null && intLoc) gl.uniform1f(intLoc, Math.min(1, int_ + audioBass * 0.7));
-      const ts = layer.inputValues['textScale'];
-      const tsLoc = this._getLayerLoc(layer, 'textScale');
-      if (ts != null && tsLoc) gl.uniform1f(tsLoc, ts * (1 + audioBass * 0.3));
-    }
 
     // Variable font texture (effects 20 + 22)
     const vfLoc = this._getLayerLoc(layer, 'varFontTex');
@@ -3896,6 +4125,8 @@ class Renderer {
       if (hcLoc) gl.uniform1f(hcLoc, mediaPipeMgr.handCount);
       const hpLoc = this._getLayerLoc(layer, 'mpHandPos');
       if (hpLoc) gl.uniform3f(hpLoc, mediaPipeMgr.handPos[0], mediaPipeMgr.handPos[1], mediaPipeMgr.handPos[2]);
+      const hp2Loc = this._getLayerLoc(layer, 'mpHandPos2');
+      if (hp2Loc) gl.uniform3f(hp2Loc, mediaPipeMgr.handPos2[0], mediaPipeMgr.handPos2[1], mediaPipeMgr.handPos2[2]);
     }
 
     return texUnit;
@@ -3920,17 +4151,32 @@ class Renderer {
 
     // Mouse uniforms — hand-as-mouse override
     let mpMx = this.mousePos[0], mpMy = this.mousePos[1];
+    let mpDx = this.mouseDelta[0], mpDy = this.mouseDelta[1];
+    let mpDown = this.mouseDown;
     if (layer.handAsMouse && mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.handCount > 0) {
-      mpMx = mediaPipeMgr.handPos[0];
-      mpMy = mediaPipeMgr.handPos[1];
+      const hx = 1.0 - mediaPipeMgr.handPos[0]; // mirror X to match flipped webcam
+      const hy = mediaPipeMgr.handPos[1];
+      mpDx = hx - (layer._prevHandX ?? hx);
+      mpDy = hy - (layer._prevHandY ?? hy);
+      layer._prevHandX = hx;
+      layer._prevHandY = hy;
+      mpMx = hx;
+      mpMy = hy;
+      mpDown = mediaPipeMgr.isPinching ? 1.0 : 0.0;
     }
     const mousePLoc = this._getLayerLoc(layer, 'mousePos');
     if (mousePLoc) gl.uniform2f(mousePLoc, mpMx, mpMy);
     const mouseDLoc = this._getLayerLoc(layer, 'mouseDelta');
-    if (mouseDLoc) gl.uniform2f(mouseDLoc, this.mouseDelta[0], this.mouseDelta[1]);
+    if (mouseDLoc) gl.uniform2f(mouseDLoc, mpDx, mpDy);
+    const mouseDownLoc = this._getLayerLoc(layer, 'mouseDown');
+    if (mouseDownLoc) gl.uniform1f(mouseDownLoc, mpDown);
+    const pinchHoldLoc2 = this._getLayerLoc(layer, 'pinchHold');
+    if (pinchHoldLoc2) gl.uniform1f(pinchHoldLoc2, this.pinchHold);
+    const iaLoc2 = this._getLayerLoc(layer, 'inputActivity');
+    if (iaLoc2) gl.uniform1f(iaLoc2, this.inputActivity || 0.0);
 
     // Resolve MediaPipe bindings
-    if (layer.mpBindings && layer.mpBindings.length > 0 && mediaPipeMgr && mediaPipeMgr.active) {
+    if (layer.mpBindings && layer.mpBindings.length > 0) {
       resolveBindings(layer, mediaPipeMgr);
     }
 
@@ -4060,9 +4306,6 @@ uniform float overlayScale; // scale
 uniform float overlayRot;   // rotation in radians
 uniform float overlayImgAspect; // image width/height ratio
 varying vec2 isf_FragNormCoord;
-uniform float morphWidth;    // 0=square, 1=full rect
-uniform float textureScale;  // 1=fill, >1=zoom in, <1=zoom out
-
 vec2 uvForLayer(vec2 uv, float fh, float fv) {
   if (fh > 0.5) uv.x = 1.0 - uv.x;
   if (fv > 0.5) uv.y = 1.0 - uv.y;
@@ -4080,20 +4323,6 @@ vec2 uvForOverlay(vec2 uv) {
   c /= max(overlayScale, 0.01);
   c.x /= imgAsp; // image aspect (preserves native proportions)
   return c + 0.5;
-}
-
-vec2 uvForMorph(vec2 uv) {
-  float canvasAsp = RENDERSIZE.x / RENDERSIZE.y;
-  float halfW = mix(0.5 / canvasAsp, 0.5, morphWidth);
-  float left = 0.5 - halfW;
-  float right = 0.5 + halfW;
-  // Outside morph rect -> return -1 sentinel
-  if (uv.x < left || uv.x > right) return vec2(-1.0);
-  // Remap UV to fill the morph rect
-  vec2 m = vec2((uv.x - left) / (right - left), uv.y);
-  // Apply texture scale (zoom from center)
-  m = (m - 0.5) / max(textureScale, 0.01) + 0.5;
-  return m;
 }
 
 vec3 blendNormal(vec3 base, vec3 top, float a) { return mix(base, top, a); }
@@ -4119,9 +4348,6 @@ vec3 applyBlend(vec3 base, vec3 top, float a, float mode) {
 
 void main() {
   vec2 uv = isf_FragNormCoord;
-  vec2 mUV = uvForMorph(uv);
-  if (mUV.x < -0.5) { gl_FragColor = vec4(0.0); return; }
-  uv = mUV;
 
   // Background
   vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
@@ -4185,7 +4411,7 @@ void main() {
     return this.compositorLocs[name];
   }
 
-  renderCompositor(layers, sceneTexture, bgState, morphOpts) {
+  renderCompositor(layers, sceneTexture, bgState) {
     const gl = this.gl;
     if (gl.isContextLost()) return;
     if (!this.compositorProgram) return;
@@ -4233,8 +4459,6 @@ void main() {
     gl.uniform1f(this._getCompLoc('overlayImgAspect'), olay ? (olay._imgAspect || 1.778) : 1.778);
 
     // Morph uniforms
-    gl.uniform1f(this._getCompLoc('morphWidth'), morphOpts ? morphOpts.width : 1.0);
-    gl.uniform1f(this._getCompLoc('textureScale'), morphOpts ? morphOpts.scale : 1.0);
 
     // Background uniforms (use texture unit 4 now that we have 4 layers)
     const bgModeMap = { none: 0, transparent: 1, color: 2, image: 3, video: 3, shader: 3, webcam: 3, ndi: 3 };
@@ -4304,6 +4528,8 @@ class SceneRenderer {
       this._shaderBg.texture.needsUpdate = true;
     }
     const elapsed = (performance.now() - this.startTime) / 1000;
+    // Inject mousePos so scenes can be interactive
+    this.inputValues._mousePos = this._mainRenderer ? [this._mainRenderer.mousePos[0], this._mainRenderer.mousePos[1]] : [0.5, 0.5];
     this.sceneDef.update(elapsed, this.inputValues, this.media);
     this.renderer.render(this.sceneDef.scene, this.sceneDef.camera);
   }
@@ -4333,12 +4559,13 @@ class SceneRenderer {
 
   resize() {
     if (!this.renderer) return;
-    const parent = this.canvas.parentElement;
-    const w = parent.clientWidth;
-    const h = parent.clientHeight;
+    // Match ISF renderer's fixed 1920x1080 so layers align in compositor
+    const w = 1920;
+    const h = 1080;
     this.renderer.setSize(w, h, false);
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
+    const parent = this.canvas.parentElement;
+    this.canvas.style.width = parent.clientWidth + 'px';
+    this.canvas.style.height = parent.clientHeight + 'px';
     if (this.sceneDef && this.sceneDef.resize) {
       this.sceneDef.resize(w, h);
     }
@@ -4424,11 +4651,11 @@ function generateControls(inputs, container, onChange) {
       const mpBtn = document.createElement('button');
       mpBtn.className = 'mp-map-btn';
       mpBtn.dataset.paramName = inp.NAME;
-      mpBtn.title = 'Link to body tracking';
+      mpBtn.title = 'Link to signal';
       mpBtn.innerHTML = '<svg width="12" height="12" viewBox="15 0 75 100" fill="currentColor" stroke="none"><path d="m73.664 7.9102c0.98047 0 1.5352 1.1094 0.98047 1.8945l-17.535 30.367h21.266c1.0391 0 1.6836 1.3047 0.75391 2.1367l-51.426 49.441c-0.94141 0.90625-2.4453-0.15625-1.9258-1.3438l16.309-36.973h-20.465c-0.66406 0-1.1992-0.53516-1.1992-1.1992l18.609-43.59c0.32812-0.76953 0.99219-0.73047 1.582-0.73047z" fill-rule="evenodd"/></svg>';
       mpBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        openMpPicker(mpBtn, inp.NAME, container);
+        window.openMpPicker(mpBtn, inp.NAME, container);
       });
       row.appendChild(mpBtn);
 
@@ -4768,6 +4995,7 @@ class MediaPipeManager {
     this.segTex = null;
     this.handCount = 0;
     this.handPos = [0, 0, 0];
+    this.handPos2 = [0, 0, 0];
     this.isPinching = false;
     this.pinchPos = [0, 0];
     this._pinchStartPos = null;
@@ -4880,9 +5108,14 @@ class MediaPipeManager {
         // Store raw landmarks for binding resolution
         this._lastHandLandmarks = result.landmarks[0].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }));
         // Store second hand landmarks for two-hand gesture processing
-        this._lastHandLandmarks2 = result.landmarks.length >= 2
-          ? result.landmarks[1].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }))
-          : null;
+        if (result.landmarks.length >= 2) {
+          const lm2 = result.landmarks[1][9];
+          this.handPos2 = [lm2.x, 1.0 - lm2.y, lm2.z];
+          this._lastHandLandmarks2 = result.landmarks[1].map(p => ({ x: p.x, y: 1.0 - p.y, z: p.z }));
+        } else {
+          this.handPos2 = [0, 0, 0];
+          this._lastHandLandmarks2 = null;
+        }
 
         // Pack all landmarks into RGBA texture
         const data = new Uint8Array(42 * 4);
@@ -4900,6 +5133,7 @@ class MediaPipeManager {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 42, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
       } else {
         this.handPos = [0, 0, 0];
+        this.handPos2 = [0, 0, 0];
         this.isPinching = false;
         this._lastHandLandmarks2 = null;
       }
@@ -5013,6 +5247,7 @@ const MP_BODY_PARTS = {
 const DERIVED_SIGNALS = {
   hand: [
     { name: 'Pinch Dist', key: 'pinchDist' },
+    { name: 'Pinch', key: 'pinchHold' },
     { name: 'Grip Strength', key: 'gripStrength' },
     { name: 'Finger Spread', key: 'fingerSpread' },
     { name: 'Hand Angle', key: 'handAngle' },
@@ -5039,14 +5274,32 @@ const DERIVED_SIGNALS = {
   ],
 };
 
+const AUDIO_SIGNALS = [
+  { name: 'Level (RMS)', key: 'audioLevel' },
+  { name: 'Bass',        key: 'audioBass' },
+  { name: 'Mid',         key: 'audioMid' },
+  { name: 'High',        key: 'audioHigh' },
+];
+
 /**
  * Resolve MediaPipe bindings for a layer: body part position → parameter value.
- * Supports both landmark bindings { group, landmarkIndex, param, axis, min, max }
- * and derived signal bindings { source: 'derived', signalKey, param, min, max }
+ * Supports three binding types:
+ * - landmark bindings { group, landmarkIndex, param, axis, min, max }
+ * - derived signal bindings { source: 'derived', signalKey, param, min, max }
+ * - audio signal bindings { source: 'audio', signalKey, param, min, max }
  */
 function resolveBindings(layer, mediaPipeMgr) {
   if (!layer.mpBindings || !layer.mpBindings.length) return;
   for (const b of layer.mpBindings) {
+    // Audio signal binding
+    if (b.source === 'audio') {
+      const sigs = { audioLevel, audioBass, audioMid, audioHigh };
+      const v = sigs[b.signalKey];
+      if (v != null) {
+        layer.inputValues[b.param] = b.min + v * (b.max - b.min);
+      }
+      continue;
+    }
     // Derived signal binding
     if (b.source === 'derived') {
       const v = gestureProcessor.derived[b.signalKey];
@@ -5144,7 +5397,7 @@ function createNdiWorker() {
       const { bitmap, width, height } = e.data;
       if (!offscreen || offscreen.width !== width || offscreen.height !== height) {
         offscreen = new OffscreenCanvas(width, height);
-        ctx = offscreen.getContext('2d', { alpha: false });
+        ctx = offscreen.getContext('2d', { alpha: false, willReadFrequently: true });
       }
       ctx.drawImage(bitmap, 0, 0, width, height);
       const imageData = ctx.getImageData(0, 0, width, height);
@@ -5166,6 +5419,11 @@ function startNdiSend(ws, canvasEl) {
   if (ndiSendingActive) return;
   ndiSendingActive = true;
   document.getElementById('ndi-indicator')?.classList.add('active');
+  // Update sidebar button + status dot
+  const sendBtn = document.getElementById('ndi-send-btn');
+  const statusDot = document.getElementById('ndi-status');
+  if (sendBtn) sendBtn.textContent = 'Stop';
+  if (statusDot) statusDot.classList.add('active');
   ndiSendFrameCount = 0;
   const NDI_W = 960, NDI_H = 540;
   const worker = createNdiWorker();
@@ -5200,6 +5458,11 @@ function startNdiSend(ws, canvasEl) {
 function stopNdiSend() {
   ndiSendingActive = false;
   document.getElementById('ndi-indicator')?.classList.remove('active');
+  // Update sidebar button + status dot
+  const sendBtn = document.getElementById('ndi-send-btn');
+  const statusDot = document.getElementById('ndi-status');
+  if (sendBtn) sendBtn.textContent = 'Send';
+  if (statusDot) statusDot.classList.remove('active');
   if (ndiSendAnimId) { cancelAnimationFrame(ndiSendAnimId); ndiSendAnimId = null; }
   if (ndiSendWorker) { ndiSendWorker.terminate(); ndiSendWorker = null; }
 }
@@ -5239,6 +5502,7 @@ function stopNdiSend() {
   dbg('init: Renderer OK');
   const sceneRenderer = new SceneRenderer(threeCanvas);
   sceneRenderer._isfGL = isfRenderer.gl;
+  sceneRenderer._mainRenderer = isfRenderer;
   const errorBar = document.getElementById('error-bar');
 
   // Three.js canvas always renders offscreen — gl-canvas is the compositor output
@@ -5268,11 +5532,12 @@ function stopNdiSend() {
   ];
 
   // Scene layer gets a plain texture (uploaded from Three.js canvas each frame)
+  // Alpha=0 so an unrendered scene doesn't cover layers below it in compositor
   function createSceneTexture() {
     const gl = isfRenderer.gl;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,255]));
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0]));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -5537,6 +5802,9 @@ function stopNdiSend() {
       inp.NAME === 'glow' || inp.NAME === 'morph' || inp.NAME === 'alive');
 
     if (result.ok) {
+      // Set layer visible immediately — don't let post-compilation errors hide a working shader
+      layer.visible = true;
+      try {
       const paramsContainer = document.querySelector(`.layer-params[data-layer="${layerId}"]`);
       if (paramsContainer) {
         // For text layer, skip msg from params UI (prominent bar handles it)
@@ -5632,6 +5900,9 @@ function stopNdiSend() {
             height: h
           };
         });
+      }
+      } catch (e) {
+        console.error('compileToLayer post-compile error for ' + layerId + ':', e);
       }
     }
     return result;
@@ -5979,8 +6250,8 @@ function stopNdiSend() {
     console.warn('Could not load shader manifest:', e);
   }
 
-  const scenes = manifest.filter(item => item.type === 'scene');
-  const isfShaders = manifest.filter(item => item.type !== 'scene');
+  const scenes = manifest.filter(item => item.type === 'scene' && !item.hidden);
+  const isfShaders = manifest.filter(item => item.type !== 'scene' && !item.hidden);
   const textShaders = isfShaders.filter(item => (item.categories || []).includes('Text'));
   const otherShaders = isfShaders.filter(item => !(item.categories || []).includes('Text'));
 
@@ -6667,6 +6938,12 @@ function stopNdiSend() {
   const mpModesRow = document.getElementById('mp-modes-row');
   const handAsMouseRow = document.getElementById('hand-as-mouse-row');
   const handAsMouseBtn = document.getElementById('hand-as-mouse-btn');
+  const handPosWidget = document.getElementById('hand-pos-widget');
+  const handPosDot = document.getElementById('hand-pos-dot');
+  const handPosXRange = document.getElementById('hand-pos-x');
+  const handPosYRange = document.getElementById('hand-pos-y');
+  const handPosXVal = document.getElementById('hand-pos-x-val');
+  const handPosYVal = document.getElementById('hand-pos-y-val');
   let gestureEnabled = false;
   let handAsMouseEnabled = false;
   let btOverlayEnabled = false;
@@ -6826,7 +7103,10 @@ function stopNdiSend() {
         const row = document.createElement('div');
         row.className = 'bt-link-row';
         let srcLabel;
-        if (b.source === 'derived') {
+        if (b.source === 'audio') {
+          const found = AUDIO_SIGNALS.find(s => s.key === b.signalKey);
+          srcLabel = '\u266B ' + (found ? found.name : b.signalKey);
+        } else if (b.source === 'derived') {
           // Find signal name
           let sigName = b.signalKey;
           for (const grp in DERIVED_SIGNALS) {
@@ -7112,9 +7392,15 @@ function stopNdiSend() {
   handAsMouseBtn.addEventListener('click', () => {
     handAsMouseEnabled = !handAsMouseEnabled;
     handAsMouseBtn.classList.toggle('active', handAsMouseEnabled);
+    handPosWidget.classList.toggle('active', handAsMouseEnabled);
     for (const lid of ['text', 'shader', 'scene']) {
       const l = getLayer(lid);
-      if (l) l.handAsMouse = handAsMouseEnabled;
+      if (l) {
+        l.handAsMouse = handAsMouseEnabled;
+        // Reset tracked position to avoid jump on re-enable
+        delete l._prevHandX;
+        delete l._prevHandY;
+      }
     }
   });
 
@@ -7181,6 +7467,7 @@ function stopNdiSend() {
       btPresetRow.style.display = 'none';
       mpModesRow.style.display = 'none';
       handAsMouseRow.style.display = 'none';
+      handPosWidget.classList.remove('active');
       btOverlayRow.style.display = 'none';
       btSignalsSection.style.display = 'none';
       btLinksSection.style.display = 'none';
@@ -7217,15 +7504,13 @@ function stopNdiSend() {
     if (!layer) return;
     const card = document.querySelector(`.layer-card[data-layer="${layerId}"]`);
     if (!card) return;
-    const controls = card.querySelector('.layer-controls');
-    if (!controls) return;
 
     // Remove legacy bindings section if still present
-    const section = controls.querySelector('.mp-bindings-section');
+    const section = card.querySelector('.mp-bindings-section');
     if (section) section.remove();
 
-    // Sync per-slider MP map button highlights
-    syncMpLinkedState(controls, layerId);
+    // Sync per-slider MP map button highlights (buttons live in .layer-params)
+    syncMpLinkedState(card, layerId);
   }
 
   // Rebuild bindings UI when MediaPipe toggled or layer switches
@@ -7263,6 +7548,7 @@ function stopNdiSend() {
         <button class="mp-picker-tab" data-group="face">Face</button>
         <button class="mp-picker-tab" data-group="pose">Pose</button>
         <button class="mp-picker-tab" data-group="signals">Signals</button>
+        <button class="mp-picker-tab" data-group="audio">Audio</button>
       </div>
       <div class="mp-picker-list"></div>
       <div class="mp-picker-axis">
@@ -7277,6 +7563,7 @@ function stopNdiSend() {
     return el;
   }
 
+  window.openMpPicker = openMpPicker;
   function openMpPicker(anchorBtn, paramName, container) {
     const picker = createMpPicker();
     const layerCard = container.closest('[data-layer]');
@@ -7294,7 +7581,9 @@ function stopNdiSend() {
     const pMin = isfInput && isfInput.MIN != null ? isfInput.MIN : 0;
     const pMax = isfInput && isfInput.MAX != null ? isfInput.MAX : 1;
 
-    let activeGroup = existing ? (existing.source === 'derived' ? 'signals' : existing.group) : 'hand';
+    let activeGroup = existing
+      ? (existing.source === 'audio' ? 'audio' : existing.source === 'derived' ? 'signals' : existing.group)
+      : 'hand';
     let selectedAxis = existing ? (existing.axis || 'x') : 'x';
 
     // Tabs
@@ -7305,12 +7594,12 @@ function stopNdiSend() {
       t.onclick = () => {
         activeGroup = t.dataset.group;
         tabs.forEach(tt => tt.classList.toggle('active', tt === t));
-        // Hide axis row for signals tab
-        axisRow.style.display = activeGroup === 'signals' ? 'none' : '';
+        // Hide axis row for signals/audio tabs
+        axisRow.style.display = (activeGroup === 'signals' || activeGroup === 'audio') ? 'none' : '';
         renderList();
       };
     });
-    axisRow.style.display = activeGroup === 'signals' ? 'none' : '';
+    axisRow.style.display = (activeGroup === 'signals' || activeGroup === 'audio') ? 'none' : '';
 
     // Axis radios
     const axisRadios = picker.querySelectorAll('input[name="mp-axis"]');
@@ -7350,6 +7639,26 @@ function stopNdiSend() {
             };
             listEl.appendChild(item);
           }
+        }
+      } else if (activeGroup === 'audio') {
+        for (const sig of AUDIO_SIGNALS) {
+          const item = document.createElement('div');
+          item.className = 'mp-picker-list-item';
+          item.textContent = sig.name;
+          if (existing && existing.source === 'audio' && existing.signalKey === sig.key) {
+            item.classList.add('selected');
+          }
+          item.onclick = () => {
+            const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+            if (idx >= 0) layer.mpBindings.splice(idx, 1);
+            existing = { source: 'audio', signalKey: sig.key, param: paramName, min: pMin, max: pMax };
+            layer.mpBindings.push(existing);
+            anchorBtn.classList.add('linked');
+            buildLinksUI(layerId);
+            renderLinksDashboard();
+            closeMpPicker();
+          };
+          listEl.appendChild(item);
         }
       } else {
         const parts = MP_BODY_PARTS[activeGroup] || [];
@@ -7407,6 +7716,19 @@ function stopNdiSend() {
       document.removeEventListener('pointerdown', _mpPickerCloseHandler, true);
       _mpPickerCloseHandler = null;
     }
+  }
+
+  // === Hand position widget update ===
+  function updateHandPosWidget() {
+    if (!handAsMouseEnabled || !mediaPipeMgr || !mediaPipeMgr.active) return;
+    const hx = 1.0 - mediaPipeMgr.handPos[0];
+    const hy = mediaPipeMgr.handPos[1];
+    handPosDot.style.left = (hx * 100) + '%';
+    handPosDot.style.top = ((1 - hy) * 100) + '%';
+    handPosXRange.value = hx;
+    handPosYRange.value = hy;
+    handPosXVal.textContent = hx.toFixed(2);
+    handPosYVal.textContent = hy.toFixed(2);
   }
 
   // === Live slider feedback for bound parameters (Step 5) ===
@@ -7591,6 +7913,90 @@ function stopNdiSend() {
     if (exportHub.classList.contains('show') && !exportHub.contains(e.target) && e.target.id !== 'export-hub-btn') {
       exportHub.classList.remove('show');
     }
+  });
+
+  // --- Sidebar Tabs ---
+  const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+  const canvasTabContent = document.getElementById('canvas-tab-content');
+  const galleryTabContent = document.getElementById('gallery-tab-content');
+  const exportTabContent = document.getElementById('export-tab-content');
+  const tabContentMap = { canvas: canvasTabContent, gallery: galleryTabContent, export: exportTabContent };
+
+  sidebarTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      sidebarTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.tab;
+      Object.values(tabContentMap).forEach(c => c.classList.remove('active'));
+      if (tabContentMap[target]) tabContentMap[target].classList.add('active');
+      if (target === 'gallery' && !galleryTabContent._populated) populateGallery();
+    });
+  });
+
+
+
+  // Populate gallery grid from manifest
+  function populateGallery(filter) {
+    const grid = document.getElementById('gallery-grid');
+    grid.innerHTML = '';
+    galleryTabContent._populated = true;
+    const q = (filter || '').toLowerCase();
+
+    // Combine all shaders + scenes
+    const allItems = [...isfShaders, ...scenes];
+    const categories = {};
+    allItems.forEach(item => {
+      if (q && !item.title.toLowerCase().includes(q) && !(item.description || '').toLowerCase().includes(q)) return;
+      const cats = item.categories || ['Uncategorized'];
+      cats.forEach(cat => {
+        if (!categories[cat]) categories[cat] = [];
+        if (!categories[cat].find(x => x.id === item.id)) categories[cat].push(item);
+      });
+    });
+
+    for (const [cat, items] of Object.entries(categories)) {
+      const title = document.createElement('div');
+      title.className = 'gallery-category-title';
+      title.textContent = cat;
+      grid.appendChild(title);
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'gc-title';
+        titleEl.textContent = item.title;
+        card.appendChild(titleEl);
+        const folder = item.folder || (item.type === 'scene' ? 'scenes' : 'shaders');
+        card.addEventListener('click', async () => {
+          const layerId = item.type === 'scene' ? 'scene' : 'shader';
+          const layer = getLayer(layerId);
+          if (layer) layer.manifestEntry = item;
+          if (item.type === 'scene') {
+            await loadScene(folder, item.file);
+          } else {
+            await loadShaderToLayer(layerId, folder, item.file);
+          }
+          // Switch back to Canvas tab
+          sidebarTabs.forEach(t => t.classList.remove('active'));
+          sidebarTabs[0].classList.add('active');
+          Object.values(tabContentMap).forEach(c => c.classList.remove('active'));
+          canvasTabContent.classList.add('active');
+        });
+        grid.appendChild(card);
+      });
+    }
+  }
+
+  // Gallery search
+  document.getElementById('gallery-search').addEventListener('input', (e) => {
+    populateGallery(e.target.value);
+  });
+
+  // Export tab tiles — reuse existing exportAction
+  document.getElementById('export-tab-content').addEventListener('click', (e) => {
+    const tile = e.target.closest('[data-action]');
+    if (!tile) return;
+    exportAction(tile.dataset.action);
   });
 
   // Background source select
@@ -7920,52 +8326,60 @@ function stopNdiSend() {
     catch (e) { console.warn('Webcam access denied:', e.message); }
   });
 
-  // MediaPipe tile — mode selection then init
-  document.getElementById('tile-mediapipe').addEventListener('click', async () => {
-    if (mediaPipeMgr.active) {
-      // Already active — show info
-      alert('MediaPipe already active: ' + mediaPipeMgr.getLabel());
-      return;
-    }
-
-    // Simple mode selection
-    const modes = { hand: true, face: false, pose: false, segment: false };
-    const choice = prompt('MediaPipe modes (comma-separated):\nhand, face, pose, segment\n\nDefault: hand', 'hand');
-    if (!choice) return;
-    choice.split(',').map(s => s.trim().toLowerCase()).forEach(m => {
-      if (m === 'hand') modes.hand = true;
-      if (m === 'face') modes.face = true;
-      if (m === 'pose') modes.pose = true;
-      if (m === 'segment') modes.segment = true;
-    });
-
-    // Auto-enable webcam if not already active
-    const hasWebcam = mediaInputs.some(m => m.name === 'Webcam' && m.type === 'video');
-    if (!hasWebcam) {
-      try { await addMediaFromWebcam(); }
-      catch (e) { console.warn('Webcam needed for MediaPipe:', e.message); return; }
-    }
-
-    // Show loading indicator
-    const mpLoading = document.createElement('div');
-    mpLoading.className = 'mp-loading';
-    mpLoading.innerHTML = '<div class="spinner"></div> Loading MediaPipe models...';
-    document.getElementById('media-list').appendChild(mpLoading);
-
+  // Code import tile — load .fs/.glsl/.frag shader files
+  const codeFileInput = document.getElementById('code-file-input');
+  document.getElementById('tile-code').addEventListener('click', () => codeFileInput.click());
+  codeFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    codeFileInput.value = '';
     try {
-      await mediaPipeMgr.init(modes);
-      mpLoading.remove();
-      // Add to media list display
-      const id = ++mediaIdCounter;
-      const entry = { id, name: mediaPipeMgr.getLabel(), type: 'mediapipe', element: null, glTexture: null, threeTexture: null, threeModel: null, _isMediaPipe: true };
-      mediaInputs.push(entry);
-      renderMediaList();
-    } catch (e) {
-      mpLoading.remove();
-      console.warn('MediaPipe init failed:', e.message);
-      alert('MediaPipe failed to load: ' + e.message);
+      const source = await file.text();
+      // Detect target layer from ISF header categories
+      let targetLayer = 'shader'; // default to shader layer
+      const headerMatch = source.match(/\/\*\s*\{([\s\S]*?)\}\s*\*\//);
+      if (headerMatch) {
+        try {
+          const meta = JSON.parse('{' + headerMatch[1] + '}');
+          const cats = (meta.CATEGORIES || []).map(c => c.toLowerCase());
+          if (cats.includes('text')) targetLayer = 'text';
+        } catch (parseErr) { /* non-JSON header, use default */ }
+      }
+      const result = compileToLayer(targetLayer, source);
+      if (focusedLayerId === targetLayer) editor.setValue(source);
+      if (!result.ok) {
+        errorBar.textContent = result.errors;
+        errorBar.classList.add('show');
+      } else {
+        errorBar.textContent = '';
+        errorBar.classList.remove('show');
+        // Auto-show the target layer
+        const layer = getLayer(targetLayer);
+        if (layer && !layer.visible) {
+          layer.visible = true;
+          const visBtn = document.querySelector(`.layer-card[data-layer="${targetLayer}"] .layer-vis`);
+          if (visBtn) visBtn.classList.add('active');
+        }
+        // Update preset dropdown to show filename
+        const sel = document.querySelector(`.layer-shader-select[data-layer="${targetLayer}"]`);
+        if (sel) {
+          let customOpt = sel.querySelector('option[value="custom"]');
+          if (!customOpt) {
+            customOpt = document.createElement('option');
+            customOpt.value = 'custom';
+            sel.appendChild(customOpt);
+          }
+          customOpt.textContent = file.name;
+          sel.value = 'custom';
+        }
+      }
+    } catch (err) {
+      errorBar.textContent = 'Failed to load: ' + file.name;
+      errorBar.classList.add('show');
     }
   });
+
+  // MediaPipe tile removed from UI — body tracking is controlled via the layer panel toggle
 
   // NDI Source Picker
   const ndiPicker = document.getElementById('ndi-source-picker');
@@ -8060,17 +8474,44 @@ function stopNdiSend() {
     return entry;
   }
 
-  // NDI Send (triggered from Export dropdown)
+  // NDI Send (triggered from Export dropdown, NDI indicator, or sidebar Send btn)
+  function updateNdiUI() {
+    const sendBtn = document.getElementById('ndi-send-btn');
+    const statusDot = document.getElementById('ndi-status');
+    if (sendBtn) sendBtn.textContent = ndiSendingActive ? 'Stop' : 'Send';
+    if (statusDot) statusDot.classList.toggle('active', ndiSendingActive);
+  }
+
   async function toggleNdiSend() {
-    if (!_ndiWs || _ndiWs.readyState !== WebSocket.OPEN) return;
-    if (ndiSendingActive) {
-      stopNdiSend();
-      await ndiRequest(_ndiWs, 'ndi_send_stop');
-    } else {
-      await ndiRequest(_ndiWs, 'ndi_send_start', { name: 'ShaderClaw', width: glCanvas.width, height: glCanvas.height });
-      startNdiSend(_ndiWs, glCanvas);
+    if (!_ndiWs || _ndiWs.readyState !== WebSocket.OPEN) {
+      console.warn('NDI: WebSocket not connected');
+      return;
+    }
+    try {
+      if (ndiSendingActive) {
+        stopNdiSend();
+        updateNdiUI();
+        await ndiRequest(_ndiWs, 'ndi_send_stop').catch(() => {});
+      } else {
+        await ndiRequest(_ndiWs, 'ndi_send_start', { name: 'ShaderClaw', width: glCanvas.width, height: glCanvas.height });
+        startNdiSend(_ndiWs, glCanvas);
+        updateNdiUI();
+      }
+    } catch (e) {
+      console.warn('NDI toggle error:', e.message);
+      updateNdiUI();
     }
   }
+
+  // NDI indicator click → toggle send
+  document.getElementById('ndi-indicator')?.addEventListener('click', () => {
+    toggleNdiSend();
+  });
+
+  // NDI sidebar Send button → toggle send
+  document.getElementById('ndi-send-btn')?.addEventListener('click', () => {
+    toggleNdiSend();
+  });
 
   function renderMediaList() {
     mediaListContainer.innerHTML = '';
@@ -8406,12 +8847,18 @@ function stopNdiSend() {
     renderMediaList();
     autoBindTextures();
 
-    // Auto-switch to "Custom" shape when a model is added
+    // Make 3D layer visible when a model is added; set Custom shape if scene supports it
     if (type === 'model') {
       const sceneLayer = getLayer('scene');
-      sceneLayer.inputValues['shape'] = 6;
-      sceneRenderer.inputValues = sceneLayer.inputValues;
-      window.shaderClaw.updateControlUI('shape', 6, 'scene');
+      if (sceneLayer.inputs && sceneLayer.inputs.some(inp => inp.NAME === 'shape')) {
+        sceneLayer.inputValues['shape'] = 6;
+        sceneRenderer.inputValues = sceneLayer.inputValues;
+        window.shaderClaw.updateControlUI('shape', 6, 'scene');
+      }
+      if (!sceneLayer.visible) {
+        sceneLayer.visible = true;
+        updateLayerCardUI('scene');
+      }
     }
 
     return entry;
@@ -8850,31 +9297,37 @@ function stopNdiSend() {
   (async function loadDefaults() {
     dbg('loadDefaults: fetching...');
     const [textSrc, sceneSrc, skySrc] = await Promise.all([
-      fetch('shaders/text_james.fs').then(r => r.text()),
+      fetch('shaders/text_typewriter.fs').then(r => r.text()),
       fetch('scenes/tesseract.scene.js').then(r => r.text()),
-      fetch('shaders/wind.fs').then(r => r.text()).catch(() => null),
+      fetch('shaders/laser.fs').then(r => r.text()).catch(() => null),
     ]);
 
     // Yield frames between each heavy GPU operation to prevent context loss
     await yieldFrame();
 
-    // 1. Shader layer FIRST (simple particle network — compile fast, render immediately)
+    // 1. Shader layer FIRST
     try {
       const shaderSrc = skySrc || DEFAULT_SHADER;
       const shaderResult = compileToLayer('shader', shaderSrc);
       if (shaderResult && shaderResult.ok) {
-        getLayer('shader').visible = true;
+        // compileToLayer already sets visible=true on success
         if (skySrc) {
-          getLayer('shader').manifestEntry = manifest.find(m => m.file === 'wind.fs');
+          getLayer('shader').manifestEntry = manifest.find(m => m.file === 'laser.fs');
           const sel = document.querySelector('.layer-shader-select[data-layer="shader"]');
-          if (sel) sel.value = 'wind.fs';
+          if (sel) sel.value = 'laser.fs';
         }
         if (focusedLayerId === 'shader') editor.setValue(shaderSrc);
-        dbg('shader: OK');
       } else {
-        dbg('shader: FAILED — ' + (shaderResult && shaderResult.errors));
+        const err = shaderResult && shaderResult.errors;
+        console.error('Shader compile failed:', err);
+        errorBar.textContent = 'Shader: ' + (err || 'unknown error');
+        errorBar.classList.add('show');
       }
-    } catch (e) { dbg('shader EXCEPTION: ' + e.message); }
+    } catch (e) {
+      console.error('shader compile exception:', e);
+      errorBar.textContent = 'Shader exception: ' + e.message;
+      errorBar.classList.add('show');
+    }
 
     await yieldFrame();
 
@@ -8909,22 +9362,22 @@ function stopNdiSend() {
     try {
       const textResult = compileToLayer('text', textSrc);
       if (textResult && textResult.ok) {
-        getLayer('text').visible = true;
-        getLayer('text').manifestEntry = manifest.find(m => m.file === 'text_james.fs');
+        // compileToLayer already sets visible=true on success
+        getLayer('text').manifestEntry = manifest.find(m => m.file === 'text_typewriter.fs');
         const textSel = document.querySelector('.layer-shader-select[data-layer="text"]');
-        if (textSel) textSel.value = 'text_james.fs';
+        if (textSel) textSel.value = 'text_typewriter.fs';
         if (focusedLayerId === 'text') editor.setValue(textSrc);
         // Pre-generate font atlas so first render frame has the texture ready
         updateFontAtlas(isfRenderer.gl, getLayer('text').inputValues || {});
-        dbg('text: OK');
       } else {
-        dbg('text: FAILED — ' + (textResult && textResult.errors));
+        console.error('Text compile failed:', textResult && textResult.errors);
       }
     } catch (e) { dbg('text EXCEPTION: ' + e.message); }
 
     updateLayerCardUI('scene');
     updateLayerCardUI('shader');
     updateLayerCardUI('text');
+
     // Start rendering now that all shaders are compiled
     compositionPlaying = true;
     document.getElementById('play-btn').innerHTML = '&#9654;';
@@ -8957,6 +9410,13 @@ function stopNdiSend() {
     }
     if (_compFrameCount < 3) dbg('compLoop frame ' + _compFrameCount + ' comp=' + !!isfRenderer.compositorProgram);
     _compFrameCount++;
+
+    // Pinch hold accumulator: ramps up while pinching, decays when released
+    if (mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.isPinching) {
+      isfRenderer.pinchHold = Math.min(isfRenderer.pinchHold + 0.016, 10.0);
+    } else {
+      isfRenderer.pinchHold = Math.max(isfRenderer.pinchHold - 0.04, 0.0);
+    }
 
     const gl = isfRenderer.gl;
 
@@ -9007,6 +9467,7 @@ function stopNdiSend() {
       // Live slider feedback: update sliders for MP-bound params (~15fps)
       if ((_compFrameCount & 3) === 0) {
         updateLinkedSliders();
+        updateHandPosWidget();
         updateSignalBars();
         updateLinksDashboardValues();
         if (btIsRecording) captureFrame();
@@ -9038,13 +9499,16 @@ function stopNdiSend() {
       if (result.ok) {
         // Snapshot old FBO for crossfade
         _snapshotLayerFBO(gl, layer);
-        // Apply compiled program via compileToLayer (handles controls, passes, etc.)
-        compileToLayer(layer.id, pending.source, result.program);
+        // Swap program immediately (GPU-only, fast) to keep rendering smooth
+        isfRenderer.compileForLayer(layer, null, null, result.program);
         // Start crossfade
         layer._transitionStart = performance.now();
         errorBar.textContent = '';
         errorBar.classList.remove('show');
         lastErrors = null;
+        // Defer heavy DOM work (generateControls, passes, etc.) out of animation frame
+        const _pendingId = layer.id, _pendingSrc = pending.source;
+        setTimeout(() => { compileToLayer(_pendingId, _pendingSrc, layer.program); }, 0);
       } else {
         errorBar.textContent = result.errors;
         errorBar.classList.add('show');
@@ -9076,15 +9540,26 @@ function stopNdiSend() {
           }
         }
       } catch (e) {
-        // Silently skip layer if GL error (e.g. during context recovery)
+        if (_compFrameCount < 5) console.error('Layer render error [' + layer.id + ']:', e);
       }
     }
 
     // Update mouse delta for this frame
-    isfRenderer.mouseDelta[0] = isfRenderer.mousePos[0] - isfRenderer._lastMousePos[0];
-    isfRenderer.mouseDelta[1] = isfRenderer.mousePos[1] - isfRenderer._lastMousePos[1];
+    const mdx = isfRenderer.mousePos[0] - isfRenderer._lastMousePos[0];
+    const mdy = isfRenderer.mousePos[1] - isfRenderer._lastMousePos[1];
+    isfRenderer.mouseDelta[0] = mdx;
+    isfRenderer.mouseDelta[1] = mdy;
     isfRenderer._lastMousePos[0] = isfRenderer.mousePos[0];
     isfRenderer._lastMousePos[1] = isfRenderer.mousePos[1];
+
+    // Input activity: 1.0 when mouse/hands active, decays toward 0 when idle
+    const _mouseMoving = Math.abs(mdx) > 0.0005 || Math.abs(mdy) > 0.0005;
+    const _handsActive = mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.handCount > 0;
+    if (_mouseMoving || _handsActive) {
+      isfRenderer.inputActivity = Math.min((isfRenderer.inputActivity || 0) + 0.05, 1.0);
+    } else {
+      isfRenderer.inputActivity = Math.max((isfRenderer.inputActivity || 0) - 0.006, 0.0);
+    }
 
     // Update background texture each frame
     if (canvasBg.mode === 'video' || canvasBg.mode === 'webcam') {
@@ -9106,8 +9581,7 @@ function stopNdiSend() {
     }
 
     // 5. Compositor pass to screen
-    const morphOpts = gestureEnabled ? { width: gestureProcessor.morphValue, scale: gestureProcessor.textureScale } : null;
-    isfRenderer.renderCompositor(layers, sceneTexture, canvasBg, morphOpts);
+    isfRenderer.renderCompositor(layers, sceneTexture, canvasBg);
 
     // 6. Projection window mirror
     if (projectionCtx && projectionWindow && !projectionWindow.closed) {
@@ -9131,6 +9605,8 @@ function stopNdiSend() {
     isfRenderer.mousePos[0] += (nx - isfRenderer.mousePos[0]) * 0.3;
     isfRenderer.mousePos[1] += (ny - isfRenderer.mousePos[1]) * 0.3;
   });
+  glCanvas.addEventListener('mousedown', () => { isfRenderer.mouseDown = 1; });
+  glCanvas.addEventListener('mouseup', () => { isfRenderer.mouseDown = 0; });
 
   // Handle canvas resize on panel resize
   const resizeObs = new ResizeObserver(() => {

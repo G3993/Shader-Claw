@@ -74,6 +74,10 @@ export function buildFragmentShader(source) {
     'uniform float useFontAtlas;',
     // Voice decay
     'uniform float _voiceGlitch;',
+    // Pinch gesture
+    'uniform float pinchHold;',
+    // Input activity (1.0 = active, decays to 0 when idle)
+    'uniform float inputActivity;',
     // MediaPipe
     'uniform sampler2D mpHandLandmarks;',
     'uniform sampler2D mpFaceLandmarks;',
@@ -81,6 +85,7 @@ export function buildFragmentShader(source) {
     'uniform sampler2D mpSegMask;',
     'uniform float mpHandCount;',
     'uniform vec3 mpHandPos;',
+    'uniform vec3 mpHandPos2;',
     // Layer compositing
     'uniform float _transparentBg;',
     // Effects layer: reads composite of layers below

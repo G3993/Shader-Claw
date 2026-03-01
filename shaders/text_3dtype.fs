@@ -50,6 +50,50 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+// Word-wrap helpers — keep whole words together
+bool _isSp(int i, int nc) {
+    if (i < 0 || i >= nc) return true;
+    int ch = getChar(i);
+    return (ch < 0 || ch > 25);
+}
+int _wLen(int from, int nc) {
+    int w = 0;
+    for (int j = 0; j < 24; j++) {
+        if (from + j >= nc) break;
+        int ch = getChar(from + j);
+        if (ch < 0 || ch > 25) break;
+        w++;
+    }
+    return w;
+}
+int _wwRows(int mc, int nc) {
+    int c = 0, r = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return r + 1;
+}
+int _wwRowLen(int tr, int mc, int nc) {
+    int c = 0, r = 0, n = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        if (r == tr) n++;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return n;
+}
+
 vec3 rgb2hsv(vec3 c) {
     vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
     vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
@@ -73,7 +117,7 @@ float textHit(vec2 uv, float aspect) {
     int maxCols = int(floor((maxW + gap) / cellStep));
     if (maxCols < 1) maxCols = 1;
     if (maxCols > numChars) maxCols = numChars;
-    int numRows = (numChars + maxCols - 1) / maxCols;
+    int numRows = _wwRows(maxCols, numChars);
 
     float rw = float(maxCols) * cellStep - gap;
     if (rw > maxW) {
@@ -95,13 +139,24 @@ float textHit(vec2 uv, float aspect) {
     float rowStartX = 0.5;
     for (int i = 0; i < 24; i++) {
         if (i >= numChars) break;
+        int ch = getChar(i);
+        bool isSp = (ch < 0 || ch > 25);
+
+        // Word-wrap: if starting a new word that won't fit, break to next line
+        if (!isSp && _isSp(i - 1, numChars) && _col > 0) {
+            if (_col + _wLen(i, numChars) > maxCols) {
+                _col = 0; _row++;
+            }
+        }
+
+        // Skip leading spaces at start of wrapped line
+        if (isSp && _col == 0 && i > 0) continue;
+
         if (_col == 0) {
-            int charsInRow = numChars - _row * maxCols;
-            if (charsInRow > maxCols) charsInRow = maxCols;
+            int charsInRow = _wwRowLen(_row, maxCols, numChars);
             float rwRow = float(charsInRow) * cellStep - gap;
             rowStartX = 0.5 - rwRow * 0.5;
         }
-        int ch = getChar(i);
         if (ch >= 0 && ch <= 25) {
             float cx = rowStartX + float(_col) * cellStep;
             float cy = startY + float(_row) * lineH;

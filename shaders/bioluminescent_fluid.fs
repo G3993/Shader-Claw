@@ -4,9 +4,9 @@
   "CREDIT": "ShaderClaw",
   "CATEGORIES": ["Generator", "Simulation"],
   "INPUTS": [
-    { "NAME": "dotSize", "TYPE": "float", "DEFAULT": 0.004, "MIN": 0.001, "MAX": 0.015 },
+    { "NAME": "dotSize", "TYPE": "float", "DEFAULT": 0.005, "MIN": 0.001, "MAX": 0.015 },
     { "NAME": "lineThickness", "TYPE": "float", "DEFAULT": 0.0012, "MIN": 0.0002, "MAX": 0.004 },
-    { "NAME": "connectionRange", "TYPE": "float", "DEFAULT": 0.22, "MIN": 0.05, "MAX": 0.5 },
+    { "NAME": "connectionRange", "TYPE": "float", "DEFAULT": 0.28, "MIN": 0.05, "MAX": 0.5 },
     { "NAME": "attraction", "TYPE": "float", "DEFAULT": 0.3, "MIN": 0.0, "MAX": 2.0 },
     { "NAME": "driftSpeed", "TYPE": "float", "DEFAULT": 1.0, "MIN": 0.0, "MAX": 3.0 },
     { "NAME": "starColor", "TYPE": "color", "DEFAULT": [0.7, 0.85, 1.0, 1.0] },
@@ -14,20 +14,20 @@
     { "NAME": "mouseNode", "TYPE": "float", "DEFAULT": 1.0, "MIN": 0.0, "MAX": 1.0 }
   ],
   "PASSES": [
-    { "TARGET": "particleState", "PERSISTENT": true, "WIDTH": 96, "HEIGHT": 1 },
+    { "TARGET": "particleState", "PERSISTENT": true, "WIDTH": 48, "HEIGHT": 1 },
     {}
   ]
 }
 */
 
-const float N = 96.0;
-const int NI = 96;
+const float N = 48.0;
+const int NI = 48;
 
 float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 vec2 hash2(float n) { return fract(sin(vec2(n, n + 1.0)) * vec2(43758.5453, 22578.1459)); }
 
 // =============================================
-// PASS 0 — Particle state (32x1, PERSISTENT)
+// PASS 0 — Particle state (48x1, PERSISTENT)
 // xy = position, zw = velocity
 // =============================================
 vec4 passState() {
@@ -52,14 +52,14 @@ vec4 passState() {
     vec2 drift = vec2(
         sin(t * f1 + p1) * cos(t * f2 * 0.7 + p2),
         cos(t * f1 * 0.8 + p1) * sin(t * f2 + p2)
-    ) * 0.00012 * driftSpeed;
+    ) * 0.00015 * driftSpeed;
 
     // Gentle mouse attraction
     vec2 toMouse = mousePos - pos;
     vel += toMouse * attraction * 0.0004;
 
     vel += drift;
-    vel *= 0.985; // damping
+    vel *= 0.985;
 
     // Soft edge repulsion
     float m = 0.06;
@@ -85,11 +85,15 @@ vec4 passRender() {
     vec2 uv = isf_FragNormCoord;
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
     vec2 uvA = vec2(uv.x * aspect, uv.y);
+    float cr2 = connectionRange * connectionRange;
 
-    // Cache all particle positions
-    vec2 pts[96];
+    // Cache all particle positions (aspect-corrected)
+    vec2 raw[48];
+    vec2 pts[48];
     for (int i = 0; i < NI; i++) {
-        pts[i] = texture2D(particleState, vec2((float(i) + 0.5) / N, 0.5)).xy;
+        vec2 p = texture2D(particleState, vec2((float(i) + 0.5) / N, 0.5)).xy;
+        raw[i] = p;
+        pts[i] = vec2(p.x * aspect, p.y);
     }
 
     vec3 col = vec3(0.0);
@@ -105,64 +109,58 @@ vec4 passRender() {
         col += starColor.rgb * smoothstep(0.04, 0.0, length(sf)) * sb * st * 0.12;
     }
 
-    // --- Constellation lines between pairs ---
+    // --- Constellation lines between pairs (squared distance, pre-corrected positions) ---
     for (int i = 0; i < NI; i++) {
         for (int j = 0; j < NI; j++) {
-            if (j > i) {
-                float pd = distance(pts[i], pts[j]);
-                if (pd < connectionRange) {
-                    vec2 a = vec2(pts[i].x * aspect, pts[i].y);
-                    vec2 b = vec2(pts[j].x * aspect, pts[j].y);
-                    vec2 ab = b - a;
-                    float ab2 = dot(ab, ab);
-                    if (ab2 > 0.00001) {
-                        float t = clamp(dot(uvA - a, ab) / ab2, 0.0, 1.0);
-                        float ld = length(uvA - (a + ab * t));
-                        float fade = 1.0 - pd / connectionRange;
-                        col += starColor.rgb * smoothstep(lineThickness, 0.0, ld) * fade * fade * lineOpacity;
-                    }
-                }
-            }
+            if (j <= i) continue;
+            vec2 d = raw[i] - raw[j];
+            float pd2 = dot(d, d);
+            if (pd2 > cr2) continue;
+            vec2 a = pts[i];
+            vec2 ab = pts[j] - a;
+            float ab2 = dot(ab, ab);
+            if (ab2 < 0.00001) continue;
+            float t = clamp(dot(uvA - a, ab) / ab2, 0.0, 1.0);
+            float ld = length(uvA - (a + ab * t));
+            float fade = 1.0 - sqrt(pd2) / connectionRange;
+            col += starColor.rgb * smoothstep(lineThickness, 0.0, ld) * fade * fade * lineOpacity;
         }
     }
 
     // --- Lines from mouse to nearby particles ---
     if (mouseNode > 0.01) {
         vec2 mA = vec2(mousePos.x * aspect, mousePos.y);
+        float mr2 = cr2 * 1.96; // (1.4)^2
+        float mr = connectionRange * 1.4;
         for (int i = 0; i < NI; i++) {
-            float md = distance(mousePos, pts[i]);
-            if (md < connectionRange * 1.4) {
-                vec2 b = vec2(pts[i].x * aspect, pts[i].y);
-                vec2 ab = b - mA;
-                float ab2 = dot(ab, ab);
-                if (ab2 > 0.00001) {
-                    float t = clamp(dot(uvA - mA, ab) / ab2, 0.0, 1.0);
-                    float ld = length(uvA - (mA + ab * t));
-                    float fade = 1.0 - md / (connectionRange * 1.4);
-                    col += starColor.rgb * smoothstep(lineThickness * 1.2, 0.0, ld) * fade * fade * lineOpacity * mouseNode * 0.6;
-                }
-            }
+            vec2 d = mousePos - raw[i];
+            float md2 = dot(d, d);
+            if (md2 > mr2) continue;
+            vec2 ab = pts[i] - mA;
+            float ab2 = dot(ab, ab);
+            if (ab2 < 0.00001) continue;
+            float t = clamp(dot(uvA - mA, ab) / ab2, 0.0, 1.0);
+            float ld = length(uvA - (mA + ab * t));
+            float fade = 1.0 - sqrt(md2) / mr;
+            col += starColor.rgb * smoothstep(lineThickness * 1.2, 0.0, ld) * fade * fade * lineOpacity * mouseNode * 0.6;
         }
     }
 
     // --- Star dots ---
     for (int i = 0; i < NI; i++) {
-        vec2 diff = uvA - vec2(pts[i].x * aspect, pts[i].y);
+        vec2 diff = uvA - pts[i];
         float d = length(diff);
 
         float depth = 0.6 + hash(float(i) * 3.7) * 0.4;
         float twinkle = 0.7 + 0.3 * sin(TIME * (1.2 + hash(float(i) * 1.9) * 2.5) + hash(float(i) * 5.3) * 6.28);
         float bright = twinkle * depth;
 
-        // Sharp core
         float coreR = dotSize * 0.35 * depth;
         float core = smoothstep(coreR, 0.0, d) * bright;
 
-        // Inner glow
         float glowR = dotSize * 1.5 * depth;
         float glow = smoothstep(glowR, 0.0, d) * 0.2 * bright;
 
-        // Outer halo
         float haloR = dotSize * 4.0 * depth;
         float halo = smoothstep(haloR, 0.0, d) * 0.04 * bright;
 

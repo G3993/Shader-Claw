@@ -93,8 +93,22 @@ export function compileToLayer(renderer, layerId, source) {
   if (parsed.meta && Array.isArray(parsed.meta.PASSES) && parsed.meta.PASSES.length > 0) {
     layer.passes = parsed.meta.PASSES.map(p => {
       let pw = FBO_WIDTH, ph = FBO_HEIGHT;
-      try { if (p.WIDTH) pw = eval(p.WIDTH.replace(/\$WIDTH/g, FBO_WIDTH).replace(/\$HEIGHT/g, FBO_HEIGHT)); } catch(e) {}
-      try { if (p.HEIGHT) ph = eval(p.HEIGHT.replace(/\$WIDTH/g, FBO_WIDTH).replace(/\$HEIGHT/g, FBO_HEIGHT)); } catch(e) {}
+      const _parseDim = (v, w, h) => {
+        if (typeof v === 'number') return v;
+        if (typeof v === 'string') {
+          const s = v.replace(/\$WIDTH/g, w).replace(/\$HEIGHT/g, h);
+          // Handle simple expressions: number, or number / number
+          const divMatch = s.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
+          if (divMatch) return parseFloat(divMatch[1]) / parseFloat(divMatch[2]);
+          const mulMatch = s.match(/^\s*(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)\s*$/);
+          if (mulMatch) return parseFloat(mulMatch[1]) * parseFloat(mulMatch[2]);
+          const num = parseFloat(s);
+          if (!isNaN(num)) return num;
+        }
+        return null;
+      };
+      try { if (p.WIDTH)  { const v = _parseDim(p.WIDTH,  FBO_WIDTH, FBO_HEIGHT); if (v) pw = v; } } catch(e) {}
+      try { if (p.HEIGHT) { const v = _parseDim(p.HEIGHT, FBO_WIDTH, FBO_HEIGHT); if (v) ph = v; } } catch(e) {}
       const pass = {
         target: p.TARGET || null,
         persistent: !!p.PERSISTENT,

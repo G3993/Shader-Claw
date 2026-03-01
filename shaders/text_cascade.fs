@@ -86,7 +86,7 @@ vec4 effectCascade(vec2 uv) {
     float wordW = float(numChars) * (cW + gW);
 
     float xOff = sin(rowIdx*0.6 + TIME*speed*2.0) * waveAmount * wordW * 1.5 + TIME*speed*0.08;
-    float px = mod(uv.x + xOff, wordW);
+    float px = mod(uv.x + xOff - 0.5 + wordW * 0.5, wordW);
     if (px < 0.0) px += wordW;
 
     float cs = cW + gW;

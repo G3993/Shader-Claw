@@ -66,6 +66,65 @@ float sampleChar(int ch, vec2 uv) {
 
 float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 
+// Word-wrap helpers — keep whole words together
+bool _isSp(int i, int nc) {
+    if (i < 0 || i >= nc) return true;
+    int ch = getChar(i);
+    return (ch < 0 || ch > 25);
+}
+int _wLen(int from, int nc) {
+    int w = 0;
+    for (int j = 0; j < 24; j++) {
+        if (from + j >= nc) break;
+        int ch = getChar(from + j);
+        if (ch < 0 || ch > 25) break;
+        w++;
+    }
+    return w;
+}
+int _wwRows(int mc, int nc) {
+    int c = 0, r = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return r + 1;
+}
+int _wwRowLen(int tr, int mc, int nc) {
+    int c = 0, r = 0, n = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        if (r == tr) n++;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return n;
+}
+// Get global char index at (targetRow, targetCol) in word-wrapped layout
+int _wwGetIdx(int targetRow, int targetCol, int mc, int nc) {
+    int c = 0, r = 0;
+    for (int i = 0; i < 24; i++) {
+        if (i >= nc) break;
+        bool sp = _isSp(i, nc);
+        if (!sp && _isSp(i - 1, nc) && c > 0) {
+            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
+        }
+        if (sp && c == 0 && i > 0) continue;
+        if (r == targetRow && c == targetCol) return i;
+        c++; if (c >= mc) { c = 0; r++; }
+    }
+    return -1;
+}
+
 // =======================================================================
 // EFFECT: DIGIFADE - glitch dissolve
 // =======================================================================
@@ -86,8 +145,8 @@ vec4 effectDigifade(vec2 uv, int sub) {
     // Each char cell is 5:7 aspect ratio
     float maxCols = max(1.0, floor(0.9 * aspect / (textScale * (5.0/7.0) * 0.18)));
     int numCols = int(min(maxCols, float(numChars)));
-    int numRows = (numChars + numCols - 1) / numCols;
-    if (numRows > 6) { numCols = (numChars + 5) / 6; numRows = (numChars + numCols - 1) / numCols; }
+    int numRows = _wwRows(numCols, numChars);
+    if (numRows > 6) { numCols = (numChars + 5) / 6; numRows = _wwRows(numCols, numChars); }
 
     float cH = min(0.18 * textScale, 0.85 / float(numRows));
     float cW = cH * (5.0/7.0);
@@ -104,9 +163,8 @@ vec4 effectDigifade(vec2 uv, int sub) {
 
     for (int row = 0; row < 6; row++) {
         if (row >= numRows) break;
-        // How many chars in this row
-        int charsInRow = numChars - row * numCols;
-        if (charsInRow > numCols) charsInRow = numCols;
+        // How many chars in this row (word-wrap aware)
+        int charsInRow = _wwRowLen(row, numCols, numChars);
 
         float rowW = float(charsInRow) * cW + float(charsInRow - 1) * gW;
         float startX = 0.5 - rowW * 0.5;
@@ -127,8 +185,8 @@ vec4 effectDigifade(vec2 uv, int sub) {
             int slot = int(floor(csF));
             float clx = fract(csF), cf = cW/cs;
             if (clx < cf && slot >= 0 && slot < charsInRow) {
-                int globalIdx = row * numCols + slot;
-                if (globalIdx < numChars) {
+                int globalIdx = _wwGetIdx(row, slot, numCols, numChars);
+                if (globalIdx >= 0 && globalIdx < numChars) {
                     float gc = (clx/cf)*5.0, gr = (ry/cH)*7.0;
                     if (gc >= 0.0 && gc < 5.0 && gr >= 0.0 && gr < 7.0) {
                         int ch = getChar(globalIdx);

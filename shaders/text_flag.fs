@@ -106,7 +106,7 @@ vec4 effectFlag(vec2 uv, int sub) {
     float gW = cW*0.15;
     float wordW = float(numChars)*(cW+gW);
 
-    float piw = mod(wX, wordW);
+    float piw = mod(wX - 0.5 + wordW * 0.5, wordW);
     if (piw < 0.0) piw += wordW;
     float cs = cW+gW, csF = piw/cs;
     int slot = int(floor(csF));

@@ -91,6 +91,12 @@ export class Renderer {
     this.mouseDelta = [0, 0];
     this._lastMousePos = [0.5, 0.5];
 
+    // Pinch hold accumulator
+    this.pinchHold = 0;
+
+    // Input activity (1.0 = active input, decays to 0 when idle)
+    this.inputActivity = 0.0;
+
     // Compositor
     this.compositorProgram = null;
     this.compositorLocs = {};
@@ -737,6 +743,12 @@ export class Renderer {
       if (hcLoc) gl.uniform1f(hcLoc, mediaPipeMgr.handCount);
       const hpLoc = getLocFn('mpHandPos');
       if (hpLoc) gl.uniform3f(hpLoc, mediaPipeMgr.handPos[0], mediaPipeMgr.handPos[1], mediaPipeMgr.handPos[2]);
+      const hp2Loc = getLocFn('mpHandPos2');
+      if (hp2Loc) gl.uniform3f(hp2Loc, mediaPipeMgr.handPos2[0], mediaPipeMgr.handPos2[1], mediaPipeMgr.handPos2[2]);
+      const phLoc = getLocFn('pinchHold');
+      if (phLoc) gl.uniform1f(phLoc, this.pinchHold);
+      const iaLoc = getLocFn('inputActivity');
+      if (iaLoc) gl.uniform1f(iaLoc, this.inputActivity);
     }
 
     return texUnit;

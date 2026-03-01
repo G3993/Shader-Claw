@@ -260,10 +260,17 @@ export function updateFontAtlas(gl, inputValues) {
   ctx.font = weight + ' ' + fontSize + 'px ' + fontStack;
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+
+  // Center uppercase letters by their actual cap height, not the full em box.
+  // textBaseline='middle' uses the em-box center which includes descender space,
+  // pushing caps below the visual center.
+  ctx.textBaseline = 'alphabetic';
+  const metrics = ctx.measureText('H');
+  const capAscent = metrics.actualBoundingBoxAscent || fontSize * 0.72;
+  const drawY = cellH / 2 + capAscent / 2;
 
   for (let i = 0; i < 26; i++) {
-    ctx.fillText(String.fromCharCode(65 + i), (i + 0.5) * cellW, cellH / 2);
+    ctx.fillText(String.fromCharCode(65 + i), (i + 0.5) * cellW, drawY);
   }
 
   ctx.restore();

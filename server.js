@@ -383,7 +383,11 @@ const httpServer = createServer(async (req, res) => {
   try {
     const data = await readFile(filePath);
     const ext = extname(filePath);
-    res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream", "Cache-Control": "no-cache, no-store, must-revalidate" });
+    res.writeHead(200, {
+      "Content-Type": MIME[ext] || "application/octet-stream",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Content-Security-Policy": "default-src 'self' blob: data: https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; connect-src * blob: data:; media-src * blob:; img-src * data: blob:; worker-src 'self' blob:"
+    });
     res.end(data);
   } catch {
     res.writeHead(404);

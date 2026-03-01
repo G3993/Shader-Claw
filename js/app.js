@@ -169,6 +169,23 @@ function compositionLoop() {
   isfRenderer.mouseDelta = [dx * 0.3, dy * 0.3];
   isfRenderer._lastMousePos = [...isfRenderer.mousePos];
 
+  // Pinch hold accumulator: ramps up while pinching, decays when released
+  if (mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.isPinching) {
+    isfRenderer.pinchHold = Math.min(isfRenderer.pinchHold + 0.016, 10.0);
+  } else {
+    isfRenderer.pinchHold = Math.max(isfRenderer.pinchHold - 0.04, 0.0);
+  }
+
+  // Input activity: 1.0 when mouse/hands active, decays toward 0 when idle
+  const mouseMoving = Math.abs(dx) > 0.0005 || Math.abs(dy) > 0.0005;
+  const handsActive = mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.handCount > 0;
+  if (mouseMoving || handsActive) {
+    isfRenderer.inputActivity = Math.min(isfRenderer.inputActivity + 0.05, 1.0);
+  } else {
+    // Slow decay over ~3 seconds (0.006/frame at 60fps)
+    isfRenderer.inputActivity = Math.max(isfRenderer.inputActivity - 0.006, 0.0);
+  }
+
   _rafId = requestAnimationFrame(compositionLoop);
 }
 

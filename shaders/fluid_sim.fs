@@ -1,33 +1,75 @@
 /*{
-  "DESCRIPTION": "GPU Navier-Stokes fluid simulation. Faithful port of Pavel Dobryakov's WebGL-Fluid-Simulation.",
+  "DESCRIPTION": "GPU Navier-Stokes fluid — port of Pavel Dobryakov's WebGL Fluid Simulation",
   "CREDIT": "Pavel Dobryakov / ShaderClaw",
   "CATEGORIES": ["Generator", "Simulation"],
   "INPUTS": [
     { "NAME": "splatForce", "TYPE": "float", "DEFAULT": 6000.0, "MIN": 500.0, "MAX": 20000.0 },
-    { "NAME": "splatRadius", "TYPE": "float", "DEFAULT": 0.0025, "MIN": 0.0005, "MAX": 0.02 },
+    { "NAME": "splatRadius", "LABEL": "Splat Radius", "TYPE": "float", "DEFAULT": 0.005, "MIN": 0.001, "MAX": 0.05 },
     { "NAME": "curlStrength", "TYPE": "float", "DEFAULT": 30.0, "MIN": 0.0, "MAX": 80.0 },
-    { "NAME": "velDissipation", "TYPE": "float", "DEFAULT": 0.2, "MIN": 0.0, "MAX": 2.0 },
-    { "NAME": "dyeDissipation", "TYPE": "float", "DEFAULT": 1.0, "MIN": 0.0, "MAX": 5.0 },
-    { "NAME": "pressureDecay", "TYPE": "float", "DEFAULT": 0.8, "MIN": 0.0, "MAX": 1.0 },
-    { "NAME": "bloomIntensity", "TYPE": "float", "DEFAULT": 0.8, "MIN": 0.0, "MAX": 2.0 },
+    { "NAME": "velDissipation", "LABEL": "Vel Dissipation", "TYPE": "float", "DEFAULT": 0.2, "MIN": 0.0, "MAX": 2.0 },
+    { "NAME": "dyeDissipation", "LABEL": "Dye Dissipation", "TYPE": "float", "DEFAULT": 0.5, "MIN": 0.0, "MAX": 5.0 },
+    { "NAME": "pressureDecay", "TYPE": "float", "DEFAULT": 0.6, "MIN": 0.0, "MAX": 1.0 },
+    { "NAME": "bloomIntensity", "TYPE": "float", "DEFAULT": 0.8, "MIN": 0.0, "MAX": 3.0 },
     { "NAME": "shading", "TYPE": "bool", "DEFAULT": true },
     { "NAME": "autoSplats", "TYPE": "bool", "DEFAULT": true }
   ],
   "PASSES": [
-    { "TARGET": "curlBuf", "WIDTH": 128, "HEIGHT": 128, "PERSISTENT": true },
-    { "TARGET": "velocityBuf", "WIDTH": 128, "HEIGHT": 128, "PERSISTENT": true },
-    { "TARGET": "pressure0", "WIDTH": 128, "HEIGHT": 128, "PERSISTENT": true },
-    { "TARGET": "pressure1", "WIDTH": 128, "HEIGHT": 128, "PERSISTENT": true },
-    { "TARGET": "pressure2", "WIDTH": 128, "HEIGHT": 128, "PERSISTENT": true },
-    { "TARGET": "pressure3", "WIDTH": 128, "HEIGHT": 128, "PERSISTENT": true },
-    { "TARGET": "dyeBuf", "PERSISTENT": true },
+    { "TARGET": "curlBuf",     "WIDTH": 256, "HEIGHT": 256, "PERSISTENT": true },
+    { "TARGET": "velocityBuf", "WIDTH": 256, "HEIGHT": 256, "PERSISTENT": true },
+    { "TARGET": "pressure0",   "WIDTH": 256, "HEIGHT": 256, "PERSISTENT": true },
+    { "TARGET": "pressure1",   "WIDTH": 256, "HEIGHT": 256, "PERSISTENT": true },
+    { "TARGET": "pressure2",   "WIDTH": 256, "HEIGHT": 256, "PERSISTENT": true },
+    { "TARGET": "pressure3",   "WIDTH": 256, "HEIGHT": 256, "PERSISTENT": true },
+    { "TARGET": "dyeBuf",      "PERSISTENT": true },
     {}
   ]
 }*/
 
-const float SIM_RES = 128.0;
-const float H = 1.0 / 128.0;
+// ============================================================
+// Bias-scale encoding: maps signed sim values into [0,1] so
+// the simulation works with both half-float AND uint8 FBOs.
+// Without this, uint8 FBOs clamp negative velocities to zero,
+// completely breaking the fluid dynamics.
+// ============================================================
+const float VEL_RANGE  = 1000.0;  // velocity ±1000
+const float P_RANGE    = 500.0;   // pressure ±500
+const float CURL_RANGE = 1000.0;  // curl     ±1000
+const float DYE_RANGE  = 3.0;     // dye HDR  [0, 3]
+
+const float H  = 1.0 / 256.0;
 const float DT = 0.016;
+
+// --- Velocity encode/decode (xy channels) ---
+vec2 decVel(sampler2D s, vec2 uv) {
+    return (texture2D(s, uv).xy - 0.5) * 2.0 * VEL_RANGE;
+}
+vec4 encVel(vec2 v) {
+    return vec4(clamp(v / (2.0 * VEL_RANGE) + 0.5, 0.0, 1.0), 0.0, 1.0);
+}
+
+// --- Pressure encode/decode (x channel) ---
+float decP(sampler2D s, vec2 uv) {
+    return (texture2D(s, uv).x - 0.5) * 2.0 * P_RANGE;
+}
+vec4 encP(float p) {
+    return vec4(clamp(p / (2.0 * P_RANGE) + 0.5, 0.0, 1.0), 0.0, 0.0, 1.0);
+}
+
+// --- Curl encode/decode (x channel) ---
+float decCurl(sampler2D s, vec2 uv) {
+    return (texture2D(s, uv).x - 0.5) * 2.0 * CURL_RANGE;
+}
+vec4 encCurl(float c) {
+    return vec4(clamp(c / (2.0 * CURL_RANGE) + 0.5, 0.0, 1.0), 0.0, 0.0, 1.0);
+}
+
+// --- Dye encode/decode (rgb, HDR into [0,1]) ---
+vec3 decDye(sampler2D s, vec2 uv) {
+    return texture2D(s, uv).rgb * DYE_RANGE;
+}
+vec4 encDye(vec3 d) {
+    return vec4(clamp(d / DYE_RANGE, 0.0, 1.0), 1.0);
+}
 
 float hash(float n) {
     n = fract(n * 0.1031);
@@ -41,176 +83,164 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
 }
 
-vec3 linearToGamma(vec3 c) {
-    c = max(c, vec3(0.0));
-    return max(1.055 * pow(c, vec3(0.416667)) - 0.055, vec3(0.0));
-}
-
 // ============================================================
-// PASS 0: Curl
+// PASS 0: Curl of velocity field
 // ============================================================
 vec4 passCurl() {
     vec2 uv = isf_FragNormCoord;
-    float L = texture2D(velocityBuf, uv - vec2(H, 0.0)).y;
-    float R = texture2D(velocityBuf, uv + vec2(H, 0.0)).y;
-    float T = texture2D(velocityBuf, uv + vec2(0.0, H)).x;
-    float B = texture2D(velocityBuf, uv - vec2(0.0, H)).x;
-    return vec4(0.5 * (R - L - T + B), 0.0, 0.0, 1.0);
+    float L = decVel(velocityBuf, uv - vec2(H, 0.0)).y;
+    float R = decVel(velocityBuf, uv + vec2(H, 0.0)).y;
+    float T = decVel(velocityBuf, uv + vec2(0.0, H)).x;
+    float B = decVel(velocityBuf, uv - vec2(0.0, H)).x;
+    return encCurl(0.5 * (R - L - T + B));
 }
 
 // ============================================================
-// PASS 1: Velocity
+// PASS 1: Velocity — advect + vorticity + forces
 // ============================================================
 vec4 passVelocity() {
     vec2 uv = isf_FragNormCoord;
 
-    // Self-advection
-    vec2 oldVel = texture2D(velocityBuf, uv).xy;
+    // Semi-Lagrangian self-advection
+    vec2 oldVel = decVel(velocityBuf, uv);
     vec2 coord = uv - DT * oldVel * H;
-    vec2 vel = texture2D(velocityBuf, coord).xy;
+    vec2 vel = decVel(velocityBuf, coord);
 
-    // Pressure gradient subtract (from previous frame's final pressure)
-    float pL = texture2D(pressure3, uv - vec2(H, 0.0)).x;
-    float pR = texture2D(pressure3, uv + vec2(H, 0.0)).x;
-    float pT = texture2D(pressure3, uv + vec2(0.0, H)).x;
-    float pB = texture2D(pressure3, uv - vec2(0.0, H)).x;
+    // Pressure gradient subtract (previous frame's converged pressure)
+    float pL = decP(pressure3, uv - vec2(H, 0.0));
+    float pR = decP(pressure3, uv + vec2(H, 0.0));
+    float pT = decP(pressure3, uv + vec2(0.0, H));
+    float pB = decP(pressure3, uv - vec2(0.0, H));
     vel -= vec2(pR - pL, pT - pB);
 
     // Vorticity confinement
-    float cL = texture2D(curlBuf, uv - vec2(H, 0.0)).x;
-    float cR = texture2D(curlBuf, uv + vec2(H, 0.0)).x;
-    float cT = texture2D(curlBuf, uv + vec2(0.0, H)).x;
-    float cB = texture2D(curlBuf, uv - vec2(0.0, H)).x;
-    float cC = texture2D(curlBuf, uv).x;
+    float cL = decCurl(curlBuf, uv - vec2(H, 0.0));
+    float cR = decCurl(curlBuf, uv + vec2(H, 0.0));
+    float cT = decCurl(curlBuf, uv + vec2(0.0, H));
+    float cB = decCurl(curlBuf, uv - vec2(0.0, H));
+    float cC = decCurl(curlBuf, uv);
     vec2 vf = 0.5 * vec2(abs(cT) - abs(cB), abs(cR) - abs(cL));
     vf /= length(vf) + 0.0001;
     vf *= curlStrength * cC;
     vf.y *= -1.0;
     vel += vf * DT;
 
-    // Mouse force
+    // Mouse / hand force
     if (length(mouseDelta) > 0.0001) {
         vec2 p = uv - mousePos;
-        p.x *= RENDERSIZE.x / RENDERSIZE.y;
         vel += mouseDelta * splatForce * exp(-dot(p, p) / splatRadius);
     }
 
-    // Auto-splats: initial burst on first 15 frames, then 1 every 3s
+    // Auto-splats for initial motion
     if (autoSplats) {
-        float aspect = RENDERSIZE.x / RENDERSIZE.y;
-
-        // Initial burst: 1 splat per frame for first 15 frames
-        if (FRAMEINDEX < 15) {
+        if (FRAMEINDEX < 20) {
             float seed = float(FRAMEINDEX);
             vec2 sp = vec2(hash(seed * 13.73), hash(seed * 7.31));
-            vec2 sv = (vec2(hash(seed * 23.17), hash(seed * 31.71)) - 0.5) * 1000.0;
+            vec2 sv = (vec2(hash(seed * 23.17), hash(seed * 31.71)) - 0.5) * 600.0;
             vec2 dp = uv - sp;
-            dp.x *= aspect;
-            vel += sv * exp(-dot(dp, dp) / splatRadius);
+            vel += sv * exp(-dot(dp, dp) / (splatRadius * 2.0));
         }
-
-        // Ongoing: 1 splat every 3 seconds
-        if (FRAMEINDEX >= 15) {
-            float splatIdx = floor(TIME / 3.0);
-            float splatAge = TIME - splatIdx * 3.0;
+        if (FRAMEINDEX >= 20) {
+            float splatIdx = floor(TIME / 1.5);
+            float splatAge = TIME - splatIdx * 1.5;
             if (splatAge < 0.1) {
                 float seed = splatIdx * 77.0 + 100.0;
                 vec2 sp = vec2(hash(seed * 13.73), hash(seed * 7.31));
-                vec2 sv = (vec2(hash(seed * 23.17), hash(seed * 31.71)) - 0.5) * 1000.0;
+                vec2 sv = (vec2(hash(seed * 23.17), hash(seed * 31.71)) - 0.5) * 400.0;
                 vec2 dp = uv - sp;
-                dp.x *= aspect;
                 float fade = smoothstep(0.0, 0.02, splatAge) * smoothstep(0.1, 0.05, splatAge);
-                vel += sv * exp(-dot(dp, dp) / splatRadius) * fade;
+                vel += sv * fade * exp(-dot(dp, dp) / (splatRadius * 2.0));
             }
         }
     }
 
-    // Dissipation
+    // Dissipation + clamp
     vel /= 1.0 + velDissipation * DT;
-    vel = clamp(vel, -1000.0, 1000.0);
+    vel = clamp(vel, -VEL_RANGE, VEL_RANGE);
 
-    // Boundary reflection
+    // Boundary: reflect at edges
     if (uv.x < H) vel.x = abs(vel.x);
     if (uv.x > 1.0 - H) vel.x = -abs(vel.x);
     if (uv.y < H) vel.y = abs(vel.y);
     if (uv.y > 1.0 - H) vel.y = -abs(vel.y);
 
-    return vec4(vel, 0.0, 1.0);
+    return encVel(vel);
 }
 
 // ============================================================
-// Pressure Jacobi (shared)
+// Pressure Jacobi iteration
 // ============================================================
 vec4 pressureJacobi(sampler2D prevP, bool withDecay) {
     vec2 uv = isf_FragNormCoord;
-    if (FRAMEINDEX < 1) return vec4(0.0);
+    if (FRAMEINDEX < 1) return encP(0.0);
 
-    // Divergence
-    vec2 vC = texture2D(velocityBuf, uv).xy;
-    float vL = texture2D(velocityBuf, uv - vec2(H, 0.0)).x;
-    float vR = texture2D(velocityBuf, uv + vec2(H, 0.0)).x;
-    float vT = texture2D(velocityBuf, uv + vec2(0.0, H)).y;
-    float vB = texture2D(velocityBuf, uv - vec2(0.0, H)).y;
+    // Divergence of velocity field
+    vec2 vC = decVel(velocityBuf, uv);
+    float vL = decVel(velocityBuf, uv - vec2(H, 0.0)).x;
+    float vR = decVel(velocityBuf, uv + vec2(H, 0.0)).x;
+    float vT = decVel(velocityBuf, uv + vec2(0.0, H)).y;
+    float vB = decVel(velocityBuf, uv - vec2(0.0, H)).y;
+
     if (uv.x - H < 0.0) vL = -vC.x;
     if (uv.x + H > 1.0) vR = -vC.x;
     if (uv.y + H > 1.0) vT = -vC.y;
     if (uv.y - H < 0.0) vB = -vC.y;
+
     float div = 0.5 * (vR - vL + vT - vB);
 
-    // Jacobi
     float d = withDecay ? pressureDecay : 1.0;
-    float pL = texture2D(prevP, uv - vec2(H, 0.0)).x * d;
-    float pR = texture2D(prevP, uv + vec2(H, 0.0)).x * d;
-    float pT = texture2D(prevP, uv + vec2(0.0, H)).x * d;
-    float pB = texture2D(prevP, uv - vec2(0.0, H)).x * d;
-    return vec4((pL + pR + pT + pB - div) * 0.25, 0.0, 0.0, 1.0);
+    float pL = decP(prevP, uv - vec2(H, 0.0)) * d;
+    float pR = decP(prevP, uv + vec2(H, 0.0)) * d;
+    float pT = decP(prevP, uv + vec2(0.0, H)) * d;
+    float pB = decP(prevP, uv - vec2(0.0, H)) * d;
+
+    return encP((pL + pR + pT + pB - div) * 0.25);
 }
 
 // ============================================================
-// PASS 6: Dye
+// PASS 6: Dye advection + color injection
 // ============================================================
 vec4 passDye() {
     vec2 uv = isf_FragNormCoord;
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
-    float rad = splatRadius * (aspect > 1.0 ? aspect : 1.0);
+    float rad = splatRadius * 2.5 * (aspect > 1.0 ? aspect : 1.0);
 
-    // Advect
-    vec2 vel = texture2D(velocityBuf, uv).xy;
+    // Advect dye with velocity field
+    vec2 vel = decVel(velocityBuf, uv);
     vec2 coord = uv - DT * vel * H;
-    vec3 dye = texture2D(dyeBuf, coord).rgb;
+    vec3 dye = decDye(dyeBuf, coord);
 
     // Dissipation
     dye /= 1.0 + dyeDissipation * DT;
 
-    // Mouse color splat (intensity 0.15, matching original)
-    if (length(mouseDelta) > 0.0001) {
+    // Mouse / hand color splat
+    bool doSplat = length(mouseDelta) > 0.0001 || mouseDown > 0.5;
+    if (doSplat) {
         vec2 p = uv - mousePos;
         p.x *= aspect;
         float s = exp(-dot(p, p) / rad);
-        vec3 col = hsv2rgb(vec3(fract(TIME * 0.3), 1.0, 1.0)) * 0.15;
+        float hue = fract(TIME * 0.12 + mousePos.x * 0.5 + mousePos.y * 0.3);
+        vec3 col = hsv2rgb(vec3(hue, 1.0, 1.0)) * 1.5;
         dye += col * s;
     }
 
     // Auto-splats dye
     if (autoSplats) {
-        // Initial burst: bright splats (intensity 1.5, matching original * 10)
-        if (FRAMEINDEX < 15) {
+        if (FRAMEINDEX < 20) {
             float seed = float(FRAMEINDEX);
             vec2 sp = vec2(hash(seed * 13.73), hash(seed * 7.31));
-            vec3 col = hsv2rgb(vec3(hash(seed * 3.17), 1.0, 1.0)) * 1.5;
+            vec3 col = hsv2rgb(vec3(hash(seed * 3.17), 1.0, 1.0)) * 2.0;
             vec2 dp = uv - sp;
             dp.x *= aspect;
             dye += col * exp(-dot(dp, dp) / rad);
         }
-
-        // Ongoing: dimmer splats (intensity 0.15)
-        if (FRAMEINDEX >= 15) {
-            float splatIdx = floor(TIME / 3.0);
-            float splatAge = TIME - splatIdx * 3.0;
+        if (FRAMEINDEX >= 20) {
+            float splatIdx = floor(TIME / 1.5);
+            float splatAge = TIME - splatIdx * 1.5;
             if (splatAge < 0.1) {
                 float seed = splatIdx * 77.0 + 100.0;
                 vec2 sp = vec2(hash(seed * 13.73), hash(seed * 7.31));
-                vec3 col = hsv2rgb(vec3(hash(seed * 3.17), 1.0, 1.0)) * 0.15;
+                vec3 col = hsv2rgb(vec3(hash(seed * 3.17), 1.0, 1.0)) * 1.5;
                 vec2 dp = uv - sp;
                 dp.x *= aspect;
                 float fade = smoothstep(0.0, 0.02, splatAge) * smoothstep(0.1, 0.05, splatAge);
@@ -219,7 +249,7 @@ vec4 passDye() {
         }
     }
 
-    return vec4(dye, 1.0);
+    return encDye(dye);
 }
 
 // ============================================================
@@ -227,61 +257,56 @@ vec4 passDye() {
 // ============================================================
 vec4 passDisplay() {
     vec2 uv = isf_FragNormCoord;
-    vec3 c = texture2D(dyeBuf, uv).rgb;
+    vec3 c = decDye(dyeBuf, uv);
 
-    // Shading: surface normal from luminance gradient
+    // Shading — Pavel's method: surface normal from dye luminance gradient
     if (shading) {
-        float tx = 1.0 / RENDERSIZE.x;
-        float ty = 1.0 / RENDERSIZE.y;
-        float dx = length(texture2D(dyeBuf, uv + vec2(tx, 0.0)).rgb)
-                 - length(texture2D(dyeBuf, uv - vec2(tx, 0.0)).rgb);
-        float dy = length(texture2D(dyeBuf, uv + vec2(0.0, ty)).rgb)
-                 - length(texture2D(dyeBuf, uv - vec2(0.0, ty)).rgb);
-        vec3 n = normalize(vec3(dx, dy, length(vec2(tx, ty))));
-        float diffuse = clamp(dot(n, vec3(0.0, 0.0, 1.0)) + 0.7, 0.7, 1.0);
-        c *= diffuse;
+        vec2 tx = 1.0 / RENDERSIZE;
+        float dx = length(decDye(dyeBuf, uv + vec2(tx.x, 0.0)))
+                 - length(decDye(dyeBuf, uv - vec2(tx.x, 0.0)));
+        float dy = length(decDye(dyeBuf, uv + vec2(0.0, tx.y)))
+                 - length(decDye(dyeBuf, uv - vec2(0.0, tx.y)));
+        // Pavel: normalize(vec3(dx, dy, 1.0)) then shade = abs(n.z)
+        float mag = sqrt(dx * dx + dy * dy + 1.0);
+        c *= abs(1.0 / mag);
     }
 
-    // Bloom: neighborhood glow (gamma-corrected, additive — matching original)
+    // Bloom: multi-scale axis-aligned samples
     if (bloomIntensity > 0.01) {
+        vec2 tx = 1.0 / RENDERSIZE;
         vec3 bloom = vec3(0.0);
-        float bx = 3.0 / RENDERSIZE.x;
-        float by = 3.0 / RENDERSIZE.y;
-        for (int i = -2; i <= 2; i++) {
-            for (int j = -2; j <= 2; j++) {
-                if (i == 0 && j == 0) continue;
-                bloom += texture2D(dyeBuf, uv + vec2(float(i) * bx, float(j) * by)).rgb;
-            }
-        }
-        bloom /= 24.0;
-        // Threshold: only glow from bright areas (original threshold = 0.6)
+        bloom += decDye(dyeBuf, uv + vec2(tx.x * 4.0, 0.0));
+        bloom += decDye(dyeBuf, uv - vec2(tx.x * 4.0, 0.0));
+        bloom += decDye(dyeBuf, uv + vec2(0.0, tx.y * 4.0));
+        bloom += decDye(dyeBuf, uv - vec2(0.0, tx.y * 4.0));
+        bloom += decDye(dyeBuf, uv + vec2(tx.x * 12.0, 0.0)) * 0.7;
+        bloom += decDye(dyeBuf, uv - vec2(tx.x * 12.0, 0.0)) * 0.7;
+        bloom += decDye(dyeBuf, uv + vec2(0.0, tx.y * 12.0)) * 0.7;
+        bloom += decDye(dyeBuf, uv - vec2(0.0, tx.y * 12.0)) * 0.7;
+        bloom += decDye(dyeBuf, uv + vec2(tx.x * 28.0, 0.0)) * 0.4;
+        bloom += decDye(dyeBuf, uv - vec2(tx.x * 28.0, 0.0)) * 0.4;
+        bloom += decDye(dyeBuf, uv + vec2(0.0, tx.y * 28.0)) * 0.4;
+        bloom += decDye(dyeBuf, uv - vec2(0.0, tx.y * 28.0)) * 0.4;
+        bloom /= 12.0;
         float br = max(bloom.r, max(bloom.g, bloom.b));
-        bloom *= smoothstep(0.2, 0.6, br);
-        bloom = linearToGamma(bloom);
+        bloom *= smoothstep(0.3, 0.8, br);
         c += bloom * bloomIntensity;
     }
 
-    // NO gamma on base dye (matching original — dye stays in linear space)
+    // Gamma only (no tone mapping — keeps colors vivid like Pavel's)
+    c = pow(clamp(c, 0.0, 1.0), vec3(1.0 / 2.2));
+
     float a = max(c.r, max(c.g, c.b));
     return vec4(c, a);
 }
 
 void main() {
-    if (PASSINDEX == 0) {
-        gl_FragColor = passCurl();
-    } else if (PASSINDEX == 1) {
-        gl_FragColor = passVelocity();
-    } else if (PASSINDEX == 2) {
-        gl_FragColor = pressureJacobi(pressure3, true);
-    } else if (PASSINDEX == 3) {
-        gl_FragColor = pressureJacobi(pressure0, false);
-    } else if (PASSINDEX == 4) {
-        gl_FragColor = pressureJacobi(pressure1, false);
-    } else if (PASSINDEX == 5) {
-        gl_FragColor = pressureJacobi(pressure2, false);
-    } else if (PASSINDEX == 6) {
-        gl_FragColor = passDye();
-    } else {
-        gl_FragColor = passDisplay();
-    }
+    if      (PASSINDEX == 0) gl_FragColor = passCurl();
+    else if (PASSINDEX == 1) gl_FragColor = passVelocity();
+    else if (PASSINDEX == 2) gl_FragColor = pressureJacobi(pressure3, true);
+    else if (PASSINDEX == 3) gl_FragColor = pressureJacobi(pressure0, false);
+    else if (PASSINDEX == 4) gl_FragColor = pressureJacobi(pressure1, false);
+    else if (PASSINDEX == 5) gl_FragColor = pressureJacobi(pressure2, false);
+    else if (PASSINDEX == 6) gl_FragColor = passDye();
+    else                     gl_FragColor = passDisplay();
 }
