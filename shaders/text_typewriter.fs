@@ -4,24 +4,16 @@
   "INPUTS": [
     { "NAME": "msg", "TYPE": "text", "DEFAULT": "ETHEREA", "MAX_LENGTH": 24 },
     { "NAME": "fontFamily", "LABEL": "Font", "TYPE": "long", "VALUES": [0,1,2,3], "LABELS": ["Inter","Times New Roman","Libre Caslon","Outfit"], "DEFAULT": 0 },
-    { "NAME": "speed", "LABEL": "Speed", "TYPE": "float", "MIN": 0.5, "MAX": 20.0, "DEFAULT": 4.0 },
+    { "NAME": "speed", "LABEL": "Speed", "TYPE": "float", "MIN": 0.5, "MAX": 40.0, "DEFAULT": 12.0 },
     { "NAME": "cursorBlink", "LABEL": "Cursor Blink", "TYPE": "float", "MIN": 0.5, "MAX": 5.0, "DEFAULT": 2.0 },
-    { "NAME": "textScale", "LABEL": "Size", "TYPE": "float", "MIN": 0.3, "MAX": 2.0, "DEFAULT": 1.0 },
+    { "NAME": "textScale", "LABEL": "Size", "TYPE": "float", "MIN": 0.3, "MAX": 3.0, "DEFAULT": 1.0 },
     { "NAME": "kerning", "LABEL": "Spacing", "TYPE": "float", "MIN": 0.0, "MAX": 3.0, "DEFAULT": 0.4 },
     { "NAME": "textColor", "LABEL": "Color", "TYPE": "color", "DEFAULT": [1.0, 1.0, 1.0, 1.0] },
     { "NAME": "bgColor", "LABEL": "Background", "TYPE": "color", "DEFAULT": [0.02, 0.02, 0.04, 1.0] },
     { "NAME": "transparentBg", "LABEL": "Transparent", "TYPE": "bool", "DEFAULT": true },
-    { "NAME": "loop", "LABEL": "Loop", "TYPE": "bool", "DEFAULT": true }
+    { "NAME": "loop", "LABEL": "Loop", "TYPE": "bool", "DEFAULT": false }
   ]
 }*/
-
-// Atlas-only font engine (no bitmap fallback — faster ANGLE compile)
-float charPixel(int ch, float col, float row) {
-    if (ch < 0 || ch > 25) return 0.0;
-    vec2 uv = vec2(col / 5.0, row / 7.0);
-    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
-    return smoothstep(0.1, 0.55, texture2D(fontAtlasTex, vec2((float(ch) + uv.x) / 27.0, uv.y)).r);
-}
 
 float sampleChar(int ch, vec2 uv) {
     if (ch < 0 || ch > 25) return 0.0;
@@ -64,170 +56,81 @@ int charCount() {
     return n;
 }
 
-// Word-wrap helpers — keep whole words together
-bool _isSp(int i, int nc) {
-    if (i < 0 || i >= nc) return true;
-    int ch = getChar(i);
-    return (ch < 0 || ch > 25);
-}
-int _wLen(int from, int nc) {
-    int w = 0;
-    for (int j = 0; j < 24; j++) {
-        if (from + j >= nc) break;
-        int ch = getChar(from + j);
-        if (ch < 0 || ch > 25) break;
-        w++;
-    }
-    return w;
-}
-int _wwRows(int mc, int nc) {
-    int c = 0, r = 0;
-    for (int i = 0; i < 24; i++) {
-        if (i >= nc) break;
-        bool sp = _isSp(i, nc);
-        if (!sp && _isSp(i - 1, nc) && c > 0) {
-            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
-        }
-        if (sp && c == 0 && i > 0) continue;
-        c++; if (c >= mc) { c = 0; r++; }
-    }
-    return r + 1;
-}
-int _wwRowLen(int tr, int mc, int nc) {
-    int c = 0, r = 0, n = 0;
-    for (int i = 0; i < 24; i++) {
-        if (i >= nc) break;
-        bool sp = _isSp(i, nc);
-        if (!sp && _isSp(i - 1, nc) && c > 0) {
-            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
-        }
-        if (sp && c == 0 && i > 0) continue;
-        if (r == tr) n++;
-        c++; if (c >= mc) { c = 0; r++; }
-    }
-    return n;
-}
-
-// =======================================================================
-// EFFECT: TYPEWRITER — characters appear one by one with blinking cursor
-// =======================================================================
-
 void main() {
     vec2 uv = gl_FragCoord.xy / RENDERSIZE.xy;
     float aspect = RENDERSIZE.x / RENDERSIZE.y;
     int numChars = charCount();
-    float _textScale = textScale > 0.01 ? textScale : 1.0;
-    float _kerning = kerning > 0.01 ? kerning : 1.0;
+    float sc = textScale > 0.01 ? textScale : 1.0;
+    float kr = kerning > 0.01 ? kerning : 1.0;
 
     vec3 col = bgColor.rgb;
     float alpha = transparentBg ? 0.0 : 1.0;
 
+    // Aspect-corrected coordinates
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
-    float maxW = aspect * 0.9;
 
-    // Layout: multi-line wrap then scale-to-fit
-    float charH = 0.18 * _textScale;
+    // Character dimensions — fixed size, scale to fit width if needed
+    float charH = 0.18 * sc;
     float charW = charH * (5.0 / 7.0);
-    float gap = charW * 0.25 * _kerning;
-    float cellStep = charW + gap;
+    float gap = charW * 0.25 * kr;
+    float step_ = charW + gap;
 
-    int maxCols = int(floor((maxW + gap) / cellStep));
-    if (maxCols < 1) maxCols = 1;
-    if (maxCols > numChars) maxCols = numChars;
-    int numRows = _wwRows(maxCols, numChars);
-
-    float rw = float(maxCols) * cellStep - gap;
-    if (rw > maxW) {
-        float sc = maxW / rw;
-        charH *= sc; charW = charH * (5.0 / 7.0); gap = charW * 0.25 * _kerning;
-        cellStep = charW + gap;
-        rw = float(maxCols) * cellStep - gap;
+    float totalW = float(numChars) * step_ - gap;
+    float maxW = aspect * 0.9;
+    if (totalW > maxW) {
+        float fit = maxW / totalW;
+        charH *= fit;
+        charW = charH * (5.0 / 7.0);
+        gap = charW * 0.25 * kr;
+        step_ = charW + gap;
+        totalW = float(numChars) * step_ - gap;
     }
 
-    float lineH = charH * 1.3;
-    float totalH = float(numRows) * lineH - (lineH - charH);
-    float startY = 0.5 - totalH * 0.5;
+    float originX = 0.5 - totalW * 0.5;
+    float originY = 0.5 - charH * 0.5;
 
-    // Typewriter reveal: how many chars are visible
-    float totalTime = float(numChars) / speed;
-    float elapsed = loop ? mod(TIME, totalTime + 1.5) : TIME;
-    int visibleChars = int(floor(elapsed * speed));
-    if (visibleChars > numChars) visibleChars = numChars;
+    // How many chars revealed so far
+    float typeTime = float(numChars) / speed;
+    float t = TIME;
+    if (loop) {
+        float cycle = typeTime + 2.0; // 2s pause before restart
+        t = mod(t, cycle);
+    }
+    int revealed = int(floor(t * speed));
+    if (revealed > numChars) revealed = numChars;
 
+    // Render characters
     float textMask = 0.0;
     vec3 textCol = vec3(0.0);
 
-    int _col = 0;
-    int _row = 0;
-    float rowStartX = 0.5;
-    float lastCursorX = 0.0;
-    float lastCursorY = startY;
     for (int i = 0; i < 24; i++) {
+        if (i >= revealed) break;
         if (i >= numChars) break;
 
         int ch = getChar(i);
-        bool isSp = (ch < 0 || ch > 25);
+        if (ch < 0 || ch > 25) continue;
 
-        // Word-wrap: if starting a new word that won't fit, break to next line
-        if (!isSp && _isSp(i - 1, numChars) && _col > 0) {
-            if (_col + _wLen(i, numChars) > maxCols) {
-                _col = 0; _row++;
-            }
-        }
+        float cx = originX + float(i) * step_;
+        vec2 cellUV = vec2((p.x - cx) / charW, (p.y - originY) / charH);
 
-        // Skip leading spaces at start of wrapped line
-        if (isSp && _col == 0 && i > 0) continue;
-
-        if (_col == 0) {
-            int charsInRow = _wwRowLen(_row, maxCols, numChars);
-            float rwRow = float(charsInRow) * cellStep - gap;
-            rowStartX = 0.5 - rwRow * 0.5;
-        }
-
-        float cx = rowStartX + float(_col) * cellStep;
-        float cy = startY + float(_row) * lineH;
-
-        // Only show if revealed
-        if (i < visibleChars && ch >= 0 && ch <= 25) {
-            vec2 cellUV = vec2((p.x - cx) / charW, (p.y - cy) / charH);
-            if (cellUV.x >= 0.0 && cellUV.x <= 1.0 && cellUV.y >= 0.0 && cellUV.y <= 1.0) {
-                float filled = sampleChar(ch, cellUV);
-                if (filled > 0.05) {
-                    float edgeAA = smoothstep(0.1, 0.5, filled);
-                    textCol = textColor.rgb;
-                    textMask = max(textMask, edgeAA);
-                }
-            }
-        }
-
-        // Blinking cursor at next position
-        if (i == visibleChars && visibleChars < numChars) {
-            float cursorOn = step(0.5, fract(TIME * cursorBlink));
-            float cursorW = charW * 0.15;
-            if (p.x >= cx && p.x <= cx + cursorW &&
-                p.y >= cy && p.y <= cy + charH) {
+        if (cellUV.x >= 0.0 && cellUV.x <= 1.0 && cellUV.y >= 0.0 && cellUV.y <= 1.0) {
+            float s = sampleChar(ch, cellUV);
+            if (s > 0.05) {
                 textCol = textColor.rgb;
-                textMask = cursorOn;
+                textMask = max(textMask, smoothstep(0.1, 0.5, s));
             }
         }
-
-        // Track position for end cursor
-        lastCursorX = cx + cellStep;
-        lastCursorY = cy;
-
-        _col++;
-        if (_col >= maxCols) { _col = 0; _row++; }
     }
 
-    // Cursor at end when all chars revealed
-    if (visibleChars >= numChars) {
-        float cursorOn = step(0.5, fract(TIME * cursorBlink));
-        float cursorW = charW * 0.15;
-        if (p.x >= lastCursorX && p.x <= lastCursorX + cursorW &&
-            p.y >= lastCursorY && p.y <= lastCursorY + charH) {
-            textCol = textColor.rgb;
-            textMask = cursorOn;
-        }
+    // Blinking cursor
+    float cursorX = originX + float(revealed) * step_;
+    if (revealed >= numChars) cursorX = originX + totalW + gap;
+    float cursorOn = step(0.5, fract(TIME * cursorBlink));
+    float cursorW = charW * 0.15;
+    if (p.x >= cursorX && p.x <= cursorX + cursorW &&
+        p.y >= originY && p.y <= originY + charH) {
+        textCol = textColor.rgb;
+        textMask = max(textMask, cursorOn);
     }
 
     col = mix(col, textCol, clamp(textMask, 0.0, 1.0));

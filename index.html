@@ -2251,6 +2251,10 @@ body {
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
           <span>Sound</span>
         </button>
+        <button class="import-tile" id="tile-mic" title="Microphone input">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <span>Mic</span>
+        </button>
         <button class="import-tile" id="tile-webcam" title="Webcam input">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
           <span>Webcam</span>
@@ -3004,6 +3008,9 @@ let audioFFTGLTexture = null;
 let audioFFTThreeTexture = null;
 let audioLevel = 0, audioBass = 0, audioMid = 0, audioHigh = 0;
 let activeAudioEntry = null;
+let _micAudioStream = null;
+let _micAudioSourceNode = null;
+let _micAudioEntry = null;
 
 // Variable font texture system (for Text shader "Variable Font" effect)
 let _vfCanvas = null;
@@ -3295,6 +3302,7 @@ function mediaTypeIcon(type, name) {
   if (type === 'video' && name === 'Webcam') return '\u{1F4F9}';
   if (type === 'video') return '\u{1F3AC}';
   if (type === 'model') return '\u{1F9CA}';
+  if (type === 'audio' && name === 'Microphone') return '\u{1F3A4}';
   if (type === 'audio') return '\u{1F50A}';
   if (type === 'svg') return '\u{2712}';
   return '\u{1F5BC}';
@@ -8326,6 +8334,11 @@ function stopNdiSend() {
     catch (e) { console.warn('Webcam access denied:', e.message); }
   });
 
+  document.getElementById('tile-mic').addEventListener('click', async () => {
+    try { await addMicAudio(); }
+    catch (e) { console.warn('Mic access denied:', e.message); }
+  });
+
   // Code import tile — load .fs/.glsl/.frag shader files
   const codeFileInput = document.getElementById('code-file-input');
   document.getElementById('tile-code').addEventListener('click', () => codeFileInput.click());
@@ -8570,24 +8583,26 @@ function stopNdiSend() {
 
       // Audio: play/pause toggle + level bar
       if (media.type === 'audio') {
-        const toggle = document.createElement('button');
-        toggle.className = 'audio-toggle';
-        toggle.textContent = (media.element && !media.element.paused) ? '\u23F8' : '\u25B6';
-        toggle.title = 'Play/Pause';
-        toggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (media.element) {
-            if (media.element.paused) {
-              if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-              media.element.play().catch(() => {});
-              toggle.textContent = '\u23F8';
-            } else {
-              media.element.pause();
-              toggle.textContent = '\u25B6';
+        if (!media._isMicAudio) {
+          const toggle = document.createElement('button');
+          toggle.className = 'audio-toggle';
+          toggle.textContent = (media.element && !media.element.paused) ? '\u23F8' : '\u25B6';
+          toggle.title = 'Play/Pause';
+          toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (media.element) {
+              if (media.element.paused) {
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                media.element.play().catch(() => {});
+                toggle.textContent = '\u23F8';
+              } else {
+                media.element.pause();
+                toggle.textContent = '\u25B6';
+              }
             }
-          }
-        });
-        item.appendChild(toggle);
+          });
+          item.appendChild(toggle);
+        }
 
         const bar = document.createElement('div');
         bar.className = 'audio-bar';
@@ -8782,8 +8797,20 @@ function stopNdiSend() {
         audioDataArray = new Uint8Array(audioAnalyser.frequencyBinCount); // 128 bins
       }
 
-      // Disconnect previous audio source
-      if (activeAudioEntry && activeAudioEntry._sourceNode) {
+      // Disconnect previous audio source (file or mic)
+      if (_micAudioEntry) {
+        // Stop mic stream, null mic vars, remove mic entry, reconnect analyser
+        if (_micAudioSourceNode) { try { _micAudioSourceNode.disconnect(); } catch(e) {} }
+        if (_micAudioStream) { _micAudioStream.getTracks().forEach(t => t.stop()); }
+        const micIdx = mediaInputs.findIndex(m => m.id === _micAudioEntry.id);
+        if (micIdx !== -1) mediaInputs.splice(micIdx, 1);
+        _micAudioStream = null;
+        _micAudioSourceNode = null;
+        _micAudioEntry = null;
+        try { audioAnalyser.connect(audioCtx.destination); } catch(e) {}
+        const micBtn = document.getElementById('tile-mic');
+        if (micBtn) micBtn.classList.remove('active');
+      } else if (activeAudioEntry && activeAudioEntry._sourceNode) {
         try { activeAudioEntry._sourceNode.disconnect(); } catch(e) {}
         if (activeAudioEntry.element) activeAudioEntry.element.pause();
       }
@@ -8904,6 +8931,64 @@ function stopNdiSend() {
     renderMediaList();
     autoBindTextures();
     return entry;
+  }
+
+  async function addMicAudio() {
+    // Toggle off: if mic already active, remove it
+    if (_micAudioEntry) {
+      removeMedia(_micAudioEntry.id);
+      return;
+    }
+
+    // Init audio context & analyser if needed
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioAnalyser = audioCtx.createAnalyser();
+      audioAnalyser.fftSize = 256;
+      audioAnalyser.smoothingTimeConstant = 0.8;
+      audioAnalyser.connect(audioCtx.destination);
+      audioDataArray = new Uint8Array(audioAnalyser.frequencyBinCount);
+    }
+
+    // Disconnect previous file audio source if any
+    if (activeAudioEntry && activeAudioEntry._sourceNode) {
+      try { activeAudioEntry._sourceNode.disconnect(); } catch(e) {}
+      if (activeAudioEntry.element) activeAudioEntry.element.pause();
+    }
+
+    // Disconnect analyser from destination to prevent speaker feedback
+    try { audioAnalyser.disconnect(audioCtx.destination); } catch(e) {}
+
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    // Get microphone stream
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const sourceNode = audioCtx.createMediaStreamSource(stream);
+    sourceNode.connect(audioAnalyser); // analysis only — NOT connected to destination
+
+    const entry = {
+      id: 'mic-audio-' + Date.now(),
+      name: 'Microphone',
+      type: 'audio',
+      element: null,
+      glTexture: null,
+      threeTexture: null,
+      _isMicAudio: true,
+      _sourceNode: sourceNode,
+      stream: stream
+    };
+
+    _micAudioStream = stream;
+    _micAudioSourceNode = sourceNode;
+    _micAudioEntry = entry;
+    activeAudioEntry = entry;
+
+    mediaInputs.push(entry);
+    renderMediaList();
+    autoBindTextures();
+
+    const micBtn = document.getElementById('tile-mic');
+    if (micBtn) micBtn.classList.add('active');
   }
 
   async function addMediaFromDataUrl(name, dataUrl) {
@@ -9233,14 +9318,34 @@ function stopNdiSend() {
     }
     // Cleanup audio element
     if (entry.type === 'audio') {
-      if (entry._sourceNode) {
-        try { entry._sourceNode.disconnect(); } catch(e) {}
-      }
-      if (entry.element) {
-        entry.element.pause();
-        if (entry.element.src) URL.revokeObjectURL(entry.element.src);
-        entry.element.src = '';
-        if (entry.element.parentNode) entry.element.parentNode.removeChild(entry.element);
+      if (entry._isMicAudio) {
+        // Mic audio cleanup: stop stream tracks, null state vars
+        if (entry._sourceNode) {
+          try { entry._sourceNode.disconnect(); } catch(e) {}
+        }
+        if (entry.stream) {
+          entry.stream.getTracks().forEach(t => t.stop());
+        }
+        _micAudioStream = null;
+        _micAudioSourceNode = null;
+        _micAudioEntry = null;
+        // Reconnect analyser to destination for file audio playback
+        if (audioAnalyser && audioCtx) {
+          try { audioAnalyser.connect(audioCtx.destination); } catch(e) {}
+        }
+        const micBtn = document.getElementById('tile-mic');
+        if (micBtn) micBtn.classList.remove('active');
+      } else {
+        // File audio cleanup
+        if (entry._sourceNode) {
+          try { entry._sourceNode.disconnect(); } catch(e) {}
+        }
+        if (entry.element) {
+          entry.element.pause();
+          if (entry.element.src) URL.revokeObjectURL(entry.element.src);
+          entry.element.src = '';
+          if (entry.element.parentNode) entry.element.parentNode.removeChild(entry.element);
+        }
       }
       if (activeAudioEntry === entry) {
         activeAudioEntry = null;
@@ -9282,9 +9387,9 @@ function stopNdiSend() {
         if (m.type === 'video' && m.element && m.element.paused) {
           m.element.play().catch(() => {});
         }
-        if (m.type === 'audio' && m.element && m.element.paused && m === activeAudioEntry) {
+        if (m.type === 'audio' && m === activeAudioEntry) {
           if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-          m.element.play().catch(() => {});
+          if (m.element && m.element.paused) m.element.play().catch(() => {});
         }
       });
     }
