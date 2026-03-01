@@ -2537,7 +2537,7 @@ body {
           <select class="layer-shader-select" data-layer="text"></select>
         </div>
         <div class="text-msg-bar">
-          <input type="text" id="text-msg-input" maxlength="24" value="ETHEREA" spellcheck="false" placeholder="TYPE HERE">
+          <input type="text" id="text-msg-input" maxlength="64" value="ETHEREA" spellcheck="false" placeholder="TYPE HERE">
         </div>
         <div class="layer-controls">
           <div class="layer-control-row">
@@ -3964,16 +3964,19 @@ class Renderer {
     }
 
     // Direct msg uniform override for text layer — reads prominent bar value
-    // and sets msg_0..msg_23 every frame, bypassing inputValues
+    // and sets msg_0..msg_N every frame, bypassing inputValues
     if (layer.id === 'text') {
       if (!layer._msgBar) layer._msgBar = document.getElementById('text-msg-input');
       if (layer._msgBar) {
+        const msgInp = (layer.inputs || []).find(inp => inp.TYPE === 'text' && inp.NAME === 'msg');
+        const maxLen = msgInp ? (msgInp.MAX_LENGTH || 24) : 24;
         const raw = layer._msgBar.value;
-        if (raw !== layer._msgCached) {
+        if (raw !== layer._msgCached || maxLen !== layer._msgMaxLen) {
           layer._msgCached = raw;
+          layer._msgMaxLen = maxLen;
           const str = raw.trim().toUpperCase();
-          layer._msgCodes = new Float32Array(24);
-          for (let j = 0; j < 24; j++) {
+          layer._msgCodes = new Float32Array(maxLen);
+          for (let j = 0; j < maxLen; j++) {
             const ch = str[j];
             if (!ch) { layer._msgCodes[j] = 26; continue; }
             const cc = ch.charCodeAt(0) - 65;
@@ -3981,10 +3984,12 @@ class Renderer {
           }
         }
         if (layer._msgCodes) {
-          for (let j = 0; j < 24; j++) {
+          for (let j = 0; j < layer._msgCodes.length; j++) {
             const loc = this._getLayerLoc(layer, 'msg_' + j);
             if (loc) gl.uniform1f(loc, layer._msgCodes[j]);
           }
+          const lenLoc = this._getLayerLoc(layer, 'msg_len');
+          if (lenLoc) gl.uniform1f(lenLoc, raw.trim().replace(/\s+$/, '').length);
         }
       }
     }
@@ -8810,6 +8815,16 @@ function stopNdiSend() {
         try { audioAnalyser.connect(audioCtx.destination); } catch(e) {}
         const micBtn = document.getElementById('tile-mic');
         if (micBtn) micBtn.classList.remove('active');
+        const headerBtn = document.getElementById('canvas-mic-btn');
+        if (headerBtn) headerBtn.classList.remove('active');
+        // Also stop speech recognition started with mic audio
+        if (_micCaptionEntry) {
+          const capIdx = mediaInputs.findIndex(m => m.id === _micCaptionEntry.id);
+          if (capIdx !== -1) mediaInputs.splice(capIdx, 1);
+          if (_micRecognition) { try { _micRecognition.stop(); } catch(e) {} _micRecognition = null; }
+          _micCaptionEntry = null;
+          _micCaptionText = '';
+        }
       } else if (activeAudioEntry && activeAudioEntry._sourceNode) {
         try { activeAudioEntry._sourceNode.disconnect(); } catch(e) {}
         if (activeAudioEntry.element) activeAudioEntry.element.pause();
@@ -8961,8 +8976,14 @@ function stopNdiSend() {
 
     if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-    // Get microphone stream
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Raw audio — disable all processing for clean FFT signal (like Synesthesia)
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
     const sourceNode = audioCtx.createMediaStreamSource(stream);
     sourceNode.connect(audioAnalyser); // analysis only — NOT connected to destination
 
@@ -8987,8 +9008,15 @@ function stopNdiSend() {
     renderMediaList();
     autoBindTextures();
 
+    // Also start speech recognition for text shader transcription
+    if (!_micCaptionEntry || !mediaInputs.includes(_micCaptionEntry)) {
+      startMicCaptions();
+    }
+
     const micBtn = document.getElementById('tile-mic');
     if (micBtn) micBtn.classList.add('active');
+    const headerBtn = document.getElementById('canvas-mic-btn');
+    if (headerBtn) headerBtn.classList.add('active');
   }
 
   async function addMediaFromDataUrl(name, dataUrl) {
@@ -9335,6 +9363,12 @@ function stopNdiSend() {
         }
         const micBtn = document.getElementById('tile-mic');
         if (micBtn) micBtn.classList.remove('active');
+        const headerBtn = document.getElementById('canvas-mic-btn');
+        if (headerBtn) headerBtn.classList.remove('active');
+        // Also stop speech recognition if it was started with mic audio
+        if (_micCaptionEntry && mediaInputs.includes(_micCaptionEntry)) {
+          removeMedia(_micCaptionEntry.id);
+        }
       } else {
         // File audio cleanup
         if (entry._sourceNode) {
