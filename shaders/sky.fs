@@ -8,7 +8,7 @@
     {
       "NAME": "skyColor",
       "TYPE": "color",
-      "DEFAULT": [0.0, 0.0, 0.3, 1.0]
+      "DEFAULT": [0.91, 0.25, 0.34, 1.0]
     },
     {
       "NAME": "starColor",
@@ -49,7 +49,7 @@ vec4 star(vec2 uv, float zoom, float seed)
 	vec2 f = fract(uv);
 	vec2 p = .5 + .440 * (sin(s + PI)) * sin(11. * fract(sin((s + seed) * mat2(7.5, 3.3, 6.2, 5.4)) * 55.)) - f;
 	float d = length(p);
-	float k = smoothstep(d*.9, d, 0.025 * starSize * (1.0 + audioBass * 3.0));
+	float k = smoothstep(d*.9, d, 0.025 * starSize * (1.0 + audioBass * 1.5));
 	float shades = 2.0;
 	vec4 color = vec4(
 		(shades/(shades-1.0))*mod(floor(shades*uv.y)/shades, 1.0),
@@ -63,7 +63,7 @@ vec4 star(vec2 uv, float zoom, float seed)
 
 void main(void)
 {
-	float phase = (fract(TIME * speed * (1.0 + audioLevel))/5.) * PI;
+	float phase = (fract(TIME * speed * (1.0 + audioLevel * 0.5))/5.) * PI;
 	float blue = 1.-((isf_FragNormCoord.x/2.) + (isf_FragNormCoord.y));
 	float opacity = (isf_FragNormCoord.x + isf_FragNormCoord.y);
 	vec2 uv = (gl_FragCoord.xy*2.-RENDERSIZE.xy) / min(RENDERSIZE.x,RENDERSIZE.y); 

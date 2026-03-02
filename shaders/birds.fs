@@ -12,7 +12,7 @@
     { "NAME": "depth", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
     { "NAME": "skyTop", "TYPE": "color", "DEFAULT": [0.15, 0.3, 0.65, 1.0] },
     { "NAME": "skyBottom", "TYPE": "color", "DEFAULT": [0.85, 0.75, 0.6, 1.0] },
-    { "NAME": "birdColor", "TYPE": "color", "DEFAULT": [0.05, 0.05, 0.1, 1.0] },
+    { "NAME": "birdColor", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
     { "NAME": "bgImage", "TYPE": "image" },
     { "NAME": "audioReactive", "TYPE": "bool", "DEFAULT": false }
   ]

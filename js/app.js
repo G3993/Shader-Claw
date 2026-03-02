@@ -103,6 +103,11 @@ function compile(source) {
     const layer = getLayer(layerId);
     generateControls(layer.inputs, detailPanel, (values) => {
       Object.assign(layer.inputValues, values);
+    }, {
+      gl: isfRenderer.gl,
+      onBgSource: (name, source) => {
+        layer._bgTexture = source.texture || null;
+      },
     });
     autoBindTextures();
   } else {
@@ -133,7 +138,7 @@ async function loadScene(folder, file) {
     generateControls(layer3d.inputs, detailPanel, (values) => {
       Object.assign(sceneRenderer.inputValues, values);
       Object.assign(layer3d.inputValues, values);
-    });
+    }, { gl: isfRenderer.gl });
     autoBindTextures();
   } catch (e) {
     console.error('Failed to load scene:', e);
@@ -150,6 +155,11 @@ on('layer:select', ({ layerId }) => {
   }
   generateControls(layer.inputs || [], detailPanel, (values) => {
     Object.assign(layer.inputValues, values);
+  }, {
+    gl: isfRenderer.gl,
+    onBgSource: (name, source) => {
+      layer._bgTexture = source.texture || null;
+    },
   });
 });
 

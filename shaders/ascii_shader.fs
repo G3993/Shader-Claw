@@ -7,7 +7,7 @@
     { "NAME": "colorMode", "TYPE": "long", "VALUES": [0,1,2], "LABELS": ["Mono Green","Mono White","Rainbow"], "DEFAULT": 0 },
     { "NAME": "contrast", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.6 },
     { "NAME": "density", "TYPE": "float", "MIN": 0.1, "MAX": 1.0, "DEFAULT": 0.27 },
-    { "NAME": "charColor", "TYPE": "color", "DEFAULT": [0.25, 0.25, 0.25, 1.0] },
+    { "NAME": "charColor", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
     { "NAME": "bgColor", "TYPE": "color", "DEFAULT": [0.0, 0.0, 0.0, 1.0] },
     { "NAME": "transparentBg", "TYPE": "bool", "DEFAULT": false }
   ]

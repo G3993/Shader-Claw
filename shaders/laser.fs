@@ -16,15 +16,15 @@
       "NAME": "intensity",
       "LABEL": "Intensity",
       "TYPE": "float",
-      "DEFAULT": 0.01,
+      "DEFAULT": 0.005,
       "MIN": 0.001,
       "MAX": 0.05
     },
     {
       "NAME": "zoom",
-      "LABEL": "Zoom",
+      "LABEL": "Scale",
       "TYPE": "float",
-      "DEFAULT": 1.0,
+      "DEFAULT": 4.0,
       "MIN": 0.2,
       "MAX": 4.0
     },
@@ -32,19 +32,19 @@
       "NAME": "color1",
       "LABEL": "Color A",
       "TYPE": "color",
-      "DEFAULT": [1.0, 0.0, 0.0, 1.0]
+      "DEFAULT": [0.91, 0.25, 0.34, 1.0]
     },
     {
       "NAME": "color2",
       "LABEL": "Color B",
       "TYPE": "color",
-      "DEFAULT": [0.0, 1.0, 0.0, 1.0]
+      "DEFAULT": [1.0, 1.0, 1.0, 1.0]
     },
     {
       "NAME": "color3",
       "LABEL": "Color C",
       "TYPE": "color",
-      "DEFAULT": [0.0, 0.0, 1.0, 1.0]
+      "DEFAULT": [1.0, 0.0, 0.0, 1.0]
     }
   ]
 }
@@ -112,8 +112,11 @@ void main(void) {
    p *= zoom;
    float t = TIME * speed * (1.0 + audioHigh * 2.0);
 
+   // Smooth sinusoidal drift — ease-in/ease-out parallax feel
+   vec2 drift = 0.03 * vec2(sin(t * 0.17), cos(t * 0.23));
+
    // First cluster: follows mouse (or primary hand via hand-as-mouse)
-   vec3 d = laserCluster(p - toCenter(mousePos), t);
+   vec3 d = laserCluster(p - toCenter(mousePos) + drift, t);
 
    // Second cluster: when two hands are detected, mirror X for webcam flip
    if (mpHandCount >= 2.0) {

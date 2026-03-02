@@ -15,7 +15,7 @@
     { "NAME": "cubeSize", "TYPE": "float", "MIN": 0.2, "MAX": 2.0, "DEFAULT": 0.8 },
     { "NAME": "cubeY", "TYPE": "float", "MIN": -1.0, "MAX": 2.0, "DEFAULT": 0.6 },
     { "NAME": "cubeSpin", "TYPE": "float", "MIN": 0.0, "MAX": 3.0, "DEFAULT": 0.5 },
-    { "NAME": "cubeColor", "TYPE": "color", "DEFAULT": [0.8, 0.85, 0.9, 1.0] },
+    { "NAME": "cubeColor", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
     { "NAME": "cubeRoughness", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.15 },
     { "NAME": "orbitSpeed", "TYPE": "float", "MIN": 0.0, "MAX": 2.0, "DEFAULT": 0.3 },
     { "NAME": "camHeight", "TYPE": "float", "MIN": 1.0, "MAX": 8.0, "DEFAULT": 3.5 },

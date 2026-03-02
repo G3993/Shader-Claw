@@ -60,6 +60,8 @@ export function compileToLayer(renderer, layerId, source) {
 
   // Store parsed inputs
   layer.inputs = parsed.inputs || [];
+  layer._hasBgColor = layer.inputs.some(inp => inp.NAME === 'bgColor');
+  if (!layer._bgTexture) layer._bgTexture = null;
 
   // Reset input values with defaults
   const oldValues = { ...layer.inputValues };

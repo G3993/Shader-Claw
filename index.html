@@ -623,6 +623,36 @@ body {
   color: var(--text-dim); transition: border-color 0.3s, color 0.3s;
   pointer-events: auto; cursor: pointer; user-select: none;
 }
+.audio-signal-bar {
+  display: none; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--border);
+}
+.audio-signal-bar.active { display: flex; }
+.audio-signal-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: #e84057;
+  box-shadow: 0 0 4px #e84057;
+  animation: signal-pulse 1.2s ease-in-out infinite;
+}
+@keyframes signal-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px #e84057; }
+  50% { opacity: 0.35; box-shadow: 0 0 1px #e84057; }
+}
+.audio-signal-label {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.5px;
+  color: #e84057; text-transform: uppercase; flex-shrink: 0;
+}
+.audio-signal-meter {
+  flex: 1; height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px; overflow: hidden;
+}
+.audio-signal-meter-fill {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, #e84057, #ff6b6b);
+  border-radius: 2px; transition: width 0.05s;
+}
 .ndi-indicator.active { border-color: #e84057; }
 .ndi-indicator.active .ndi-label { color: #e84057; }
 .ndi-indicator.active .ndi-dot {
@@ -870,6 +900,91 @@ body {
 
 .canvas-btn:hover { background: #000000dd; }
 
+.live-signal-bar {
+  height: 3px; margin: -6px 0 6px 90px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px; overflow: hidden;
+}
+.live-signal-bar .live-signal-fill {
+  display: block; height: 100%; width: 0%;
+  background: #e84057; border-radius: 2px;
+  transition: width 0.08s linear;
+}
+
+/* === Inline binding config panel (under bound parameters) === */
+.bind-inline {
+  margin: -4px 0 10px 0; padding: 4px 6px 4px 8px;
+  border-left: 2px solid rgba(232,64,87,0.3);
+  background: rgba(232,64,87,0.03); border-radius: 0 4px 4px 0;
+}
+.bind-inline-header {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; min-height: 14px; padding: 1px 0;
+}
+.bind-inline-meter {
+  flex: 1; height: 3px; background: rgba(255,255,255,0.06);
+  border-radius: 2px; overflow: hidden;
+}
+.bind-inline-fill {
+  display: block; height: 100%; width: 0%;
+  background: #e84057; border-radius: 2px;
+  transition: width 0.08s linear;
+}
+.bind-inline-src {
+  font-size: 9px; color: #e84057; white-space: nowrap; flex-shrink: 0;
+}
+.bind-inline-chevron {
+  font-size: 7px; color: var(--text-dim); transition: transform 0.2s;
+}
+.bind-inline-header.open .bind-inline-chevron { transform: rotate(180deg); }
+.bind-inline-clear {
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: 13px; line-height: 1; padding: 0 2px; opacity: 0;
+  transition: opacity 0.15s; flex-shrink: 0;
+}
+.bind-inline-header:hover .bind-inline-clear { opacity: 0.6; }
+.bind-inline-clear:hover { color: #ff5050 !important; opacity: 1 !important; }
+.bind-inline-body { padding: 6px 0 2px; }
+.bind-inline-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
+}
+.bind-inline-row label {
+  width: 46px; flex-shrink: 0; color: var(--text-dim); font-size: 9px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.bind-inline-row input[type="number"] {
+  width: 60px; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 3px; color: var(--text); font-size: 10px; padding: 3px 5px;
+  font-family: inherit;
+}
+.bind-inline-row input[type="range"] { flex: 1; height: 3px; accent-color: #e84057; }
+.bind-inline-row .bi-val {
+  width: 30px; text-align: right; font-size: 9px; color: var(--text-dim);
+}
+.bind-inline-row select {
+  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 3px; color: var(--text); font-size: 10px; padding: 3px 5px;
+  font-family: inherit; max-width: 100%;
+}
+
+.audio-level-indicator {
+  display: none; align-items: center; gap: 5px;
+  background: #000000aa; border: 1px solid var(--border);
+  border-radius: 4px; padding: 0 8px; height: 28px;
+}
+.audio-level-indicator.active { display: flex; }
+.audio-level-indicator svg { color: #e84057; flex-shrink: 0; }
+.audio-level-track {
+  width: 80px; height: 5px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px; overflow: hidden;
+}
+.audio-level-fill {
+  display: block; height: 100%; width: 0%;
+  background: #e84057;
+  border-radius: 3px; transition: width 0.06s;
+}
+
 #error-bar {
   position: absolute;
   bottom: 0;
@@ -918,6 +1033,7 @@ body {
   flex: 1;
   accent-color: var(--accent);
   height: 4px;
+  position: relative; z-index: 1;
 }
 
 .control-row input[type="color"] {
@@ -1273,45 +1389,54 @@ body {
 }
 .mp-map-btn svg { fill: var(--text-dim); }
 .mp-map-btn:hover { opacity: 0.7; border-color: var(--border); }
-.mp-map-btn.linked {
+.mp-map-btn.linked, .mp-map-btn.auto-reactive {
   opacity: 1; border-color: #e84057;
 }
-.mp-map-btn.linked svg { fill: #e84057; filter: drop-shadow(0 0 3px rgba(232,64,87,0.5)); }
+.mp-map-btn.linked svg, .mp-map-btn.auto-reactive svg {
+  fill: #e84057; filter: drop-shadow(0 0 3px rgba(232,64,87,0.5));
+}
+.mp-map-btn.auto-reactive {
+  animation: react-blink 2.5s ease-in-out infinite;
+}
+@keyframes react-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
 
 .mp-picker {
-  position: fixed; z-index: 1000; width: 180px; max-height: 290px;
+  position: fixed; z-index: 1000; width: 260px; max-height: 460px;
   background: var(--bg-dark, #1a1a2e); border: 1px solid var(--border);
-  border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.55);
   display: flex; flex-direction: column; overflow: hidden;
-  font-size: 10px;
+  font-size: 11px;
 }
 .mp-picker-tabs {
   display: flex; border-bottom: 1px solid var(--border);
 }
 .mp-picker-tab {
-  flex: 1; padding: 5px 4px; text-align: center; cursor: pointer;
+  flex: 1; padding: 7px 5px; text-align: center; cursor: pointer;
   background: none; border: none; color: var(--text-dim);
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.3px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px;
   font-family: inherit; transition: color 0.15s, background 0.15s;
 }
 .mp-picker-tab:hover { color: var(--text); }
 .mp-picker-tab.active { color: #e84057; background: rgba(232,64,87,0.08); }
 .mp-picker-list {
-  flex: 1; overflow-y: auto; padding: 2px 0;
+  flex: 1; overflow-y: auto; padding: 3px 0;
 }
 .mp-picker-list-item {
-  padding: 4px 8px; cursor: pointer; color: var(--text-dim);
-  transition: background 0.1s, color 0.1s;
+  padding: 6px 10px; cursor: pointer; color: var(--text-dim);
+  transition: background 0.1s, color 0.1s; font-size: 11px;
 }
 .mp-picker-list-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 .mp-picker-list-item.selected { color: #e84057; background: rgba(232,64,87,0.1); }
 .mp-picker-axis {
-  display: flex; gap: 2px; padding: 5px 8px; border-top: 1px solid var(--border);
+  display: flex; gap: 3px; padding: 6px 10px; border-top: 1px solid var(--border);
 }
 .mp-picker-axis label {
   flex: 1; display: flex; align-items: center; justify-content: center;
-  gap: 3px; cursor: pointer; padding: 3px; border-radius: 3px;
-  color: var(--text-dim); font-size: 9px; text-transform: uppercase;
+  gap: 3px; cursor: pointer; padding: 4px; border-radius: 3px;
+  color: var(--text-dim); font-size: 10px; text-transform: uppercase;
   transition: color 0.15s, background 0.15s;
 }
 .mp-picker-axis input[type="radio"] { display: none; }
@@ -1321,14 +1446,71 @@ body {
 .mp-picker-axis label:has(input:checked) {
   background: rgba(232,64,87,0.1); color: #e84057;
 }
+.mp-picker-btns {
+  display: flex; gap: 6px; margin: 6px 10px 8px;
+}
+.mp-picker-save {
+  flex: 1; padding: 6px; background: rgba(232,64,87,0.12);
+  border: 1px solid rgba(232,64,87,0.5); border-radius: 4px;
+  color: #e84057; font-size: 10px; cursor: pointer; font-family: inherit;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mp-picker-save:hover { background: rgba(232,64,87,0.22); border-color: #e84057; }
 .mp-picker-clear {
-  margin: 4px 8px 6px; padding: 4px; background: none;
-  border: 1px solid rgba(255,80,80,0.4); border-radius: 3px;
-  color: #ff5050; font-size: 9px; cursor: pointer; font-family: inherit;
+  flex: 1; padding: 6px; background: none;
+  border: 1px solid rgba(255,80,80,0.4); border-radius: 4px;
+  color: #ff5050; font-size: 10px; cursor: pointer; font-family: inherit;
   text-transform: uppercase; letter-spacing: 0.3px;
   transition: background 0.15s, border-color 0.15s;
 }
 .mp-picker-clear:hover { background: rgba(255,80,80,0.1); border-color: #ff5050; }
+.mp-picker-config {
+  padding: 8px 10px 4px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-dim);
+}
+.mp-picker-config-title {
+  text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+  color: var(--text); font-size: 10px;
+}
+.mp-picker-config-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.mp-picker-config-row label {
+  width: 52px; flex-shrink: 0; color: var(--text-dim); font-size: 11px;
+}
+.mp-picker-config-row input[type="number"] {
+  width: 64px; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 11px; padding: 4px 6px;
+  font-family: inherit;
+}
+.mp-picker-config-row input[type="range"] {
+  flex: 1; height: 4px; accent-color: #e84057;
+}
+.mp-picker-config-row .cfg-val {
+  width: 32px; text-align: right; font-size: 11px; color: var(--text-dim);
+}
+.mp-picker-config-row select {
+  flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 11px; padding: 4px 6px;
+  font-family: inherit;
+}
+
+/* === Slider wrap + range indicator === */
+.slider-wrap {
+  flex: 1; position: relative; display: flex; align-items: center;
+}
+.bind-range-indicator {
+  position: absolute; height: 4px; border-radius: 2px;
+  background: rgba(232,64,87,0.25); pointer-events: none; z-index: 0;
+  top: 50%; transform: translateY(-50%);
+}
+.bind-signal-dot {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: #e84057; top: 50%; transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px rgba(232,64,87,0.6);
+  transition: left 0.08s linear;
+}
 
 /* === Body Tracking Panel — expanded styles === */
 .bt-section-header {
@@ -2172,6 +2354,44 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* ── Background Color Row ── */
+.bg-color-row {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 4px 8px;
+  flex: 1; min-width: 0;
+}
+.bg-color-swatch {
+  width: 16px; height: 16px; border-radius: 3px;
+  border: 1px solid var(--border); flex-shrink: 0;
+  cursor: pointer; position: relative;
+}
+.bg-color-swatch input[type="color"] {
+  position: absolute; inset: 0; opacity: 0;
+  width: 100%; height: 100%; cursor: pointer; border: none;
+}
+.bg-color-hex {
+  font-size: 10px; font-family: var(--font);
+  color: var(--text-dim); letter-spacing: 0.5px;
+  background: none; border: none; outline: none;
+  width: 52px; padding: 0;
+  font-variant-numeric: tabular-nums;
+}
+.bg-color-hex:focus { color: var(--text); }
+.bg-color-opacity {
+  font-size: 10px; color: var(--text-dim);
+  margin-left: auto; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bg-color-eye {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dim); padding: 0; font-size: 12px;
+  opacity: 0.7; transition: opacity 0.15s;
+  display: flex; align-items: center;
+}
+.bg-color-eye:hover { opacity: 1; }
+.bg-color-eye.off { opacity: 0.25; }
 </style>
 </head>
 <body>
@@ -2343,10 +2563,21 @@ body {
         <div class="voice-transcript-bar">
           <input type="text" id="voice-transcript" readonly value="" placeholder="Start Talking.." spellcheck="false">
         </div>
+        <div class="audio-signal-bar" id="audio-signal">
+          <span class="audio-signal-dot"></span>
+          <span class="audio-signal-label" id="audio-signal-label">MIC</span>
+          <div class="audio-signal-meter"><span class="audio-signal-meter-fill" id="audio-signal-fill"></span></div>
+        </div>
         <div class="layer-controls">
           <div class="cam-toggle-row">
             <label>Mic</label>
             <button class="cam-switch" id="voice-mic-toggle" title="Toggle microphone on/off"></button>
+          </div>
+          <div class="layer-control-row">
+            <label>Audio Device</label>
+            <select id="audio-device-select" style="flex:1">
+              <option value="">Default</option>
+            </select>
           </div>
           <div class="layer-control-row">
             <label>Decay</label>
@@ -2666,6 +2897,10 @@ body {
       <div class="canvas-controls">
         <div class="ndi-indicator" id="ndi-indicator"><span class="ndi-dot"></span><span class="ndi-label">NDI</span></div>
         <button class="canvas-btn" id="play-btn" title="Play/Pause">&#9654;</button>
+        <div class="audio-level-indicator" id="audio-level-indicator">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
+          <div class="audio-level-track"><span class="audio-level-fill" id="audio-level-fill"></span></div>
+        </div>
         <button class="canvas-btn" id="fs-btn" title="Fullscreen">&#x26F6;</button>
       </div>
       <div id="error-bar"></div>
@@ -2873,7 +3108,18 @@ function parseISF(source) {
 function isfInputToUniform(input) {
   const t = input.TYPE;
   if (t === 'float') return `uniform float ${input.NAME};`;
-  if (t === 'color') return `uniform vec4 ${input.NAME};`;
+  if (t === 'color') {
+    if (input.NAME === 'bgColor') {
+      return [
+        'uniform vec4 _bgColorSolid;',
+        'uniform sampler2D _bgTex;',
+        'uniform float _bgTexActive;',
+        'vec4 _resolvedBgColor;',
+        '#define bgColor _resolvedBgColor',
+      ].join('\n');
+    }
+    return `uniform vec4 ${input.NAME};`;
+  }
   if (t === 'bool') return `uniform bool ${input.NAME};`;
   if (t === 'point2D') return `uniform vec2 ${input.NAME};`;
   if (t === 'image') return `uniform sampler2D ${input.NAME};`;
@@ -2953,29 +3199,34 @@ function buildFragmentShader(source) {
     .replace(/#version\s+\d+.*/g, '')
     .replace(/#ifdef\s+GL_ES\s*\r?\nprecision\s+\w+\s+float\s*;\s*\r?\n#endif\s*\r?\n?/g, '');
 
-  // Wrap shader main() to inject transparent background support for layer compositing
-  // Skip wrapper if the shader already declares a 'transparentBg' input (it handles alpha itself)
+  // Wrap shader main() to inject bgColor resolution and/or transparent background support
   const shaderHandlesTransparency = (parsed.inputs || []).some(inp => inp.NAME === 'transparentBg');
+  const hasBgColor = (parsed.inputs || []).some(inp => inp.NAME === 'bgColor');
   let body = header + cleaned;
   const mainRe = /void\s+main\s*\(\s*(void)?\s*\)/;
-  if (mainRe.test(body) && !shaderHandlesTransparency) {
+  const needsWrap = mainRe.test(body) && (hasBgColor || !shaderHandlesTransparency);
+  if (needsWrap) {
     body = body.replace(mainRe, 'void _shaderMain()');
-    body += `
-void main() {
-    _shaderMain();
-    // Global mouse spotlight — subtle interactive light on all shaders
-    vec2 _muv = gl_FragCoord.xy / RENDERSIZE.xy;
-    vec2 _md = _muv - mousePos;
-    _md.x *= RENDERSIZE.x / RENDERSIZE.y;
-    float _mr = length(_md);
-    float _mspot = exp(-_mr * _mr * 6.0) * 0.25;
-    gl_FragColor.rgb += gl_FragColor.rgb * _mspot;
-    if (_transparentBg > 0.5) {
-        float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-        gl_FragColor.a = smoothstep(0.02, 0.15, _lum);
+    let wrapper = '\nvoid main() {\n';
+    if (hasBgColor) {
+      wrapper += '    _resolvedBgColor = _bgTexActive > 0.5 ? texture2D(_bgTex, isf_FragNormCoord) : _bgColorSolid;\n';
     }
-}
-`;
+    wrapper += '    _shaderMain();\n';
+    if (!shaderHandlesTransparency) {
+      wrapper += '    // Global mouse spotlight\n';
+      wrapper += '    vec2 _muv = gl_FragCoord.xy / RENDERSIZE.xy;\n';
+      wrapper += '    vec2 _md = _muv - mousePos;\n';
+      wrapper += '    _md.x *= RENDERSIZE.x / RENDERSIZE.y;\n';
+      wrapper += '    float _mr = length(_md);\n';
+      wrapper += '    float _mspot = exp(-_mr * _mr * 6.0) * 0.25;\n';
+      wrapper += '    gl_FragColor.rgb += gl_FragColor.rgb * _mspot;\n';
+      wrapper += '    if (_transparentBg > 0.5) {\n';
+      wrapper += '        float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));\n';
+      wrapper += '        gl_FragColor.a = smoothstep(0.02, 0.15, _lum);\n';
+      wrapper += '    }\n';
+    }
+    wrapper += '}\n';
+    body += wrapper;
   }
 
   return { frag: body, parsed, headerLineCount: headerParts.length };
@@ -3243,24 +3494,35 @@ function updateFontAtlas(gl, inputValues) {
 function updateAudioUniforms(gl) {
   if (!audioAnalyser || !activeAudioEntry) {
     audioLevel = audioBass = audioMid = audioHigh = 0;
+    const sf = document.getElementById('audio-signal-fill');
+    if (sf) sf.style.width = '0%';
+    const lf = document.getElementById('audio-level-fill');
+    if (lf) lf.style.width = '0%';
     return;
   }
   audioAnalyser.getByteFrequencyData(audioDataArray);
   const len = audioDataArray.length; // 128 bins
 
-  // Compute RMS level
+  // Compute RMS level (raw)
   let sum = 0;
   for (let i = 0; i < len; i++) sum += audioDataArray[i] * audioDataArray[i];
-  audioLevel = Math.sqrt(sum / len) / 255.0;
+  const rawLevel = Math.sqrt(sum / len) / 255.0;
 
   // Bass (bins 0-15), Mid (16-80), High (81-127)
   let bassSum = 0, midSum = 0, highSum = 0;
   for (let i = 0; i < 16; i++) bassSum += audioDataArray[i];
   for (let i = 16; i < 81; i++) midSum += audioDataArray[i];
   for (let i = 81; i < len; i++) highSum += audioDataArray[i];
-  audioBass = bassSum / (16 * 255);
-  audioMid = midSum / (65 * 255);
-  audioHigh = highSum / (47 * 255);
+  const rawBass = bassSum / (16 * 255);
+  const rawMid = midSum / (65 * 255);
+  const rawHigh = highSum / (47 * 255);
+
+  // Smooth audio values (EMA) — ease in/out for less abrupt transitions
+  const ease = 0.25;
+  audioLevel += (rawLevel - audioLevel) * ease;
+  audioBass  += (rawBass  - audioBass)  * ease;
+  audioMid   += (rawMid   - audioMid)   * ease;
+  audioHigh  += (rawHigh  - audioHigh)  * ease;
 
   // Upload FFT data to GL texture (256x1 LUMINANCE)
   if (!audioFFTGLTexture) {
@@ -3287,6 +3549,12 @@ function updateAudioUniforms(gl) {
     const bar = document.querySelector('.audio-bar-fill[data-audio-id="' + activeAudioEntry.id + '"]');
     if (bar) bar.style.width = (audioLevel * 100) + '%';
   }
+
+  // Update live signal indicators
+  const sigFill = document.getElementById('audio-signal-fill');
+  if (sigFill) sigFill.style.width = (audioLevel * 100) + '%';
+  const lvlFill = document.getElementById('audio-level-fill');
+  if (lvlFill) lvlFill.style.width = (audioLevel * 100) + '%';
 }
 
 function detectMediaType(file) {
@@ -3948,11 +4216,17 @@ class Renderer {
 
     // Resolve MediaPipe bindings before setting input values
     if (layer.mpBindings && layer.mpBindings.length > 0) {
-      resolveBindings(layer, mediaPipeMgr);
+      resolveBindings(layer, mediaPipeMgr, this);
     }
 
     // Set layer input values
     for (const [name, val] of Object.entries(layer.inputValues || {})) {
+      // bgColor uses #define trick — set _bgColorSolid instead
+      if (name === 'bgColor') {
+        const solidLoc = this._getLayerLoc(layer, '_bgColorSolid');
+        if (solidLoc && Array.isArray(val)) gl.uniform4f(solidLoc, val[0], val[1], val[2], val[3]);
+        continue;
+      }
       const loc = this._getLayerLoc(layer, name);
       if (!loc) continue;
       if (typeof val === 'number') gl.uniform1f(loc, val);
@@ -4021,6 +4295,25 @@ class Renderer {
       }
       gl.uniform1i(this._getLayerLoc(layer, name), texUnit);
       texUnit++;
+    }
+
+    // bgColor texture uniforms (_bgTexActive, _bgTex)
+    if (layer._hasBgColor) {
+      // Update video/webcam bg texture each frame
+      const bgSrc = layer._bgSource;
+      if (bgSrc && bgSrc.isVideo && bgSrc.element && layer._bgTexture) {
+        gl.bindTexture(gl.TEXTURE_2D, layer._bgTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bgSrc.element);
+      }
+      const bgActiveLoc = this._getLayerLoc(layer, '_bgTexActive');
+      if (bgActiveLoc) gl.uniform1f(bgActiveLoc, layer._bgTexture ? 1.0 : 0.0);
+      const bgTexLoc = this._getLayerLoc(layer, '_bgTex');
+      if (bgTexLoc) {
+        gl.activeTexture(gl.TEXTURE0 + texUnit);
+        gl.bindTexture(gl.TEXTURE_2D, layer._bgTexture || this._defaultTex);
+        gl.uniform1i(bgTexLoc, texUnit);
+        texUnit++;
+      }
     }
 
     // Bind extras (audio, font, mediapipe) and draw
@@ -4190,11 +4483,16 @@ class Renderer {
 
     // Resolve MediaPipe bindings
     if (layer.mpBindings && layer.mpBindings.length > 0) {
-      resolveBindings(layer, mediaPipeMgr);
+      resolveBindings(layer, mediaPipeMgr, this);
     }
 
     // Set input values
     for (const [name, val] of Object.entries(layer.inputValues || {})) {
+      if (name === 'bgColor') {
+        const solidLoc = this._getLayerLoc(layer, '_bgColorSolid');
+        if (solidLoc && Array.isArray(val)) gl.uniform4f(solidLoc, val[0], val[1], val[2], val[3]);
+        continue;
+      }
       const loc = this._getLayerLoc(layer, name);
       if (!loc) continue;
       if (typeof val === 'number') gl.uniform1f(loc, val);
@@ -4232,6 +4530,24 @@ class Renderer {
       }
       gl.uniform1i(this._getLayerLoc(layer, name), texUnit);
       texUnit++;
+    }
+
+    // bgColor texture uniforms
+    if (layer._hasBgColor) {
+      const bgSrc = layer._bgSource;
+      if (bgSrc && bgSrc.isVideo && bgSrc.element && layer._bgTexture) {
+        gl.bindTexture(gl.TEXTURE_2D, layer._bgTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bgSrc.element);
+      }
+      const bgActiveLoc = this._getLayerLoc(layer, '_bgTexActive');
+      if (bgActiveLoc) gl.uniform1f(bgActiveLoc, layer._bgTexture ? 1.0 : 0.0);
+      const bgTexLoc = this._getLayerLoc(layer, '_bgTex');
+      if (bgTexLoc) {
+        gl.activeTexture(gl.TEXTURE0 + texUnit);
+        gl.bindTexture(gl.TEXTURE_2D, layer._bgTexture || this._defaultTex);
+        gl.uniform1i(bgTexLoc, texUnit);
+        texUnit++;
+      }
     }
 
     // Bind extras (audio, font, mediapipe)
@@ -4455,7 +4771,8 @@ void main() {
       }
       gl.uniform1i(this._getCompLoc('layer' + i), i);
       gl.uniform1f(this._getCompLoc('opacity' + i), (i < layerCount && layers[i]) ? layers[i].opacity : 0);
-      gl.uniform1f(this._getCompLoc('visible' + i), (i < layerCount && layers[i] && layers[i].visible) ? 1.0 : 0.0);
+      const lVis = (i < layerCount && layers[i] && layers[i].visible && (layers[i].type !== 'overlay' || layers[i]._hasImage)) ? 1.0 : 0.0;
+      gl.uniform1f(this._getCompLoc('visible' + i), lVis);
       gl.uniform1f(this._getCompLoc('blendMode' + i), blendModeMap[(i < layerCount && layers[i]) ? layers[i].blendMode : 'normal'] || 0);
 
       // Per-layer flip uniforms
@@ -4543,6 +4860,12 @@ class SceneRenderer {
     const elapsed = (performance.now() - this.startTime) / 1000;
     // Inject mousePos so scenes can be interactive
     this.inputValues._mousePos = this._mainRenderer ? [this._mainRenderer.mousePos[0], this._mainRenderer.mousePos[1]] : [0.5, 0.5];
+    // Inject audio data so scenes can be audio-reactive
+    this.inputValues._audioLevel = audioLevel;
+    this.inputValues._audioBass = audioBass;
+    this.inputValues._audioMid = audioMid;
+    this.inputValues._audioHigh = audioHigh;
+    this.inputValues._audioFFTTexture = audioFFTThreeTexture;
     this.sceneDef.update(elapsed, this.inputValues, this.media);
     this.renderer.render(this.sceneDef.scene, this.sceneDef.camera);
   }
@@ -4610,6 +4933,98 @@ class SceneRenderer {
 // UI Controls Generator
 // ============================================================
 
+// Detect which inputs are driven by audio/mouse/hand in shader source
+function detectReactivity(shaderSource, inputs) {
+  if (!shaderSource || !inputs) return {};
+  // Strip JSON header
+  const bodyStart = shaderSource.indexOf('*/');
+  const body = bodyStart >= 0 ? shaderSource.slice(bodyStart + 2) : shaderSource;
+  const lines = body.split('\n');
+
+  const audioRe = /\b(audioLevel|audioBass|audioMid|audioHigh|audioFFT)\b/;
+  const mouseRe = /\b(mousePos|mouseDelta)\b/;
+  const handRe  = /\b(mpHandPos|mpHandPos2|mpHandCount|pinchHold|mpPinch|mpPinch2|mpFacePos|mpBodyPos)\b/;
+
+  const result = {};
+  inputs.forEach(inp => {
+    const name = inp.NAME;
+    const types = new Set();
+    lines.forEach(line => {
+      if (line.indexOf(name) !== -1) {
+        if (audioRe.test(line)) types.add('audio');
+        if (mouseRe.test(line)) types.add('mouse');
+        if (handRe.test(line))  types.add('hand');
+      }
+    });
+    if (types.size > 0) result[name] = [...types];
+  });
+  return result;
+}
+
+// Add a live signal bar under a control row
+// === Range indicator helpers for bound parameters ===
+function updateRangeIndicator(row, binding) {
+  const wrap = row.querySelector('.slider-wrap');
+  if (!wrap) return;
+  const ind = wrap.querySelector('.bind-range-indicator');
+  if (!ind) return;
+  if (!binding) { ind.style.display = 'none'; return; }
+  const pMin = binding._pMin != null ? binding._pMin : 0;
+  const pMax = binding._pMax != null ? binding._pMax : 1;
+  const range = pMax - pMin;
+  if (range <= 0) { ind.style.display = 'none'; return; }
+  const leftPct = ((binding.min - pMin) / range) * 100;
+  const widthPct = ((binding.max - binding.min) / range) * 100;
+  ind.style.display = 'block';
+  ind.style.left = leftPct.toFixed(1) + '%';
+  ind.style.width = widthPct.toFixed(1) + '%';
+}
+
+function updateSignalDot(row, rawSignal) {
+  const wrap = row.querySelector('.slider-wrap');
+  if (!wrap) return;
+  const dot = wrap.querySelector('.bind-signal-dot');
+  if (!dot) return;
+  if (rawSignal == null) { dot.style.display = 'none'; return; }
+  dot.style.display = 'block';
+  dot.style.left = (Math.max(0, Math.min(1, rawSignal)) * 100).toFixed(1) + '%';
+}
+
+function ensureLiveSignalBar(row) {
+  if (row.nextElementSibling && row.nextElementSibling.classList.contains('live-signal-bar')) return;
+  const bar = document.createElement('div');
+  bar.className = 'live-signal-bar';
+  bar.dataset.bindParam = row.dataset.name;
+  bar.innerHTML = '<span class="live-signal-fill"></span>';
+  row.after(bar);
+}
+
+// Remove live signal bar from a control row
+function removeLiveSignalBar(row) {
+  if (row.nextElementSibling && row.nextElementSibling.classList.contains('live-signal-bar')) {
+    row.nextElementSibling.remove();
+  }
+}
+
+// Highlight existing lightning bolt binding buttons for auto-reactive parameters
+function markReactiveParams(container, shaderSource, inputs) {
+  const reactivity = detectReactivity(shaderSource, inputs);
+  Object.entries(reactivity).forEach(([name, types]) => {
+    const row = container.querySelector('.control-row[data-name="' + name + '"]');
+    if (!row) return;
+    const btn = row.querySelector('.mp-map-btn');
+    if (!btn) return;
+    btn.classList.add('auto-reactive');
+    const labels = [];
+    if (types.includes('audio')) labels.push('Audio');
+    if (types.includes('mouse')) labels.push('Mouse');
+    if (types.includes('hand'))  labels.push('Hand');
+    btn.title = labels.join(' + ') + ' reactive — click to customize';
+    // Add live signal bar for audio-reactive params
+    if (types.includes('audio')) ensureLiveSignalBar(row);
+  });
+}
+
 function generateControls(inputs, container, onChange) {
   container.innerHTML = '';
   if (!inputs || inputs.length === 0) {
@@ -4672,8 +5087,29 @@ function generateControls(inputs, container, onChange) {
       });
       row.appendChild(mpBtn);
 
-      row.appendChild(range);
+      // Wrap slider + range indicator
+      const sliderWrap = document.createElement('div');
+      sliderWrap.className = 'slider-wrap';
+      const rangeInd = document.createElement('div');
+      rangeInd.className = 'bind-range-indicator';
+      rangeInd.style.display = 'none';
+      const signalDot = document.createElement('div');
+      signalDot.className = 'bind-signal-dot';
+      signalDot.style.display = 'none';
+      rangeInd.appendChild(signalDot);
+      sliderWrap.appendChild(rangeInd);
+      sliderWrap.appendChild(range);
+      row.appendChild(sliderWrap);
       row.appendChild(valSpan);
+
+    } else if (inp.TYPE === 'color' && inp.NAME === 'bgColor') {
+      // Compact background color row: swatch | hex | opacity | eye
+      const def = inp.DEFAULT || [0, 0, 0, 1];
+      values[inp.NAME] = [...def];
+      row.classList.add('bg-source-row');
+
+      const panel = _buildBgColorRow(inp, def, values, onChange, container._bgSourceCallback);
+      row.appendChild(panel);
 
     } else if (inp.TYPE === 'color') {
       const def = inp.DEFAULT || [1, 1, 1, 1];
@@ -4990,6 +5426,81 @@ function hexToRgb(hex) {
 }
 
 // ============================================================
+// Background Source Panel (for bgColor parameters)
+// ============================================================
+
+function _buildBgColorRow(inp, def, values, onChange, onBgSource) {
+  const row = document.createElement('div');
+  row.className = 'bg-color-row';
+
+  let alpha = def[3] != null ? def[3] : 1;
+  let visible = true;
+
+  // Color swatch with hidden native picker
+  const swatch = document.createElement('div');
+  swatch.className = 'bg-color-swatch';
+  swatch.style.background = rgbToHex(def[0], def[1], def[2]);
+  const picker = document.createElement('input');
+  picker.type = 'color';
+  picker.value = rgbToHex(def[0], def[1], def[2]);
+  swatch.appendChild(picker);
+
+  // Hex input (no # prefix)
+  const hexInput = document.createElement('input');
+  hexInput.className = 'bg-color-hex';
+  hexInput.type = 'text';
+  hexInput.value = rgbToHex(def[0], def[1], def[2]).slice(1).toUpperCase();
+  hexInput.maxLength = 6;
+  hexInput.spellcheck = false;
+
+  // Opacity display
+  const opacitySpan = document.createElement('span');
+  opacitySpan.className = 'bg-color-opacity';
+  opacitySpan.textContent = Math.round(alpha * 100) + ' %';
+
+  // Eye icon (visibility toggle)
+  const eyeBtn = document.createElement('button');
+  eyeBtn.className = 'bg-color-eye';
+  eyeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  eyeBtn.title = 'Toggle background visibility';
+
+  function applyColor(hex6) {
+    const rgb = hexToRgb('#' + hex6);
+    const a = visible ? alpha : 0;
+    values[inp.NAME] = [rgb[0], rgb[1], rgb[2], a];
+    swatch.style.background = '#' + hex6;
+    picker.value = '#' + hex6;
+    hexInput.value = hex6.toUpperCase();
+    onChange(values);
+    if (onBgSource) onBgSource(inp.NAME, { type: 'color' });
+  }
+
+  picker.addEventListener('input', () => {
+    applyColor(picker.value.slice(1));
+  });
+
+  hexInput.addEventListener('change', () => {
+    let v = hexInput.value.replace(/[^0-9a-fA-F]/g, '').padEnd(6, '0').slice(0, 6);
+    applyColor(v);
+  });
+
+  eyeBtn.addEventListener('click', () => {
+    visible = !visible;
+    eyeBtn.classList.toggle('off', !visible);
+    const cur = values[inp.NAME];
+    values[inp.NAME] = [cur[0], cur[1], cur[2], visible ? alpha : 0];
+    onChange(values);
+    if (onBgSource) onBgSource(inp.NAME, { type: 'color' });
+  });
+
+  row.appendChild(swatch);
+  row.appendChild(hexInput);
+  row.appendChild(opacitySpan);
+  row.appendChild(eyeBtn);
+  return row;
+}
+
+// ============================================================
 // MediaPipe Manager
 // ============================================================
 
@@ -5288,37 +5799,73 @@ const DERIVED_SIGNALS = {
 };
 
 const AUDIO_SIGNALS = [
+  { name: 'Mic Level',   key: 'audioLevel' },
   { name: 'Level (RMS)', key: 'audioLevel' },
   { name: 'Bass',        key: 'audioBass' },
   { name: 'Mid',         key: 'audioMid' },
   { name: 'High',        key: 'audioHigh' },
 ];
 
+const MOUSE_SIGNALS = [
+  { name: 'Mouse X',    key: 'mouseX' },
+  { name: 'Mouse Y',    key: 'mouseY' },
+  { name: 'Mouse Down', key: 'mouseDown' },
+];
+
+/**
+ * Apply easing, range mapping, and smoothing for a single binding.
+ * rawSignal is 0-1 from the signal source. Stores _lastRawSignal for UI.
+ */
+function applyBindingValue(layer, b, rawSignal) {
+  // Easing curve: transform 0-1 signal
+  let v = Math.max(0, Math.min(1, rawSignal));
+  const easing = b.easing || 'linear';
+  if (easing === 'easeIn') v = v * v;
+  else if (easing === 'easeOut') v = 1 - (1 - v) * (1 - v);
+  else if (easing === 'easeInOut') v = v < 0.5 ? 2 * v * v : 1 - 2 * (1 - v) * (1 - v);
+
+  // Range mapping
+  let target = b.min + v * (b.max - b.min);
+
+  // Per-binding EMA smoothing
+  const smoothing = b.smoothing || 0;
+  if (smoothing > 0 && b._smoothedValue != null) {
+    const alpha = Math.pow(0.02, smoothing);
+    target = b._smoothedValue + (target - b._smoothedValue) * (1 - alpha);
+  }
+  b._smoothedValue = target;
+  b._lastRawSignal = rawSignal;
+
+  layer.inputValues[b.param] = target;
+}
+
 /**
  * Resolve MediaPipe bindings for a layer: body part position → parameter value.
- * Supports three binding types:
- * - landmark bindings { group, landmarkIndex, param, axis, min, max }
- * - derived signal bindings { source: 'derived', signalKey, param, min, max }
- * - audio signal bindings { source: 'audio', signalKey, param, min, max }
+ * Supports binding types: landmark, derived, audio, mouse.
  */
-function resolveBindings(layer, mediaPipeMgr) {
+function resolveBindings(layer, mediaPipeMgr, renderer) {
   if (!layer.mpBindings || !layer.mpBindings.length) return;
   for (const b of layer.mpBindings) {
     // Audio signal binding
     if (b.source === 'audio') {
       const sigs = { audioLevel, audioBass, audioMid, audioHigh };
       const v = sigs[b.signalKey];
-      if (v != null) {
-        layer.inputValues[b.param] = b.min + v * (b.max - b.min);
-      }
+      if (v != null) applyBindingValue(layer, b, v);
+      continue;
+    }
+    // Mouse signal binding
+    if (b.source === 'mouse') {
+      let v = 0;
+      if (b.signalKey === 'mouseX') v = renderer ? renderer.mousePos[0] : 0.5;
+      else if (b.signalKey === 'mouseY') v = renderer ? renderer.mousePos[1] : 0.5;
+      else if (b.signalKey === 'mouseDown') v = renderer ? (renderer.mouseDown || 0) : 0;
+      applyBindingValue(layer, b, v);
       continue;
     }
     // Derived signal binding
     if (b.source === 'derived') {
       const v = gestureProcessor.derived[b.signalKey];
-      if (v != null) {
-        layer.inputValues[b.param] = b.min + v * (b.max - b.min);
-      }
+      if (v != null) applyBindingValue(layer, b, v);
       continue;
     }
     // Landmark binding
@@ -5336,7 +5883,7 @@ function resolveBindings(layer, mediaPipeMgr) {
     }
     if (!pos) continue;
     let v = (b.axis === 'y') ? pos.y : (b.axis === 'z') ? (pos.z || 0) : pos.x;
-    layer.inputValues[b.param] = b.min + v * (b.max - b.min);
+    applyBindingValue(layer, b, v);
   }
 }
 
@@ -5810,6 +6357,9 @@ function stopNdiSend() {
       : isfRenderer.compileForLayer(layer, VERT_SHADER, optimizedFrag);
 
     layer.inputs = parsed.inputs || [];
+    layer._hasBgColor = layer.inputs.some(inp => inp.NAME === 'bgColor');
+    layer._bgTexture = layer._bgTexture || null;
+    layer._bgSource = layer._bgSource || null;
     layer._hasGestureInputs = layer.inputs.some(inp =>
       inp.NAME === 'rotationX' || inp.NAME === 'rotationY' || inp.NAME === 'shapeScale' ||
       inp.NAME === 'glow' || inp.NAME === 'morph' || inp.NAME === 'alive');
@@ -5831,6 +6381,16 @@ function stopNdiSend() {
                 return af - bf;
               })
           : layer.inputs;
+        // Pass GL context + callback for background source panel
+        paramsContainer._bgGl = isfRenderer.gl;
+        paramsContainer._bgSourceCallback = (name, source) => {
+          if (source.type === 'color') {
+            layer._bgTexture = null;
+          } else if (source.texture) {
+            layer._bgTexture = source.texture;
+          }
+          layer._bgSource = source;
+        };
         layer.inputValues = generateControls(paramsInputs, paramsContainer, (vals) => {
           layer.inputValues = vals;
           if ('fontFamily' in vals) setVarFontFamily(vals.fontFamily);
@@ -5840,6 +6400,8 @@ function stopNdiSend() {
           }
           autoBindTextures(layerId);
         });
+        // Mark parameters with automatic reactivity badges (audio/mouse/hand)
+        if (layer._isfSource) markReactiveParams(paramsContainer, layer._isfSource, paramsInputs);
         // Clean up any previously-moved direction D-pad (lives outside .layer-params after move)
         const layerCard = paramsContainer.closest('.layer-card');
         if (layerCard) {
@@ -6035,6 +6597,24 @@ function stopNdiSend() {
     }
   }
 
+  // Convert uniform definition object to ISF-style INPUTS array (for custom material UI)
+  function uniformDefsToISFInputs(uniforms) {
+    if (!uniforms) return [];
+    return Object.entries(uniforms).map(([name, def]) => {
+      const inp = { NAME: name, LABEL: def.label || name };
+      switch (def.type) {
+        case 'float': inp.TYPE='float'; inp.DEFAULT=def.default??0.5; inp.MIN=def.min??0; inp.MAX=def.max??1; break;
+        case 'color': inp.TYPE='color'; inp.DEFAULT=def.default||[1,1,1,1]; break;
+        case 'bool':  inp.TYPE='bool';  inp.DEFAULT=!!def.default; break;
+        case 'int': case 'long': inp.TYPE='long'; inp.DEFAULT=def.default||0; inp.VALUES=def.values||[0,1,2,3]; inp.LABELS=def.labels||inp.VALUES.map(String); break;
+        case 'vec2':  inp.TYPE='point2D'; inp.DEFAULT=def.default||[0,0]; break;
+        case 'image': case 'sampler2D': inp.TYPE='image'; break;
+        default: inp.TYPE='float'; inp.DEFAULT=0.5; inp.MIN=0; inp.MAX=1;
+      }
+      return inp;
+    });
+  }
+
   // Expose full API for MCP server bridge
   window.shaderClaw = {
     loadSource,
@@ -6205,6 +6785,28 @@ function stopNdiSend() {
         if (fv) fv.classList.toggle('active', layer.sceneFlipV);
       }
       return { ok: true };
+    },
+
+    setCustomShader: (vertexShader, fragmentShader, uniforms) => {
+      if (!sceneRenderer.sceneDef || !sceneRenderer.sceneDef.setShader) {
+        return { ok: false, error: 'Custom Material scene not loaded' };
+      }
+      sceneRenderer.sceneDef.setShader(vertexShader, fragmentShader, uniforms);
+      // Rebuild UI with dynamic INPUTS from uniform definitions
+      const dynamicInputs = uniformDefsToISFInputs(uniforms || sceneRenderer.sceneDef.getCustomUniforms());
+      const sceneLayer = getLayer('scene');
+      const staticInputs = sceneRenderer.inputs;
+      sceneLayer.inputs = [...staticInputs, ...dynamicInputs];
+      const paramsContainer = document.querySelector('.layer-params[data-layer="scene"]');
+      if (paramsContainer) {
+        sceneLayer.inputValues = generateControls(sceneLayer.inputs, paramsContainer, (vals) => {
+          sceneRenderer.inputValues = vals;
+          sceneLayer.inputValues = vals;
+          autoBindTextures('scene');
+        });
+        sceneRenderer.inputValues = sceneLayer.inputValues;
+      }
+      return { ok: true, inputs: dynamicInputs.map(i => i.NAME) };
     },
   };
 
@@ -7104,6 +7706,60 @@ function stopNdiSend() {
     }
   }
 
+  function updateLiveSignalBars() {
+    const bars = document.querySelectorAll('.live-signal-bar');
+    if (!bars.length) return;
+    const audioSigs = { audioLevel, audioBass, audioMid, audioHigh };
+    const derived = gestureProcessor.derived;
+    for (const bar of bars) {
+      const paramName = bar.dataset.bindParam;
+      if (!paramName) continue;
+      let v = 0;
+      // Check bindings on all layers for this param
+      for (const layer of layers) {
+        if (!layer.mpBindings) continue;
+        const b = layer.mpBindings.find(b => b.param === paramName);
+        if (!b) continue;
+        if (b.source === 'audio') {
+          v = audioSigs[b.signalKey] || 0;
+        } else if (b.source === 'mouse') {
+          if (b.signalKey === 'mouseX') v = isfRenderer ? isfRenderer.mousePos[0] : 0;
+          else if (b.signalKey === 'mouseY') v = isfRenderer ? isfRenderer.mousePos[1] : 0;
+          else if (b.signalKey === 'mouseDown') v = isfRenderer ? (isfRenderer.mouseDown || 0) : 0;
+        } else if (b.source === 'derived') {
+          v = derived[b.signalKey] || 0;
+        } else {
+          // Landmark — use normalized input value
+          if (layer.inputValues && layer.inputValues[paramName] != null && b.max !== b.min) {
+            v = (layer.inputValues[paramName] - b.min) / (b.max - b.min);
+          }
+        }
+        break;
+      }
+      // Also check auto-reactive audio (no explicit binding) — use audioLevel as proxy
+      if (v === 0 && bar.previousElementSibling && bar.previousElementSibling.querySelector('.mp-map-btn.auto-reactive')) {
+        v = audioSigs.audioLevel || 0;
+      }
+      bar.querySelector('.live-signal-fill').style.width = (Math.min(v, 1) * 100).toFixed(1) + '%';
+    }
+  }
+
+  // === Update range indicators + signal dots on all bound sliders ===
+  function updateRangeIndicators() {
+    for (const layer of layers) {
+      if (!layer.mpBindings || !layer.mpBindings.length) continue;
+      const container = document.querySelector(`.layer-params[data-layer="${layer.id}"]`);
+      if (!container) continue;
+      for (const b of layer.mpBindings) {
+        if (!b.param) continue;
+        const row = container.querySelector(`.control-row[data-name="${b.param}"]`);
+        if (!row) continue;
+        updateRangeIndicator(row, b);
+        updateSignalDot(row, b._lastRawSignal);
+      }
+    }
+  }
+
   // === Active Bindings Dashboard ===
   function renderLinksDashboard() {
     btLinksList.innerHTML = '';
@@ -7119,6 +7775,9 @@ function stopNdiSend() {
         if (b.source === 'audio') {
           const found = AUDIO_SIGNALS.find(s => s.key === b.signalKey);
           srcLabel = '\u266B ' + (found ? found.name : b.signalKey);
+        } else if (b.source === 'mouse') {
+          const found = MOUSE_SIGNALS.find(s => s.key === b.signalKey);
+          srcLabel = '\u2316 ' + (found ? found.name : b.signalKey);
         } else if (b.source === 'derived') {
           // Find signal name
           let sigName = b.signalKey;
@@ -7207,7 +7866,7 @@ function stopNdiSend() {
         const isfInput = (layer.inputs || []).find(inp => inp.NAME === paramName);
         const pMin = isfInput && isfInput.MIN != null ? isfInput.MIN : 0;
         const pMax = isfInput && isfInput.MAX != null ? isfInput.MAX : 1;
-        layer.mpBindings.push({ source: 'derived', signalKey, param: paramName, min: pMin, max: pMax });
+        layer.mpBindings.push({ source: 'derived', signalKey, param: paramName, min: pMin, max: pMax, smoothing: 0, easing: 'linear', _pMin: pMin, _pMax: pMax });
         renderLinksDashboard();
         refreshAllLinksUI();
         document.body.removeChild(picker);
@@ -7533,16 +8192,233 @@ function stopNdiSend() {
     }
   }
 
+  // === Inline binding config panel (under bound parameters in layer panel) ===
+  function getBindingSourceLabel(b) {
+    if (b.source === 'audio') {
+      const found = AUDIO_SIGNALS.find(s => s.key === b.signalKey);
+      return '\u266B ' + (found ? found.name : b.signalKey);
+    }
+    if (b.source === 'mouse') {
+      const found = MOUSE_SIGNALS.find(s => s.key === b.signalKey);
+      return '\u2316 ' + (found ? found.name : b.signalKey);
+    }
+    if (b.source === 'derived') {
+      for (const grp of ['hand', 'face', 'pose']) {
+        const found = (DERIVED_SIGNALS[grp] || []).find(s => s.key === b.signalKey);
+        if (found) return found.name;
+      }
+      return b.signalKey;
+    }
+    const parts = MP_BODY_PARTS[b.group] || [];
+    const found = parts.find(p => p.index === b.landmarkIndex);
+    return (found ? found.name : b.group) + ' ' + (b.axis || 'x').toUpperCase();
+  }
+
+  function buildSignalOptions(binding) {
+    let html = '';
+    // If landmark binding, add current as special option at top
+    if (!binding.source) {
+      html += `<option value="landmark" selected>${getBindingSourceLabel(binding)}</option><option disabled>\u2500\u2500\u2500\u2500\u2500\u2500\u2500</option>`;
+    }
+    // Audio (deduplicated by key)
+    html += '<optgroup label="Audio">';
+    const seenAudio = new Set();
+    for (const sig of AUDIO_SIGNALS) {
+      if (seenAudio.has(sig.key)) continue;
+      seenAudio.add(sig.key);
+      const sel = binding.source === 'audio' && binding.signalKey === sig.key ? ' selected' : '';
+      html += `<option value="audio:${sig.key}"${sel}>${sig.name}</option>`;
+    }
+    html += '</optgroup>';
+    // Mouse
+    html += '<optgroup label="Mouse">';
+    for (const sig of MOUSE_SIGNALS) {
+      const sel = binding.source === 'mouse' && binding.signalKey === sig.key ? ' selected' : '';
+      html += `<option value="mouse:${sig.key}"${sel}>${sig.name}</option>`;
+    }
+    html += '</optgroup>';
+    // Derived by group
+    for (const grp of ['hand', 'face', 'pose']) {
+      const sigs = DERIVED_SIGNALS[grp] || [];
+      if (!sigs.length) continue;
+      html += `<optgroup label="${grp[0].toUpperCase()+grp.slice(1)} Signals">`;
+      for (const sig of sigs) {
+        const sel = binding.source === 'derived' && binding.signalKey === sig.key ? ' selected' : '';
+        html += `<option value="derived:${sig.key}"${sel}>${sig.name}</option>`;
+      }
+      html += '</optgroup>';
+    }
+    return html;
+  }
+
+  function removeBindInline(row) {
+    const next = row.nextElementSibling;
+    if (next && next.classList.contains('bind-inline')) next.remove();
+  }
+
+  function ensureBindInline(row, binding, layerId) {
+    removeBindInline(row);
+    removeLiveSignalBar(row);
+
+    const panel = document.createElement('div');
+    panel.className = 'bind-inline';
+    panel.dataset.bindParam = row.dataset.name;
+    panel.dataset.layer = layerId;
+
+    const srcLabel = getBindingSourceLabel(binding);
+    panel.innerHTML = `
+      <div class="bind-inline-header">
+        <div class="bind-inline-meter"><span class="bind-inline-fill"></span></div>
+        <span class="bind-inline-src">${srcLabel}</span>
+        <span class="bind-inline-chevron">\u25BE</span>
+        <button class="bind-inline-clear" title="Remove binding">\u00D7</button>
+      </div>
+      <div class="bind-inline-body" style="display:none">
+        <div class="bind-inline-row"><label>Source</label><select class="bi-signal">${buildSignalOptions(binding)}</select></div>
+        <div class="bind-inline-row"><label>Min</label><input type="number" class="bi-min" step="any" value="${binding.min}"></div>
+        <div class="bind-inline-row"><label>Max</label><input type="number" class="bi-max" step="any" value="${binding.max}"></div>
+        <div class="bind-inline-row"><label>Smooth</label><input type="range" class="bi-smooth" min="0" max="1" step="0.01" value="${binding.smoothing||0}"><span class="bi-val bi-smooth-val">${Math.round((binding.smoothing||0)*100)}%</span></div>
+        <div class="bind-inline-row"><label>Easing</label><select class="bi-easing">
+          <option value="linear">Linear</option><option value="easeIn">Ease In</option><option value="easeOut">Ease Out</option><option value="easeInOut">Ease In Out</option>
+        </select></div>
+      </div>
+    `;
+    row.after(panel);
+
+    // Set easing value
+    panel.querySelector('.bi-easing').value = binding.easing || 'linear';
+
+    // Toggle collapse/expand
+    const header = panel.querySelector('.bind-inline-header');
+    const body = panel.querySelector('.bind-inline-body');
+    header.addEventListener('click', (e) => {
+      if (e.target.closest('.bind-inline-clear')) return;
+      const isOpen = body.style.display !== 'none';
+      body.style.display = isOpen ? 'none' : '';
+      header.classList.toggle('open', !isOpen);
+    });
+
+    // Clear binding button
+    panel.querySelector('.bind-inline-clear').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const layer = getLayer(layerId);
+      if (!layer) return;
+      const paramName = row.dataset.name;
+      const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+      if (idx >= 0) layer.mpBindings.splice(idx, 1);
+      const mpBtn = row.querySelector('.mp-map-btn');
+      if (mpBtn) mpBtn.classList.remove('linked');
+      removeBindInline(row);
+      updateRangeIndicator(row, null);
+      buildLinksUI(layerId);
+      renderLinksDashboard();
+    });
+
+    // Source dropdown
+    panel.querySelector('.bi-signal').addEventListener('change', function() {
+      const val = this.value;
+      if (val === 'landmark') return;
+      const layer = getLayer(layerId);
+      if (!layer) return;
+      const paramName = row.dataset.name;
+      const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+      const old = idx >= 0 ? layer.mpBindings[idx] : binding;
+      const parts = val.split(':');
+      const newBinding = {
+        source: parts[0],
+        signalKey: parts[1],
+        param: paramName, min: old.min, max: old.max,
+        smoothing: old.smoothing || 0, easing: old.easing || 'linear',
+        _pMin: old._pMin, _pMax: old._pMax
+      };
+      if (idx >= 0) layer.mpBindings[idx] = newBinding;
+      else layer.mpBindings.push(newBinding);
+      panel.querySelector('.bind-inline-src').textContent = getBindingSourceLabel(newBinding);
+      // Remove landmark option if present
+      const lmOpt = this.querySelector('option[value="landmark"]');
+      if (lmOpt) { lmOpt.remove(); const sep = this.querySelector('option[disabled]'); if (sep) sep.remove(); }
+      buildLinksUI(layerId);
+      renderLinksDashboard();
+    });
+
+    // Config inputs
+    panel.querySelector('.bi-min').addEventListener('input', function() {
+      const layer = getLayer(layerId);
+      if (!layer) return;
+      const b = layer.mpBindings.find(b => b.param === row.dataset.name);
+      if (b) { b.min = parseFloat(this.value); updateRangeIndicator(row, b); }
+    });
+    panel.querySelector('.bi-max').addEventListener('input', function() {
+      const layer = getLayer(layerId);
+      if (!layer) return;
+      const b = layer.mpBindings.find(b => b.param === row.dataset.name);
+      if (b) { b.max = parseFloat(this.value); updateRangeIndicator(row, b); }
+    });
+    panel.querySelector('.bi-smooth').addEventListener('input', function() {
+      const layer = getLayer(layerId);
+      if (!layer) return;
+      const b = layer.mpBindings.find(b => b.param === row.dataset.name);
+      if (b) { b.smoothing = parseFloat(this.value); panel.querySelector('.bi-smooth-val').textContent = Math.round(b.smoothing * 100) + '%'; }
+    });
+    panel.querySelector('.bi-easing').addEventListener('change', function() {
+      const layer = getLayer(layerId);
+      if (!layer) return;
+      const b = layer.mpBindings.find(b => b.param === row.dataset.name);
+      if (b) b.easing = this.value;
+    });
+  }
+
+  function updateBindInlineBars() {
+    const panels = document.querySelectorAll('.bind-inline');
+    if (!panels.length) return;
+    const audioSigs = { audioLevel, audioBass, audioMid, audioHigh };
+    const derived = gestureProcessor.derived;
+    for (const panel of panels) {
+      const paramName = panel.dataset.bindParam;
+      if (!paramName) continue;
+      let v = 0;
+      for (const layer of layers) {
+        if (!layer.mpBindings) continue;
+        const b = layer.mpBindings.find(b => b.param === paramName);
+        if (!b) continue;
+        if (b.source === 'audio') v = audioSigs[b.signalKey] || 0;
+        else if (b.source === 'mouse') {
+          if (b.signalKey === 'mouseX') v = isfRenderer ? isfRenderer.mousePos[0] : 0;
+          else if (b.signalKey === 'mouseY') v = isfRenderer ? isfRenderer.mousePos[1] : 0;
+          else if (b.signalKey === 'mouseDown') v = isfRenderer ? (isfRenderer.mouseDown || 0) : 0;
+        }
+        else if (b.source === 'derived') v = derived[b.signalKey] || 0;
+        else if (layer.inputValues && layer.inputValues[paramName] != null && b.max !== b.min) {
+          v = (layer.inputValues[paramName] - b.min) / (b.max - b.min);
+        }
+        break;
+      }
+      const fill = panel.querySelector('.bind-inline-fill');
+      if (fill) fill.style.width = (Math.min(v, 1) * 100).toFixed(1) + '%';
+    }
+  }
+
   // === MP Map: sync bound state on parameter buttons ===
   function syncMpLinkedState(container, layerId) {
     const layer = getLayer(layerId);
     if (!layer || !container) return;
-    const linkedSet = new Set();
+    const bindMap = new Map();
     if (layer.mpBindings) {
-      for (const b of layer.mpBindings) { if (b.param) linkedSet.add(b.param); }
+      for (const b of layer.mpBindings) {
+        if (b.param) bindMap.set(b.param, b);
+      }
     }
     for (const btn of container.querySelectorAll('.mp-map-btn')) {
-      btn.classList.toggle('linked', linkedSet.has(btn.dataset.paramName));
+      const pName = btn.dataset.paramName;
+      const bound = bindMap.has(pName);
+      btn.classList.toggle('linked', bound);
+      const row = btn.closest('.control-row');
+      if (row) {
+        const b = bindMap.get(pName);
+        updateRangeIndicator(row, b || null);
+        if (b) ensureBindInline(row, b, layerId);
+        else removeBindInline(row);
+      }
     }
   }
 
@@ -7562,6 +8438,7 @@ function stopNdiSend() {
         <button class="mp-picker-tab" data-group="pose">Pose</button>
         <button class="mp-picker-tab" data-group="signals">Signals</button>
         <button class="mp-picker-tab" data-group="audio">Audio</button>
+        <button class="mp-picker-tab" data-group="mouse">Mouse</button>
       </div>
       <div class="mp-picker-list"></div>
       <div class="mp-picker-axis">
@@ -7569,7 +8446,17 @@ function stopNdiSend() {
         <label><input type="radio" name="mp-axis" value="y"><span>Y</span></label>
         <label><input type="radio" name="mp-axis" value="z"><span>Z</span></label>
       </div>
-      <button class="mp-picker-clear">Clear Link</button>
+      <div class="mp-picker-config" style="display:none">
+        <div class="mp-picker-config-title">Range &amp; Smoothing</div>
+        <div class="mp-picker-config-row"><label>Min</label><input type="number" class="cfg-min" step="any"></div>
+        <div class="mp-picker-config-row"><label>Max</label><input type="number" class="cfg-max" step="any"></div>
+        <div class="mp-picker-config-row"><label>Smooth</label><input type="range" class="cfg-smooth" min="0" max="1" step="0.01" value="0"><span class="cfg-val cfg-smooth-val">0%</span></div>
+        <div class="mp-picker-config-row"><label>Easing</label><select class="cfg-easing"><option value="linear">Linear</option><option value="easeIn">Ease In</option><option value="easeOut">Ease Out</option><option value="easeInOut">Ease In Out</option></select></div>
+      </div>
+      <div class="mp-picker-btns">
+        <button class="mp-picker-save">Save</button>
+        <button class="mp-picker-clear">Clear Link</button>
+      </div>
     `;
     document.body.appendChild(el);
     _mpPickerEl = el;
@@ -7608,11 +8495,11 @@ function stopNdiSend() {
         activeGroup = t.dataset.group;
         tabs.forEach(tt => tt.classList.toggle('active', tt === t));
         // Hide axis row for signals/audio tabs
-        axisRow.style.display = (activeGroup === 'signals' || activeGroup === 'audio') ? 'none' : '';
+        axisRow.style.display = (activeGroup === 'signals' || activeGroup === 'audio' || activeGroup === 'mouse') ? 'none' : '';
         renderList();
       };
     });
-    axisRow.style.display = (activeGroup === 'signals' || activeGroup === 'audio') ? 'none' : '';
+    axisRow.style.display = (activeGroup === 'signals' || activeGroup === 'audio' || activeGroup === 'mouse') ? 'none' : '';
 
     // Axis radios
     const axisRadios = picker.querySelectorAll('input[name="mp-axis"]');
@@ -7623,6 +8510,61 @@ function stopNdiSend() {
         if (existing && existing.axis) { existing.axis = selectedAxis; }
       };
     });
+
+    // Config section elements
+    const cfgSection = picker.querySelector('.mp-picker-config');
+    const cfgMin = picker.querySelector('.cfg-min');
+    const cfgMax = picker.querySelector('.cfg-max');
+    const cfgSmooth = picker.querySelector('.cfg-smooth');
+    const cfgSmoothVal = picker.querySelector('.cfg-smooth-val');
+    const cfgEasing = picker.querySelector('.cfg-easing');
+
+    function showConfig() {
+      if (!existing) { cfgSection.style.display = 'none'; return; }
+      cfgSection.style.display = '';
+      cfgMin.value = existing.min;
+      cfgMax.value = existing.max;
+      cfgMin.min = pMin; cfgMin.max = pMax;
+      cfgMax.min = pMin; cfgMax.max = pMax;
+      cfgSmooth.value = existing.smoothing || 0;
+      cfgSmoothVal.textContent = Math.round((existing.smoothing || 0) * 100) + '%';
+      cfgEasing.value = existing.easing || 'linear';
+    }
+    function hideConfig() { cfgSection.style.display = 'none'; }
+
+    // Wire config inputs
+    cfgMin.oninput = () => {
+      if (!existing) return;
+      existing.min = parseFloat(cfgMin.value);
+      const row = anchorBtn.closest('.control-row');
+      if (row) updateRangeIndicator(row, existing);
+    };
+    cfgMax.oninput = () => {
+      if (!existing) return;
+      existing.max = parseFloat(cfgMax.value);
+      const row = anchorBtn.closest('.control-row');
+      if (row) updateRangeIndicator(row, existing);
+    };
+    cfgSmooth.oninput = () => {
+      if (!existing) return;
+      existing.smoothing = parseFloat(cfgSmooth.value);
+      cfgSmoothVal.textContent = Math.round(existing.smoothing * 100) + '%';
+    };
+    cfgEasing.onchange = () => {
+      if (!existing) return;
+      existing.easing = cfgEasing.value;
+    };
+
+    // Helper to finalize after selecting a signal
+    function onSignalSelected() {
+      anchorBtn.classList.add('linked');
+      const row = anchorBtn.closest('.control-row');
+      if (row) { ensureBindInline(row, existing, layerId); updateRangeIndicator(row, existing); }
+      buildLinksUI(layerId);
+      renderLinksDashboard();
+      renderList();
+      showConfig();
+    }
 
     // Landmark / Signals list
     const listEl = picker.querySelector('.mp-picker-list');
@@ -7643,12 +8585,9 @@ function stopNdiSend() {
               // Remove old binding, create derived
               const idx = layer.mpBindings.findIndex(b => b.param === paramName);
               if (idx >= 0) layer.mpBindings.splice(idx, 1);
-              existing = { source: 'derived', signalKey: sig.key, param: paramName, min: pMin, max: pMax };
+              existing = { source: 'derived', signalKey: sig.key, param: paramName, min: pMin, max: pMax, smoothing: 0, easing: 'linear', _pMin: pMin, _pMax: pMax };
               layer.mpBindings.push(existing);
-              anchorBtn.classList.add('linked');
-              buildLinksUI(layerId);
-              renderLinksDashboard();
-              closeMpPicker();
+              onSignalSelected();
             };
             listEl.appendChild(item);
           }
@@ -7664,12 +8603,26 @@ function stopNdiSend() {
           item.onclick = () => {
             const idx = layer.mpBindings.findIndex(b => b.param === paramName);
             if (idx >= 0) layer.mpBindings.splice(idx, 1);
-            existing = { source: 'audio', signalKey: sig.key, param: paramName, min: pMin, max: pMax };
+            existing = { source: 'audio', signalKey: sig.key, param: paramName, min: pMin, max: pMax, smoothing: 0, easing: 'linear', _pMin: pMin, _pMax: pMax };
             layer.mpBindings.push(existing);
-            anchorBtn.classList.add('linked');
-            buildLinksUI(layerId);
-            renderLinksDashboard();
-            closeMpPicker();
+            onSignalSelected();
+          };
+          listEl.appendChild(item);
+        }
+      } else if (activeGroup === 'mouse') {
+        for (const sig of MOUSE_SIGNALS) {
+          const item = document.createElement('div');
+          item.className = 'mp-picker-list-item';
+          item.textContent = sig.name;
+          if (existing && existing.source === 'mouse' && existing.signalKey === sig.key) {
+            item.classList.add('selected');
+          }
+          item.onclick = () => {
+            const idx = layer.mpBindings.findIndex(b => b.param === paramName);
+            if (idx >= 0) layer.mpBindings.splice(idx, 1);
+            existing = { source: 'mouse', signalKey: sig.key, param: paramName, min: pMin, max: pMax, smoothing: 0, easing: 'linear', _pMin: pMin, _pMax: pMax };
+            layer.mpBindings.push(existing);
+            onSignalSelected();
           };
           listEl.appendChild(item);
         }
@@ -7686,12 +8639,9 @@ function stopNdiSend() {
             // Create or update landmark binding
             const idx = layer.mpBindings.findIndex(b => b.param === paramName);
             if (idx >= 0) layer.mpBindings.splice(idx, 1);
-            existing = { group: activeGroup, landmarkIndex: part.index, param: paramName, axis: selectedAxis, min: pMin, max: pMax };
+            existing = { group: activeGroup, landmarkIndex: part.index, param: paramName, axis: selectedAxis, min: pMin, max: pMax, smoothing: 0, easing: 'linear', _pMin: pMin, _pMax: pMax };
             layer.mpBindings.push(existing);
-            anchorBtn.classList.add('linked');
-            buildLinksUI(layerId);
-            renderLinksDashboard();
-            closeMpPicker();
+            onSignalSelected();
           };
           listEl.appendChild(item);
         }
@@ -7699,21 +8649,41 @@ function stopNdiSend() {
     }
     renderList();
 
+    // Show config if there's already a binding
+    if (existing) {
+      // Ensure _pMin/_pMax are populated on legacy bindings
+      if (existing._pMin == null) existing._pMin = pMin;
+      if (existing._pMax == null) existing._pMax = pMax;
+      if (existing.smoothing == null) existing.smoothing = 0;
+      if (existing.easing == null) existing.easing = 'linear';
+      showConfig();
+    } else {
+      hideConfig();
+    }
+
+    // Save button — confirm and close
+    picker.querySelector('.mp-picker-save').onclick = () => {
+      closeMpPicker();
+    };
+
     // Clear button
     picker.querySelector('.mp-picker-clear').onclick = () => {
       const idx = layer.mpBindings.findIndex(b => b.param === paramName);
       if (idx >= 0) layer.mpBindings.splice(idx, 1);
       existing = null;
       anchorBtn.classList.remove('linked');
+      const row = anchorBtn.closest('.control-row');
+      if (row) { removeLiveSignalBar(row); removeBindInline(row); updateRangeIndicator(row, null); }
       buildLinksUI(layerId);
+      hideConfig();
       closeMpPicker();
     };
 
     // Position near anchor
     const rect = anchorBtn.getBoundingClientRect();
     picker.style.display = 'flex';
-    picker.style.left = Math.min(rect.right + 4, window.innerWidth - 190) + 'px';
-    picker.style.top = Math.min(rect.top, window.innerHeight - 300) + 'px';
+    picker.style.left = Math.min(rect.right + 4, window.innerWidth - 270) + 'px';
+    picker.style.top = Math.min(rect.top, window.innerHeight - 460) + 'px';
 
     // Close on click outside
     if (_mpPickerCloseHandler) document.removeEventListener('pointerdown', _mpPickerCloseHandler, true);
@@ -7833,21 +8803,22 @@ function stopNdiSend() {
 
   // Canvas panel always open (no collapse toggle)
 
-  // Shared mic toggle logic
-  function toggleMic() {
+  // Shared mic toggle logic — unified: audio analysis + speech recognition
+  async function toggleMic() {
     const headerBtn = document.getElementById('canvas-mic-btn');
     const panelToggle = document.getElementById('voice-mic-toggle');
-    if (_micCaptionEntry && mediaInputs.includes(_micCaptionEntry)) {
-      // Stop mic
-      removeMedia(_micCaptionEntry.id);
+    if (_micAudioEntry || (_micCaptionEntry && mediaInputs.includes(_micCaptionEntry))) {
+      // Stop mic — remove audio entry (which also stops captions via removeMedia)
+      if (_micAudioEntry) removeMedia(_micAudioEntry.id);
+      else if (_micCaptionEntry) removeMedia(_micCaptionEntry.id);
       headerBtn.classList.remove('active');
       if (panelToggle) panelToggle.classList.remove('active');
       _voiceDecayEnabled = false;
       const textLayer = getLayer('text');
       if (textLayer) { textLayer.opacity = 1.0; textLayer._voiceGlitch = 0.0; }
     } else {
-      // Start mic + enable voice decay
-      startMicCaptions();
+      // Start mic — audio analysis + speech recognition + indicators
+      try { await addMicAudio(); } catch(e) { console.warn('Mic access denied:', e); return; }
       headerBtn.classList.add('active');
       if (panelToggle) panelToggle.classList.add('active');
       _voiceDecayEnabled = true;
@@ -8817,6 +9788,8 @@ function stopNdiSend() {
         if (micBtn) micBtn.classList.remove('active');
         const headerBtn = document.getElementById('canvas-mic-btn');
         if (headerBtn) headerBtn.classList.remove('active');
+        document.getElementById('audio-signal')?.classList.remove('active');
+        document.getElementById('audio-level-indicator')?.classList.remove('active');
         // Also stop speech recognition started with mic audio
         if (_micCaptionEntry) {
           const capIdx = mediaInputs.findIndex(m => m.id === _micCaptionEntry.id);
@@ -8852,6 +9825,12 @@ function stopNdiSend() {
       entry.element = audio;
       entry._sourceNode = sourceNode;
       activeAudioEntry = entry;
+
+      // Show signal indicators for file audio
+      document.getElementById('audio-signal')?.classList.add('active');
+      const sigLabel = document.getElementById('audio-signal-label');
+      if (sigLabel) sigLabel.textContent = 'AUDIO';
+      document.getElementById('audio-level-indicator')?.classList.add('active');
 
       try { await audio.play(); }
       catch (e) {
@@ -8948,6 +9927,36 @@ function stopNdiSend() {
     return entry;
   }
 
+  // Populate audio input device dropdown
+  async function refreshAudioDevices() {
+    const sel = document.getElementById('audio-device-select');
+    if (!sel) return;
+    const prev = sel.value;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioInputs = devices.filter(d => d.kind === 'audioinput');
+    sel.innerHTML = '<option value="">Default</option>';
+    audioInputs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || ('Mic ' + (sel.options.length));
+      sel.appendChild(opt);
+    });
+    // Restore previous selection if still available
+    if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  }
+
+  // Re-enumerate when devices change (plug/unplug)
+  navigator.mediaDevices?.addEventListener('devicechange', refreshAudioDevices);
+
+  // Switch mic to selected device while active
+  document.getElementById('audio-device-select')?.addEventListener('change', async () => {
+    if (_micAudioEntry) {
+      // Re-open mic with new device
+      removeMedia(_micAudioEntry.id);
+      await addMicAudio();
+    }
+  });
+
   async function addMicAudio() {
     // Toggle off: if mic already active, remove it
     if (_micAudioEntry) {
@@ -8976,14 +9985,22 @@ function stopNdiSend() {
 
     if (audioCtx.state === 'suspended') await audioCtx.resume();
 
+    // Use selected device or default
+    const selectedDevice = document.getElementById('audio-device-select')?.value;
+    const audioConstraints = {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false
+    };
+    if (selectedDevice) audioConstraints.deviceId = { exact: selectedDevice };
+
     // Raw audio — disable all processing for clean FFT signal (like Synesthesia)
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false
-      }
+      audio: audioConstraints
     });
+
+    // Refresh device list (labels become available after permission grant)
+    refreshAudioDevices();
     const sourceNode = audioCtx.createMediaStreamSource(stream);
     sourceNode.connect(audioAnalyser); // analysis only — NOT connected to destination
 
@@ -9017,6 +10034,15 @@ function stopNdiSend() {
     if (micBtn) micBtn.classList.add('active');
     const headerBtn = document.getElementById('canvas-mic-btn');
     if (headerBtn) headerBtn.classList.add('active');
+    const panelToggle = document.getElementById('voice-mic-toggle');
+    if (panelToggle) panelToggle.classList.add('active');
+    document.getElementById('audio-signal')?.classList.add('active');
+    const sigLabel = document.getElementById('audio-signal-label');
+    if (sigLabel) sigLabel.textContent = 'MIC';
+    document.getElementById('audio-level-indicator')?.classList.add('active');
+    // Auto-open Voice card so signal indicator is visible
+    const voiceCard = document.querySelector('[data-layer="voice"]');
+    if (voiceCard) voiceCard.classList.add('open');
   }
 
   async function addMediaFromDataUrl(name, dataUrl) {
@@ -9365,6 +10391,9 @@ function stopNdiSend() {
         if (micBtn) micBtn.classList.remove('active');
         const headerBtn = document.getElementById('canvas-mic-btn');
         if (headerBtn) headerBtn.classList.remove('active');
+        const sig2 = document.getElementById('audio-signal');
+        document.getElementById('audio-signal')?.classList.remove('active');
+        document.getElementById('audio-level-indicator')?.classList.remove('active');
         // Also stop speech recognition if it was started with mic audio
         if (_micCaptionEntry && mediaInputs.includes(_micCaptionEntry)) {
           removeMedia(_micCaptionEntry.id);
@@ -9384,6 +10413,8 @@ function stopNdiSend() {
       if (activeAudioEntry === entry) {
         activeAudioEntry = null;
         audioLevel = audioBass = audioMid = audioHigh = 0;
+        document.getElementById('audio-signal')?.classList.remove('active');
+        document.getElementById('audio-level-indicator')?.classList.remove('active');
       }
     }
     // If removing last model, revert scene shape to Cube
@@ -9608,6 +10639,9 @@ function stopNdiSend() {
         updateLinkedSliders();
         updateHandPosWidget();
         updateSignalBars();
+        updateLiveSignalBars();
+        updateRangeIndicators();
+        updateBindInlineBars();
         updateLinksDashboardValues();
         if (btIsRecording) captureFrame();
         if (btIsPlaying) applyPlaybackFrame();
@@ -9691,13 +10725,17 @@ function stopNdiSend() {
     isfRenderer._lastMousePos[0] = isfRenderer.mousePos[0];
     isfRenderer._lastMousePos[1] = isfRenderer.mousePos[1];
 
-    // Input activity: 1.0 when mouse/hands active, decays toward 0 when idle
+    // Input activity: 1.0 when mouse/hands active, holds 5s then decays to idle
     const _mouseMoving = Math.abs(mdx) > 0.0005 || Math.abs(mdy) > 0.0005;
     const _handsActive = mediaPipeMgr && mediaPipeMgr.active && mediaPipeMgr.handCount > 0;
     if (_mouseMoving || _handsActive) {
       isfRenderer.inputActivity = Math.min((isfRenderer.inputActivity || 0) + 0.05, 1.0);
+      isfRenderer._lastInputTime = performance.now();
     } else {
-      isfRenderer.inputActivity = Math.max((isfRenderer.inputActivity || 0) - 0.006, 0.0);
+      const elapsed = performance.now() - (isfRenderer._lastInputTime || 0);
+      if (elapsed > 5000) {
+        isfRenderer.inputActivity = Math.max((isfRenderer.inputActivity || 0) - 0.008, 0.0);
+      }
     }
 
     // Update background texture each frame
@@ -9746,6 +10784,19 @@ function stopNdiSend() {
   });
   glCanvas.addEventListener('mousedown', () => { isfRenderer.mouseDown = 1; });
   glCanvas.addEventListener('mouseup', () => { isfRenderer.mouseDown = 0; });
+
+  // Touch support for mouse bindings (mobile)
+  glCanvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = glCanvas.getBoundingClientRect();
+    const nx = (touch.clientX - rect.left) / rect.width;
+    const ny = 1.0 - (touch.clientY - rect.top) / rect.height;
+    isfRenderer.mousePos[0] += (nx - isfRenderer.mousePos[0]) * 0.3;
+    isfRenderer.mousePos[1] += (ny - isfRenderer.mousePos[1]) * 0.3;
+  }, { passive: false });
+  glCanvas.addEventListener('touchstart', (e) => { isfRenderer.mouseDown = 1; }, { passive: true });
+  glCanvas.addEventListener('touchend', () => { isfRenderer.mouseDown = 0; });
 
   // Handle canvas resize on panel resize
   const resizeObs = new ResizeObserver(() => {
@@ -10036,6 +11087,21 @@ function stopNdiSend() {
 
             case 'enable_mediapipe': {
               result = await window.shaderClaw.enableMediaPipe(params.modes || { hand: true });
+              break;
+            }
+
+            case 'set_custom_shader': {
+              // Auto-load custom material scene if not already active
+              if (!sceneRenderer.sceneDef || !sceneRenderer.sceneDef.setShader) {
+                await window.shaderClaw.loadScene('scenes', 'custom_material.scene.js');
+                getLayer('scene').visible = true;
+                updateLayerCardUI('scene');
+              }
+              result = window.shaderClaw.setCustomShader(
+                params.vertexShader,
+                params.fragmentShader,
+                params.uniforms
+              );
               break;
             }
 

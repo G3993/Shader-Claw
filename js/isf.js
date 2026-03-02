@@ -23,7 +23,19 @@ export function parseISF(source) {
 export function isfInputToUniform(input) {
   const t = input.TYPE;
   if (t === 'float') return `uniform float ${input.NAME};`;
-  if (t === 'color') return `uniform vec4 ${input.NAME};`;
+  if (t === 'color') {
+    // bgColor uses #define trick so it can be driven by either a solid color or a texture
+    if (input.NAME === 'bgColor') {
+      return [
+        'uniform vec4 _bgColorSolid;',
+        'uniform sampler2D _bgTex;',
+        'uniform float _bgTexActive;',
+        'vec4 _resolvedBgColor;',
+        '#define bgColor _resolvedBgColor',
+      ].join('\n');
+    }
+    return `uniform vec4 ${input.NAME};`;
+  }
   if (t === 'bool') return `uniform bool ${input.NAME};`;
   if (t === 'point2D') return `uniform vec2 ${input.NAME};`;
   if (t === 'image') return `uniform sampler2D ${input.NAME};`;
@@ -107,21 +119,27 @@ export function buildFragmentShader(source) {
   const header = headerParts.join('\n');
   const cleaned = parsed.glsl.replace(/#version\s+\d+.*/g, '');
 
-  // Wrap main() to inject transparent background support
+  // Wrap main() to inject bgColor resolution and/or transparent background support
   const shaderHandlesTransparency = (parsed.inputs || []).some(inp => inp.NAME === 'transparentBg');
+  const hasBgColor = (parsed.inputs || []).some(inp => inp.NAME === 'bgColor');
   let body = header + cleaned;
   const mainRe = /void\s+main\s*\(\s*\)/;
-  if (mainRe.test(body) && !shaderHandlesTransparency) {
+  const needsWrap = mainRe.test(body) && (hasBgColor || !shaderHandlesTransparency);
+  if (needsWrap) {
     body = body.replace(mainRe, 'void _shaderMain()');
-    body += `
-void main() {
-    _shaderMain();
-    if (_transparentBg > 0.5) {
-        float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-        gl_FragColor.a = smoothstep(0.02, 0.15, _lum);
+    let wrapper = '\nvoid main() {\n';
+    if (hasBgColor) {
+      wrapper += '    _resolvedBgColor = _bgTexActive > 0.5 ? texture2D(_bgTex, isf_FragNormCoord) : _bgColorSolid;\n';
     }
-}
-`;
+    wrapper += '    _shaderMain();\n';
+    if (!shaderHandlesTransparency) {
+      wrapper += '    if (_transparentBg > 0.5) {\n';
+      wrapper += '        float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));\n';
+      wrapper += '        gl_FragColor.a = smoothstep(0.02, 0.15, _lum);\n';
+      wrapper += '    }\n';
+    }
+    wrapper += '}\n';
+    body += wrapper;
   }
 
   return { frag: body, parsed, headerLineCount: headerParts.length };

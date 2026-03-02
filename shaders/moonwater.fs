@@ -9,7 +9,7 @@
     { "NAME": "SEA_HEIGHT", "MIN": 0.0, "MAX": 3.0, "TYPE": "float", "DEFAULT": 0.6 },
     { "NAME": "SEA_SPEED", "MIN": 0.0, "MAX": 2.0, "TYPE": "float", "DEFAULT": 0.8 },
     { "NAME": "SEA_BASE", "TYPE": "color", "DEFAULT": [0.02, 0.04, 0.08, 1.0] },
-    { "NAME": "SEA_WATER_COLOR", "TYPE": "color", "DEFAULT": [0.3, 0.5, 0.6, 1.0] },
+    { "NAME": "SEA_WATER_COLOR", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
     { "NAME": "moonSize", "TYPE": "float", "MIN": 0.1, "MAX": 1.2, "DEFAULT": 0.55 },
     { "NAME": "moonBrightness", "TYPE": "float", "MIN": 0.5, "MAX": 5.0, "DEFAULT": 2.0 },
     { "NAME": "moonElevation", "TYPE": "float", "MIN": 0.05, "MAX": 0.6, "DEFAULT": 0.2 },

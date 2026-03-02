@@ -5,10 +5,10 @@
     "INPUTS": [
         { "NAME": "blendK", "LABEL": "Blend", "TYPE": "float", "DEFAULT": 2.0, "MIN": 0.2, "MAX": 5.0 },
         { "NAME": "animSpeed", "LABEL": "Speed", "TYPE": "float", "DEFAULT": 1.0, "MIN": 0.0, "MAX": 3.0 },
-        { "NAME": "col1", "LABEL": "Sphere 1", "TYPE": "color", "DEFAULT": [0.1, 0.4, 0.0, 1.0] },
-        { "NAME": "col2", "LABEL": "Sphere 2", "TYPE": "color", "DEFAULT": [0.0, 0.3, 0.5, 1.0] },
-        { "NAME": "col3", "LABEL": "Cube", "TYPE": "color", "DEFAULT": [0.8, 0.4, 0.0, 1.0] },
-        { "NAME": "col4", "LABEL": "Torus", "TYPE": "color", "DEFAULT": [0.7, 0.0, 0.3, 1.0] }
+        { "NAME": "col1", "LABEL": "Sphere 1", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
+        { "NAME": "col2", "LABEL": "Sphere 2", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
+        { "NAME": "col3", "LABEL": "Cube", "TYPE": "color", "DEFAULT": [1.0, 1.0, 1.0, 1.0] },
+        { "NAME": "col4", "LABEL": "Torus", "TYPE": "color", "DEFAULT": [1.0, 0.0, 0.0, 1.0] }
     ]
 }*/
 

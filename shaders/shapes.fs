@@ -3,12 +3,14 @@
     "CREDIT": "Glslify icosahedron demo, ported for ShaderClaw",
     "CATEGORIES": ["Generator"],
     "INPUTS": [
-        { "NAME": "rotSpeed", "LABEL": "Spin", "TYPE": "float", "DEFAULT": 0.45, "MIN": 0.0, "MAX": 2.0 },
-        { "NAME": "camDist", "LABEL": "Distance", "TYPE": "float", "DEFAULT": 4.5, "MIN": 2.0, "MAX": 10.0 },
-        { "NAME": "refractAmt", "LABEL": "Refraction", "TYPE": "float", "DEFAULT": 0.97, "MIN": 0.5, "MAX": 1.5 },
-        { "NAME": "innerSize", "LABEL": "Inner Size", "TYPE": "float", "DEFAULT": 0.25, "MIN": 0.05, "MAX": 0.8 },
-        { "NAME": "lightCol1", "LABEL": "Light 1", "TYPE": "color", "DEFAULT": [0.6, 0.5, 1.1, 1.0] },
-        { "NAME": "lightCol2", "LABEL": "Light 2", "TYPE": "color", "DEFAULT": [1.4, 0.9, 0.8, 1.0] }
+        { "NAME": "rotSpeed", "LABEL": "Spin", "TYPE": "float", "DEFAULT": 0.85, "MIN": 0.0, "MAX": 2.0 },
+        { "NAME": "camDist", "LABEL": "Distance", "TYPE": "float", "DEFAULT": 5.5, "MIN": 2.0, "MAX": 10.0 },
+        { "NAME": "refractAmt", "LABEL": "Refraction", "TYPE": "float", "DEFAULT": 0.85, "MIN": 0.5, "MAX": 1.5 },
+        { "NAME": "innerSize", "LABEL": "Inner Size", "TYPE": "float", "DEFAULT": 0.24, "MIN": 0.05, "MAX": 0.8 },
+        { "NAME": "lightCol1", "LABEL": "Light 1", "TYPE": "color", "DEFAULT": [0.05, 0.05, 0.15, 1.0] },
+        { "NAME": "lightCol2", "LABEL": "Light 2", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
+        { "NAME": "bgColor", "LABEL": "Background", "TYPE": "color", "DEFAULT": [0.0, 0.0, 0.0, 1.0] },
+        { "NAME": "gridColor", "LABEL": "Grid Glow", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] }
     ]
 }*/
 
@@ -198,7 +200,7 @@ vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
 vec3 bg(vec3 ro, vec3 rd) {
     vec3 col = 0.1 + palette(
         clamp((hash(rd.xz + sin(TIME * 0.1)) * 0.5 + 0.5) * 0.035 - rd.y * 0.5 + 0.35, -1.0, 1.0),
-        vec3(0.5, 0.45, 0.55),
+        bgColor.rgb,
         vec3(0.5, 0.5, 0.5),
         vec3(1.05, 1.0, 1.0),
         vec3(0.275, 0.2, 0.19)
@@ -207,7 +209,7 @@ vec3 bg(vec3 ro, vec3 rd) {
     if (t > 0.0) {
         vec3 p = ro + rd * t;
         float g = 1.0 - pow(abs(sin(p.x) * cos(p.z)), 0.25);
-        col += (1.0 - fogExp2(t, 0.04)) * g * vec3(5.0, 4.0, 2.0) * 0.075;
+        col += (1.0 - fogExp2(t, 0.04)) * g * gridColor.rgb * 5.0 * 0.075;
     }
     return col;
 }

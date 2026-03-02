@@ -62,21 +62,21 @@
 		{
 		     "NAME": "R",
             "TYPE": "float",
-           "DEFAULT": 0.31,
+           "DEFAULT": 0.91,
             "MIN": 0.0,
             "MAX": 1.5
         },
          {
             "NAME": "G",
             "TYPE": "float",
-           "DEFAULT": 0.61,
+           "DEFAULT": 0.25,
             "MIN": 0.0,
             "MAX": 1.5
         },
          {
             "NAME": "B",
             "TYPE": "float",
-           "DEFAULT": 1.1,
+           "DEFAULT": 0.34,
             "MIN": 0.0,
             "MAX": 1.33
         }

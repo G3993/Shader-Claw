@@ -27,7 +27,7 @@
     {
       "NAME": "nebulaColor",
       "TYPE": "color",
-      "DEFAULT": [0.5, 0.3, 0.8, 1.0]
+      "DEFAULT": [0.91, 0.25, 0.34, 1.0]
     },
     {
       "NAME": "starTwinkle",

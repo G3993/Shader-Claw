@@ -529,6 +529,9 @@ export class Renderer {
     let texUnit = 0;
     texUnit = this._bindTextures(layer.textures, (n) => this._getLayerLoc(layer, n), texUnit);
 
+    // bgColor texture uniforms
+    texUnit = this._setBgUniforms(layer, (n) => this._getLayerLoc(layer, n), texUnit);
+
     // Bind extras (audio, font, mediapipe)
     texUnit = this._bindLayerExtras(layer, audioState, mediaPipeMgr, fontState, texUnit);
 
@@ -600,6 +603,14 @@ export class Renderer {
   _setInputUniforms(program, locs, inputValues, getLocFn) {
     const gl = this.gl;
     for (const [name, val] of Object.entries(inputValues || {})) {
+      // bgColor uses #define trick — set _bgColorSolid instead of bgColor
+      if (name === 'bgColor') {
+        const solidLoc = getLocFn('_bgColorSolid');
+        if (solidLoc && Array.isArray(val)) {
+          gl.uniform4f(solidLoc, val[0], val[1], val[2], val[3]);
+        }
+        continue;
+      }
       const loc = getLocFn(name);
       if (!loc) continue;
       if (typeof val === 'number') gl.uniform1f(loc, val);
@@ -609,6 +620,25 @@ export class Renderer {
         else if (val.length === 4) gl.uniform4f(loc, val[0], val[1], val[2], val[3]);
       }
     }
+  }
+
+  /**
+   * Set bgColor texture uniforms (_bgTexActive, _bgTex) for layers with bgColor #define
+   * @returns {number} updated texUnit
+   */
+  _setBgUniforms(layer, getLocFn, texUnit) {
+    if (!layer._hasBgColor) return texUnit;
+    const gl = this.gl;
+    const activeLoc = getLocFn('_bgTexActive');
+    if (activeLoc) gl.uniform1f(activeLoc, layer._bgTexture ? 1.0 : 0.0);
+    const texLoc = getLocFn('_bgTex');
+    if (texLoc) {
+      gl.activeTexture(gl.TEXTURE0 + texUnit);
+      gl.bindTexture(gl.TEXTURE_2D, layer._bgTexture || this._defaultTex);
+      gl.uniform1i(texLoc, texUnit);
+      texUnit++;
+    }
+    return texUnit;
   }
 
   _bindTextures(textures, getLocFn, texUnit) {
@@ -778,6 +808,7 @@ export class Renderer {
 
     let texUnit = 0;
     texUnit = this._bindTextures(layer.textures, (n) => this._getLayerLoc(layer, n), texUnit);
+    texUnit = this._setBgUniforms(layer, (n) => this._getLayerLoc(layer, n), texUnit);
     texUnit = this._bindLayerExtras(layer, audioState, mediaPipeMgr, fontState, texUnit);
 
     // inputImage for effects layer

@@ -105,7 +105,7 @@
             "NAME": "colorRamp1",
             "TYPE": "color",
             "LABEL": "Color Mid",
-            "DEFAULT": [0.0, 1.0, 0.6667, 1.0]
+            "DEFAULT": [0.91, 0.25, 0.34, 1.0]
         },
         {
             "NAME": "colorRamp1Pos",
@@ -127,7 +127,7 @@
             "NAME": "colorRamp2",
             "TYPE": "color",
             "LABEL": "Color High",
-            "DEFAULT": [0.8588, 0.8588, 0.8588, 1.0]
+            "DEFAULT": [1.0, 1.0, 1.0, 1.0]
         },
         {
             "NAME": "colorRamp2Pos",

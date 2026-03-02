@@ -11,28 +11,28 @@
 			"NAME": "Color_A",
 			"TYPE": "color",
 			"DEFAULT": [
-				0.957, 0.804, 0.623,
+				0.91, 0.25, 0.34,
 				1.0
 			]
 		},{
 			"NAME": "Color_B",
 			"TYPE": "color",
 			"DEFAULT": [
-				0.192, 0.384, 0.933,
+				1.0, 1.0, 1.0,
 				1.0
 			]
 		},{
 			"NAME": "Color_C",
 			"TYPE": "color",
 			"DEFAULT": [
-				0.910, 0.510, 0.8,
+				1.0, 0.0, 0.0,
 				1.0
 			]
 		}, {
 			"NAME": "Color_D",
 			"TYPE": "color",
 			"DEFAULT": [
-				0.350, 0.71, 0.953,
+				1.0, 1.0, 1.0,
 				1.0
 			]
 		}, {

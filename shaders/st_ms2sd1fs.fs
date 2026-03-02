@@ -54,9 +54,9 @@
 		"NAME": "SEA_WATER_COLOR",
 		"TYPE": "color",
 		"DEFAULT": [
-			0.8,
-			0.9,
-			0.6,
+			0.91,
+			0.25,
+			0.34,
 			1.0
 		]
 	}	

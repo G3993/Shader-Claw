@@ -214,6 +214,80 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Background Source Panel ── */
+.bg-source-row {
+  flex-wrap: wrap;
+}
+
+.bg-source-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.bg-source-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bg-source-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.bg-source-type {
+  flex: 1;
+  font-size: 9px;
+  padding: 2px 4px;
+}
+
+.bg-source-detail {
+  margin-top: 4px;
+}
+
+.bg-source-detail input[type="color"] {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.bg-grad-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.bg-grad-arrow {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.bg-grad-dir {
+  width: 100%;
+  font-size: 9px;
+  padding: 2px 4px;
+}
+
+.bg-media-select {
+  width: 100%;
+  font-size: 9px;
+  padding: 2px 4px;
+}
+
+.bg-webcam-hint {
+  color: var(--text-dim);
+  font-size: 9px;
+  padding: 2px 0;
+}
+
 /* ── Output Section ── */
 .output-section {
   border-top: 1px solid var(--border);

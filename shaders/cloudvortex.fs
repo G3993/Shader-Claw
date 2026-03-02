@@ -43,9 +43,16 @@
         "MAX" :         3.0
     },
     {
-        "NAME" :        "color",
+        "NAME" :        "colorAlt",
+        "LABEL" :       "Alt Palette",
         "TYPE" :        "bool",
         "DEFAULT" :     false
+    },
+    {
+        "NAME" :        "cloudColor",
+        "LABEL" :       "Color",
+        "TYPE" :        "color",
+        "DEFAULT" :     [0.91, 0.25, 0.34, 1.0]
     }
   ],
     "ISFVSN" : 2.0
@@ -159,6 +166,9 @@ void main()
     prm1 = smoothstep(-0.4, 0.4, sin(TIME*0.3));
 	vec4 scn = render(ro, rd, T);
     vec3 col = scn.rgb;
-    if (color) { col = iLerp(col.bgr, col.rgb, clamp(1.0 - prm1, 0.05, 0.9)); }
+    if (colorAlt) { col = iLerp(col.bgr, col.rgb, clamp(1.0 - prm1, 0.05, 0.9)); }
+    // Tint with user color
+    float lum = dot(col, vec3(0.299, 0.587, 0.114));
+    col = mix(col, lum * cloudColor.rgb * 2.5, 0.65);
 	gl_FragColor = vec4(col, 1.0 );
 }

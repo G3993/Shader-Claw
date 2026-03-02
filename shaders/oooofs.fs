@@ -22,7 +22,7 @@
 		{
 			"NAME": "dotColor",
 			"TYPE": "color",
-			"DEFAULT": [1.0, 0.02, 0.2, 1.0]
+			"DEFAULT": [0.91, 0.25, 0.34, 1.0]
 		},
 		{
 			"NAME": "bgColor",

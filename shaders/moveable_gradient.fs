@@ -10,49 +10,49 @@
 			"LABEL": "Color",
 			"NAME": "color1",
 			"TYPE": "color",
-			"DEFAULT": [0.0,0.0,1.0]
+			"DEFAULT": [0.91,0.25,0.34]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color2",
 			"TYPE": "color",
-			"DEFAULT": [1.0,0.0,1.0]
+			"DEFAULT": [0.91,0.25,0.34]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color3",
 			"TYPE": "color",
-			"DEFAULT": [1.0,1.0,0.0]
+			"DEFAULT": [1.0,1.0,1.0]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color4",
 			"TYPE": "color",
-			"DEFAULT": [0.0,1.0,1.0]
+			"DEFAULT": [0.91,0.25,0.34]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color5",
 			"TYPE": "color",
-			"DEFAULT": [0.0,1.0,0.0]
+			"DEFAULT": [1.0,1.0,1.0]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color6",
 			"TYPE": "color",
-			"DEFAULT": [0.0,0.0,0.5]
+			"DEFAULT": [0.91,0.25,0.34]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color7",
 			"TYPE": "color",
-			"DEFAULT": [0.5,0.4,0.0]
+			"DEFAULT": [0.91,0.25,0.34]
 		},
 		{
 			"LABEL": "Color",
 			"NAME": "color8",
 			"TYPE": "color",
-			"DEFAULT": [0.2,0.6,0.5]
+			"DEFAULT": [1.0,1.0,1.0]
 		},
 		{
 			"LABEL": "Thickness",

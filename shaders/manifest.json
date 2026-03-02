@@ -37,7 +37,7 @@
   },
   {
     "id": 11,
-    "title": "Spherical Fibonacci",
+    "title": "Dot Sphere",
     "description": "Animated spherical fibonacci dot pattern on a rotating sphere",
     "type": "generator",
     "categories": [
@@ -71,7 +71,7 @@
   },
   {
     "id": 17,
-    "title": "CloudVortex",
+    "title": "Clouds",
     "description": "",
     "type": "generator",
     "categories": [
@@ -251,6 +251,15 @@
     "folder": "scenes"
   },
   {
+    "id": 105,
+    "title": "Custom Material",
+    "description": "Custom Three.js ShaderMaterial — paste vertex/fragment GLSL with auto-injected time, mouse, and audio uniforms",
+    "type": "scene",
+    "categories": ["3D"],
+    "file": "custom_material.scene.js",
+    "folder": "scenes"
+  },
+  {
     "id": 27,
     "title": "Cube in Water",
     "description": "Chrome cube bobbing on a raymarched ocean — procedural sky, wave reflections, underwater darkening",
@@ -419,15 +428,6 @@
     "hasVertex": true
   },
   {
-    "id": 57,
-    "title": "Wet Paper",
-    "description": "Single-pass computational fluid dynamics with specular lighting — ink-on-water effect",
-    "type": "generator",
-    "categories": ["Generator", "Simulation"],
-    "file": "wet_paper.fs",
-    "hasVertex": true
-  },
-  {
     "id": 58,
     "title": "Squares",
     "description": "Cellular Voronoi noise with drifting centers, isolines, and two-tone coloring",
@@ -443,6 +443,24 @@
     "type": "generator",
     "categories": ["Generator"],
     "file": "robot_arm.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 60,
+    "title": "Lazer Claw",
+    "description": "3 neon claw slashes with inverse-square glow, swipe flash, shimmer, and audio reactivity",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "lazer_claw.fs",
+    "hasVertex": true
+  },
+  {
+    "id": 61,
+    "title": "Lava Lamp",
+    "description": "Glossy metaballs rising and merging in viscous fluid — lava lamp simulation with audio reactivity",
+    "type": "generator",
+    "categories": ["Generator"],
+    "file": "lava_lamp.fs",
     "hasVertex": true
   }
 ]

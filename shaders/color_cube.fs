@@ -3,8 +3,8 @@
     "CREDIT": "ISF Import by Old Salt, glslsandbox #73426, adapted for ShaderClaw",
     "CATEGORIES": ["Generator"],
     "INPUTS": [
-        { "NAME": "uC1", "LABEL": "Color 1", "TYPE": "color", "DEFAULT": [0.0, 1.0, 0.0, 1.0] },
-        { "NAME": "uC2", "LABEL": "Color 2", "TYPE": "color", "DEFAULT": [0.0, 0.0, 1.0, 1.0] },
+        { "NAME": "uC1", "LABEL": "Color 1", "TYPE": "color", "DEFAULT": [0.91, 0.25, 0.34, 1.0] },
+        { "NAME": "uC2", "LABEL": "Color 2", "TYPE": "color", "DEFAULT": [1.0, 1.0, 1.0, 1.0] },
         { "NAME": "uC3", "LABEL": "Color 3", "TYPE": "color", "DEFAULT": [1.0, 0.0, 0.0, 1.0] },
         { "NAME": "uZoom", "LABEL": "Zoom", "TYPE": "float", "MAX": 1.0, "MIN": -1.0, "DEFAULT": 0.0 },
         { "NAME": "uXYrotate", "LABEL": "XY Rotation", "TYPE": "float", "MAX": 180.0, "MIN": -180.0, "DEFAULT": 60.0 },

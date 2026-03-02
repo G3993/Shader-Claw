@@ -3,13 +3,13 @@
     "CREDIT": "Port of Humus Electro demo, simplex noise by Nikita Miropolskiy",
     "CATEGORIES": ["Generator"],
     "INPUTS": [
-        { "NAME": "midSize1", "LABEL": "Mid Size 1", "TYPE": "float", "DEFAULT": 0.16, "MIN": 0.0, "MAX": 2.0 },
+        { "NAME": "midSize1", "LABEL": "Mid Size 1", "TYPE": "float", "DEFAULT": 0.60, "MIN": 0.0, "MAX": 2.0 },
         { "NAME": "midSize2", "LABEL": "Mid Size 2", "TYPE": "float", "DEFAULT": 0.15, "MIN": 0.0, "MAX": 0.4 },
-        { "NAME": "burn", "LABEL": "Burn", "TYPE": "float", "DEFAULT": 0.2, "MIN": 0.0, "MAX": 1.0 },
-        { "NAME": "wiggleAmp", "LABEL": "Wiggle Amp", "TYPE": "float", "DEFAULT": 52.0, "MIN": 0.0, "MAX": 100.0 },
+        { "NAME": "burn", "LABEL": "Burn", "TYPE": "float", "DEFAULT": 0.35, "MIN": 0.0, "MAX": 1.0 },
+        { "NAME": "wiggleAmp", "LABEL": "Wiggle Amp", "TYPE": "float", "DEFAULT": 45.0, "MIN": 0.0, "MAX": 100.0 },
         { "NAME": "freak", "LABEL": "Freak", "TYPE": "float", "DEFAULT": 0.5, "MIN": 0.5, "MAX": 10.0 },
-        { "NAME": "freak2", "LABEL": "Freak 2", "TYPE": "float", "DEFAULT": 0.6, "MIN": 0.0, "MAX": 1.0 },
-        { "NAME": "arcColor", "LABEL": "Color", "TYPE": "color", "DEFAULT": [1.70, 1.48, 1.78, 1.0] }
+        { "NAME": "freak2", "LABEL": "Freak 2", "TYPE": "float", "DEFAULT": 0.55, "MIN": 0.0, "MAX": 1.0 },
+        { "NAME": "arcColor", "LABEL": "Color", "TYPE": "color", "DEFAULT": [0.95, 0.95, 0.95, 1.0] }
     ]
 }*/
 

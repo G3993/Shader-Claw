@@ -96,7 +96,7 @@
             "NAME": "foregroundColor",
             "LABEL": "FG Color",
             "TYPE": "color",
-            "DEFAULT": [1.0, 0.0, 0.1, 1.0]
+            "DEFAULT": [0.91, 0.25, 0.34, 1.0]
         }
     ]
 }*/
