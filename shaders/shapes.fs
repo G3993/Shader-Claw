@@ -185,8 +185,8 @@ vec2 mapSolid(vec3 p) {
     p.yx = rotate2D(p.yx, TIME * 1.85);
     p.y += sin(TIME) * 0.25;
     p.x += cos(TIME) * 0.25;
-    float d = length(p) - innerSize;
-    float pulse = pow(sin(TIME * 2.0) * 0.5 + 0.5, 9.0) * 2.0;
+    float d = length(p) - innerSize * (1.0 + audioBass * 1.5);
+    float pulse = pow(sin(TIME * 2.0 + audioHigh * 10.0) * 0.5 + 0.5, 9.0) * 2.0;
     d = mix(d, sdBox(p, vec3(innerSize * 0.7)), pulse);
     return vec2(d, 1.0);
 }

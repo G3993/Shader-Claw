@@ -103,9 +103,9 @@ vec4 Star(ray r, float seed) {
     float t = fract(time * 0.1 + seed) * 2.;
     float fade = smoothstep(2., 0.5, t);
     vec4 col = mix(COOLCOLOR, HOTCOLOR, fade);
-    float size = starSize + seed * 0.03;
+    float size = (starSize + seed * 0.03) * (1.0 + audioBass * 2.0);
     size *= fade;
-    float b = BounceNorm(t, bounceDecay + seed * 0.1) * 7.;
+    float b = BounceNorm(t, bounceDecay + seed * 0.1) * 7. * (1.0 + audioLevel * 2.0);
     b += size;
     vec3 sparkPos = vec3(n.x * spread, b, n.y * spread);
     vec3 cp = ClosestPoint(r, sparkPos);

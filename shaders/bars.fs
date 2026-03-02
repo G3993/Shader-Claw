@@ -329,14 +329,14 @@ void main() {
     float stripe_index = ceil(mirrored_primary * num_columns);
 
     float phase_offset = stripe_index * (1.0 / (num_columns * max(offset, 0.001)));
-    float phase = fract(TIME * speed + phase_offset);
+    float phase = fract(TIME * speed * (1.0 + audioBass * 2.0) + phase_offset);
     float lfo = fun(phase, easing_type) * phase_iter - (phase_iter / 2.0);
 
     bool is_even_stripe = mod(stripe_index, 2.0) < 1.0;
     float secondary_adjusted = is_even_stripe ? secondary : 1.0 - secondary;
     secondary = mix(secondary, secondary_adjusted, use_odd_dirs);
 
-    float gradient = pow(secondary, gradient_pow);
+    float gradient = pow(secondary, gradient_pow * (1.0 - audioLevel * 0.5));
     gradient = mix(gradient, 1.0 - gradient, 0.5 + sin(TIME * invert_speed) * 0.5);
 
     float animated_coord = fract(lfo + gradient);

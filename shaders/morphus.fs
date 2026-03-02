@@ -160,11 +160,11 @@ vec3 getColor(vec2 uv, vec3 ro) {
 void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * RENDERSIZE.xy) / RENDERSIZE.x;
 
-    float grip = clamp(pinchHold, 0.0, 1.0);
+    float grip = clamp(pinchHold + audioBass, 0.0, 1.0);
     float eased = grip * grip * grip;
     bk = blendK + eased * 4.0;
 
-    aTime = TIME * animSpeed;
+    aTime = TIME * animSpeed * (1.0 + audioHigh * 2.0);
 
     // Mouse orbits the camera around the scene
     float mx = (mousePos.x - 0.5) * 6.28;

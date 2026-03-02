@@ -143,12 +143,12 @@ void main() {
         noise(i_st + vec2(0.0, time * moveFrequency))
     );
 
-    point += (noiseOffset - 0.5) * moveAmount;
+    point += (noiseOffset - 0.5) * moveAmount * (1.0 + audioBass * 3.0);
 
     vec2 diff = point - f_st;
     float dist = length(diff);
 
-    float field = dist * distanceField;
+    float field = dist * distanceField * (1.0 + audioLevel);
 
     if (invert) {
         field = 1.0 - field;

@@ -51,7 +51,7 @@ float sdTriPrism(vec3 p, vec2 h) {
 }
 
 float morphing(vec3 p) {
-    float tm = TIME / 18.0;
+    float tm = TIME / 18.0 + audioBass * 0.5;
     int idx = int(mod(tm, 4.0));
     float a = smoothstep(0.2, 0.8, mod(tm, 1.0));
     if (idx == 0) return mix(sdTriPrism(p, vec2(1.0, 1.5)), sdBox(p, vec3(1.0)), a);

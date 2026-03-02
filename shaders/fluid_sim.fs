@@ -131,6 +131,13 @@ vec4 passVelocity() {
         vel += mouseDelta * splatForce * exp(-dot(p, p) / splatRadius);
     }
 
+    // Audio-reactive force injection: bass creates centered force bursts
+    if (audioBass > 0.1) {
+        vec2 ap = uv - vec2(0.5);
+        vec2 audioForce = normalize(ap + 0.001) * audioBass * 200.0;
+        vel += audioForce * exp(-dot(ap, ap) / (splatRadius * 4.0));
+    }
+
     // Auto-splats for initial motion
     if (autoSplats) {
         if (FRAMEINDEX < 20) {

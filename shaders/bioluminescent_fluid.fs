@@ -56,7 +56,7 @@ vec4 passState() {
 
     // Gentle mouse attraction
     vec2 toMouse = mousePos - pos;
-    vel += toMouse * attraction * 0.0004;
+    vel += toMouse * attraction * 0.0004 * (1.0 + audioBass * 3.0);
 
     vel += drift;
     vel *= 0.985;

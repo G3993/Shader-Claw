@@ -120,7 +120,7 @@ void main() {
     float cameMask = 1.0 - smoothstep(0.0, 1.0, edgeNorm);
 
     // ========== GRIP: pinch or mouse click drives stained glass intensity ==========
-    float grip = clamp(max(pinchHold, mouseDown), 0.0, 1.0);
+    float grip = clamp(max(pinchHold, mouseDown) + audioBass, 0.0, 1.0);
     float glassiness = smoothstep(0.0, 0.6, grip); // 0 = metallic, 1 = full stained glass
 
     // ========== PANEL BASE (metallic → colorful glass) ==========

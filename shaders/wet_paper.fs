@@ -198,7 +198,7 @@ void main() {
 
         // Motor
         vec2 scr = 2.0 * (uv - motorLocation);
-        gl_FragColor.xy += motorSize * scr / (10.0 * dot(scr, scr) + motorAttenuation);
+        gl_FragColor.xy += motorSize * (1.0 + audioBass * 5.0) * scr / (10.0 * dot(scr, scr) + motorAttenuation);
 
         gl_FragColor = (1.0 - inputImageAmount) * gl_FragColor + inputImageAmount * IMG_PIXEL(inputImage, pos);
 

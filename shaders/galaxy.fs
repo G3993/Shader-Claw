@@ -195,7 +195,7 @@ vec3 coreGlow(vec2 uv) {
 
     vec3 coreColor = mix(warmColor.rgb, vec3(1.0), 0.3);
     // Principle 2: Anticipation — core pulses like a heartbeat, swells before release
-    float pulse = 1.0 + 0.06 * pow(sin(TIME * 0.4), 2.0) + 0.02 * sin(TIME * 1.1);
+    float pulse = 1.0 + 0.06 * pow(sin(TIME * 0.4), 2.0) + 0.02 * sin(TIME * 1.1) + audioBass * 2.0;
     return coreColor * glow * coreBrightness * pulse;
 }
 
@@ -217,7 +217,7 @@ void main() {
     // Layer 1: Background faint stars (everywhere, sparse)
     vec2 bgUV = uv * vec2(aspect, 1.0) + drift * 0.1;
     vec2 s0 = starLayer(bgUV, 60.0, starDensity * 0.3, 0.0);
-    col += mix(warmColor.rgb, coolColor.rgb, s0.y) * s0.x * 0.3 * starBrightness;
+    col += mix(warmColor.rgb, coolColor.rgb, s0.y) * s0.x * 0.3 * starBrightness * (1.0 + audioLevel * 2.0);
 
     // Layer 2: Mid-field stars (denser in the band)
     if (starCount > 1.5) {

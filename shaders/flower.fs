@@ -50,10 +50,10 @@ float flower(vec3 p, float r) {
     p -= vec3(sin(p.x * 15.1), sin(p.y * 25.1), sin(p.z * 15.0)) * 0.01;
     vec3 n = normalize(p);
     q = length(p);
-    float rho = atan(length(vec2(n.x, n.z)), n.y) * 20.0 + trigger + q * 15.01;
+    float rho = atan(length(vec2(n.x, n.z)), n.y) * 20.0 + trigger + audioBass * 15.0 + q * 15.01;
     float theta = atan(n.x, n.z) * 6.0 + p.y * 3.0 + rho * 1.50;
     return length(p) - (r + sin(theta) * 0.3 * (1.3 - abs(dot(n, vec3(0, 1, 0))))
-        + sin(rho - (draaiomas * TIME) * 2.0) * 0.3 * (1.3 - abs(dot(n, vec3(0, 1, 0)))));
+        + sin(rho - (draaiomas * TIME + audioHigh * 4.0) * 2.0) * 0.3 * (1.3 - abs(dot(n, vec3(0, 1, 0)))));
 }
 
 vec2 map(in vec3 pos) {

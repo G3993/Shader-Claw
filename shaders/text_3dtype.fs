@@ -50,50 +50,6 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-// Word-wrap helpers — keep whole words together
-bool _isSp(int i, int nc) {
-    if (i < 0 || i >= nc) return true;
-    int ch = getChar(i);
-    return (ch < 0 || ch > 25);
-}
-int _wLen(int from, int nc) {
-    int w = 0;
-    for (int j = 0; j < 24; j++) {
-        if (from + j >= nc) break;
-        int ch = getChar(from + j);
-        if (ch < 0 || ch > 25) break;
-        w++;
-    }
-    return w;
-}
-int _wwRows(int mc, int nc) {
-    int c = 0, r = 0;
-    for (int i = 0; i < 24; i++) {
-        if (i >= nc) break;
-        bool sp = _isSp(i, nc);
-        if (!sp && _isSp(i - 1, nc) && c > 0) {
-            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
-        }
-        if (sp && c == 0 && i > 0) continue;
-        c++; if (c >= mc) { c = 0; r++; }
-    }
-    return r + 1;
-}
-int _wwRowLen(int tr, int mc, int nc) {
-    int c = 0, r = 0, n = 0;
-    for (int i = 0; i < 24; i++) {
-        if (i >= nc) break;
-        bool sp = _isSp(i, nc);
-        if (!sp && _isSp(i - 1, nc) && c > 0) {
-            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
-        }
-        if (sp && c == 0 && i > 0) continue;
-        if (r == tr) n++;
-        c++; if (c >= mc) { c = 0; r++; }
-    }
-    return n;
-}
-
 vec3 rgb2hsv(vec3 c) {
     vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
     vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
@@ -103,7 +59,7 @@ vec3 rgb2hsv(vec3 c) {
     return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
 }
 
-// Multi-line text hit test — wraps to new lines before scaling down
+// Single-line text hit test — all chars on one row, scaled to fit width
 float textHit(vec2 uv, float aspect) {
     int numChars = charCount();
     float _ts = textScale > 0.01 ? textScale : 1.0;
@@ -114,58 +70,33 @@ float textHit(vec2 uv, float aspect) {
     float cellStep = charW + gap;
     float maxW = aspect * 0.9;
 
-    int maxCols = int(floor((maxW + gap) / cellStep));
-    if (maxCols < 1) maxCols = 1;
-    if (maxCols > numChars) maxCols = numChars;
-    int numRows = _wwRows(maxCols, numChars);
-
-    float rw = float(maxCols) * cellStep - gap;
-    if (rw > maxW) {
-        float sc = maxW / rw;
+    // All chars on one row — scale down if wider than screen
+    float totalW = float(numChars) * cellStep - gap;
+    if (totalW > maxW) {
+        float sc = maxW / totalW;
         charH *= sc; charW = charH * (5.0 / 7.0); gap = charW * 0.25 * _kn;
         cellStep = charW + gap;
+        totalW = float(numChars) * cellStep - gap;
     }
 
-    float lineH = charH * 1.3;
-    float totalH = float(numRows) * lineH - (lineH - charH);
-    float startY = 0.5 - totalH * 0.5;
+    float startY = 0.5 - charH * 0.5;
+    float startX = 0.5 - totalW * 0.5;
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
 
     // Bounding box early-out
-    if (p.y < startY - charH * 0.1 || p.y > startY + totalH + charH * 0.1) return 0.0;
+    if (p.y < startY - charH * 0.1 || p.y > startY + charH * 1.1) return 0.0;
+    if (p.x < startX - cellStep * 0.1 || p.x > startX + totalW + cellStep * 0.1) return 0.0;
 
-    int _col = 0;
-    int _row = 0;
-    float rowStartX = 0.5;
     for (int i = 0; i < 24; i++) {
         if (i >= numChars) break;
         int ch = getChar(i);
-        bool isSp = (ch < 0 || ch > 25);
-
-        // Word-wrap: if starting a new word that won't fit, break to next line
-        if (!isSp && _isSp(i - 1, numChars) && _col > 0) {
-            if (_col + _wLen(i, numChars) > maxCols) {
-                _col = 0; _row++;
-            }
-        }
-
-        // Skip leading spaces at start of wrapped line
-        if (isSp && _col == 0 && i > 0) continue;
-
-        if (_col == 0) {
-            int charsInRow = _wwRowLen(_row, maxCols, numChars);
-            float rwRow = float(charsInRow) * cellStep - gap;
-            rowStartX = 0.5 - rwRow * 0.5;
-        }
         if (ch >= 0 && ch <= 25) {
-            float cx = rowStartX + float(_col) * cellStep;
-            float cy = startY + float(_row) * lineH;
+            float cx = startX + float(i) * cellStep;
+            float cy = startY;
             vec2 cellUV = vec2((p.x - cx) / charW, (p.y - cy) / charH);
             float hit = sampleAtlas(ch, cellUV);
             if (hit > 0.5) return 1.0;
         }
-        _col++;
-        if (_col >= maxCols) { _col = 0; _row++; }
     }
     return 0.0;
 }

@@ -7,10 +7,8 @@
     { "NAME": "speed", "LABEL": "Speed", "TYPE": "float", "MIN": 0.1, "MAX": 3.0, "DEFAULT": 0.5 },
     { "NAME": "intensity", "LABEL": "Amplitude", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
     { "NAME": "density", "LABEL": "Frequency", "TYPE": "float", "MIN": 0.0, "MAX": 1.0, "DEFAULT": 0.5 },
-    { "NAME": "fillScreen", "LABEL": "Fill Screen", "TYPE": "bool", "DEFAULT": true },
     { "NAME": "textScale", "LABEL": "Size", "TYPE": "float", "MIN": 0.3, "MAX": 2.0, "DEFAULT": 1.0 },
     { "NAME": "kerning", "LABEL": "Spacing", "TYPE": "float", "MIN": 0.0, "MAX": 3.0, "DEFAULT": 0.4 },
-    { "NAME": "lineHeight", "LABEL": "Line Height", "TYPE": "float", "MIN": 0.5, "MAX": 3.0, "DEFAULT": 1.3 },
     { "NAME": "textColor", "LABEL": "Color", "TYPE": "color", "DEFAULT": [1.0, 1.0, 1.0, 1.0] },
     { "NAME": "bgColor", "LABEL": "Background", "TYPE": "color", "DEFAULT": [0.0, 0.0, 0.0, 1.0] },
     { "NAME": "transparentBg", "LABEL": "Transparent", "TYPE": "bool", "DEFAULT": true }
@@ -68,57 +66,6 @@ float sampleChar(int ch, vec2 uv) {
 
 float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 
-// =======================================================================
-// WORD-WRAP HELPERS
-// =======================================================================
-
-bool _isSp(int i, int nc) {
-    if (i < 0 || i >= nc) return true;
-    int ch = getChar(i);
-    return (ch < 0 || ch > 25);
-}
-
-int _wLen(int from, int nc) {
-    int w = 0;
-    for (int j = 0; j < 24; j++) {
-        if (from + j >= nc) break;
-        int ch = getChar(from + j);
-        if (ch < 0 || ch > 25) break;
-        w++;
-    }
-    return w;
-}
-
-// Count total rows with word-wrap
-int _wwRows(int mc, int nc) {
-    int c = 0, r = 0;
-    for (int i = 0; i < 24; i++) {
-        if (i >= nc) break;
-        bool sp = _isSp(i, nc);
-        if (!sp && _isSp(i - 1, nc) && c > 0) {
-            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
-        }
-        if (sp && c == 0 && i > 0) continue;
-        c++; if (c >= mc) { c = 0; r++; }
-    }
-    return r + 1;
-}
-
-// Count visible chars in a specific row
-int _wwRowLen(int tr, int mc, int nc) {
-    int c = 0, r = 0, n = 0;
-    for (int i = 0; i < 24; i++) {
-        if (i >= nc) break;
-        bool sp = _isSp(i, nc);
-        if (!sp && _isSp(i - 1, nc) && c > 0) {
-            if (c + _wLen(i, nc) > mc) { c = 0; r++; }
-        }
-        if (sp && c == 0 && i > 0) continue;
-        if (r == tr) n++;
-        c++; if (c >= mc) { c = 0; r++; }
-    }
-    return n;
-}
 
 // =======================================================================
 // EFFECT: WAVE - sine displacement per letter
@@ -132,71 +79,41 @@ vec4 effectWave(vec2 uv) {
 
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
 
-    // Layout: fill-screen or single-line
-    float cW, cH, gW, cellStep, rowGap;
-    int numCols, numRows;
-    if (fillScreen) {
-        cH = 0.18 * textScale;
-        cW = cH * (5.0 / 7.0);
-        gW = cW * 0.25 * kerning;
+    // Single-line layout
+    float cW = 0.09 * textScale;
+    float cH = cW * 1.5;
+    float gW = cW * 0.25 * kerning;
+    float cellStep = cW + gW;
+
+    // Scale down to fit width if text is wider than screen
+    float totalTextW = float(numChars) * cellStep - gW;
+    float availW = aspect * 0.9;
+    float fitScale = 1.0;
+    if (totalTextW > availW) {
+        fitScale = availW / totalTextW;
+        cW *= fitScale;
+        cH *= fitScale;
+        gW *= fitScale;
         cellStep = cW + gW;
-        float availW = aspect * 0.8;
-        numCols = int(max(1.0, floor(availW / cellStep)));
-        if (numCols > numChars) numCols = numChars;
-        numRows = _wwRows(numCols, numChars);
-        rowGap = cH * (lineHeight - 1.0);
-    } else {
-        cW = 0.09 * textScale;
-        cH = cW * 1.5;
-        gW = cW * 0.25 * kerning;
-        cellStep = cW + gW;
-        numCols = numChars;
-        numRows = 1;
-        rowGap = cH * (lineHeight - 1.0);
+        totalTextW = float(numChars) * cellStep - gW;
     }
 
-    float totalH = float(numRows) * cH + float(numRows - 1) * rowGap;
-    float startY = 0.5 + totalH * 0.5 - cH * 0.5;
+    float totalH = cH;
+    float startY = 0.5;
+    float rowStartX = 0.5 - totalTextW * 0.5;
 
     float mainHit = 0.0, shadowHit = 0.0;
     vec2 so = vec2(0.005, -0.005);
 
-    // Word-wrap render pass
-    int wc = 0, wr = 0, prevWR = -1;
-    float rowStartX = 0.0;
-
     for (int i = 0; i < 24; i++) {
         if (i >= numChars) break;
         int ch = getChar(i);
-        bool sp = (ch < 0 || ch > 25);
-
-        // Word-wrap tracking (only in fillScreen mode)
-        if (fillScreen) {
-            if (!sp && _isSp(i - 1, numChars) && wc > 0) {
-                if (wc + _wLen(i, numChars) > numCols) { wc = 0; wr++; }
-            }
-            if (sp && wc == 0 && i > 0) continue;
-        }
-
-        int colIdx = fillScreen ? wc : i;
-        int row = fillScreen ? wr : 0;
-
-        // Center this row
-        if (fillScreen && row != prevWR) {
-            int rl = _wwRowLen(row, numCols, numChars);
-            float rw = float(rl) * cellStep - gW;
-            rowStartX = 0.5 - rw * 0.5;
-            prevWR = row;
-        } else if (!fillScreen) {
-            float rw = float(numChars) * cellStep - gW;
-            rowStartX = 0.5 - rw * 0.5;
-        }
 
         float phase = float(i) * frequency + TIME * speed;
         float yOff = sin(phase) * amplitude;
         float tilt = cos(phase) * amplitude * 3.0;
-        float cellX = rowStartX + float(colIdx) * cellStep;
-        float cellY = startY - float(row) * (cH + rowGap);
+        float cellX = rowStartX + float(i) * cellStep;
+        float cellY = startY;
 
         vec2 m = vec2((p.x - cellX) / cW, (p.y - (cellY + yOff)) / cH);
         m.x += (m.y - 0.5) * tilt;
@@ -207,8 +124,6 @@ vec4 effectWave(vec2 uv) {
         s.x += (s.y - 0.5) * tilt;
         if (s.x >= 0.0 && s.x <= 1.0 && s.y >= 0.0 && s.y <= 1.0)
             shadowHit = max(shadowHit, sampleChar(ch, s));
-
-        if (fillScreen) { wc++; if (wc >= numCols) { wc = 0; wr++; } }
     }
 
     vec4 result = transparentBg ? vec4(0.0) : bgColor;

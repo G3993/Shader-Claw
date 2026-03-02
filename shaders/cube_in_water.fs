@@ -58,9 +58,9 @@ mat3 cubeRot;
 mat3 cubeRotInv;
 
 void initCube() {
-    cubeCenter = vec3(0.0, cubeY + sin(TIME * 0.7) * 0.5, 0.0);
+    cubeCenter = vec3(0.0, cubeY + sin(TIME * 0.7) * 0.5 * (1.0 + audioMid * 2.0), 0.0);
 
-    float ay = TIME * cubeSpin;
+    float ay = TIME * cubeSpin * (1.0 + audioHigh * 2.0);
     float ax = TIME * cubeSpin * 0.7;
     float sa = sin(ay), ca = cos(ay);
     float sb = sin(ax), cb = cos(ax);
@@ -179,7 +179,7 @@ float sea_octave(vec2 uv, float choppy) {
 
 float map(vec3 p) {
     float freq = SEA_FREQ;
-    float amp = SEA_HEIGHT;
+    float amp = SEA_HEIGHT * (1.0 + audioBass * 2.0);
     float choppy = SEA_CHOPPY;
     vec2 uv = p.xz;
     uv.x *= 0.75;
@@ -198,7 +198,7 @@ float map(vec3 p) {
 
 float map_detailed(vec3 p) {
     float freq = SEA_FREQ;
-    float amp = SEA_HEIGHT;
+    float amp = SEA_HEIGHT * (1.0 + audioBass * 2.0);
     float choppy = SEA_CHOPPY;
     vec2 uv = p.xz;
     uv.x *= 0.75;

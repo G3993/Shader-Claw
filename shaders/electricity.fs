@@ -65,7 +65,7 @@ void main() {
     // Guitar-string pluck: mouse crossing center amplifies wiggle
     float mouseDist = abs(mousePos.y - 0.5) * 2.0; // 0 at center, 1 at edges
     float pluck = 1.0 - smoothstep(0.0, 0.4, mouseDist); // strong near center, fades out
-    float ampBoost = 1.0 + pluck * 3.0; // up to 4x wiggle when mouse crosses center
+    float ampBoost = 1.0 + pluck * 3.0 + audioBass * 5.0; // mouse pluck + bass shakes the arc
 
     vec2 p = gl_FragCoord.xy / RENDERSIZE.x;
     vec3 p3 = vec3(p, TIME * 0.4);
@@ -75,7 +75,7 @@ void main() {
     float t = clamp(centered.x * -centered.x * midSize1 + midSize2, 0.0, 1.0);
     float y = abs(intensity * -t * ampBoost + centered.y);
 
-    float g = pow(y, burn);
+    float g = pow(y, burn * (1.0 - audioLevel * 0.4));
 
     vec3 col = arcColor.rgb;
     col = col * -g + col;

@@ -197,10 +197,10 @@ void drawLaser(vec2 p, vec2 origin, vec2 dir, float grip, vec3 beamColor, float 
     if (grip < 0.05) return;
 
     float intensity = smoothstep(0.05, 0.5, grip);
-    float beamLen = mix(0.05, 0.6, intensity);
+    float beamLen = mix(0.05, 0.6, intensity) * (1.0 + audioBass * 1.5);
 
     // Pulse/flicker
-    float flicker = 0.85 + 0.15 * sin(TIME * 18.0 + origin.x * 40.0);
+    float flicker = 0.85 + 0.15 * sin(TIME * (18.0 + audioHigh * 40.0) + origin.x * 40.0);
     float pulse = 0.9 + 0.1 * sin(TIME * 7.0);
     intensity *= flicker * pulse;
 

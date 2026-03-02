@@ -272,7 +272,7 @@ vec4 getColorFromRamp(float t) {
 
 void main() {
     vec2 pix = gl_FragCoord.xy;
-    float gs = max(gridSize, 1.0);
+    float gs = max(gridSize * (1.0 + audioBass * 0.5), 1.0);
     vec2 cell = floor(pix / gs);
     vec2 within = mod(pix, gs);
     float gap = spacing;
@@ -285,7 +285,7 @@ void main() {
 
     if (within.x >= gap && within.x <= gs - gap && within.y >= gap && within.y <= gs - gap) {
         vec2 cellUV = (cell * gs + gs * 0.5) / RENDERSIZE.xy;
-        vec3 pos = vec3(cellUV.x / zoom * horizontalScale, cellUV.y / zoom * verticalScale, TIME * speed);
+        vec3 pos = vec3(cellUV.x / zoom * horizontalScale, cellUV.y / zoom * verticalScale, TIME * speed * (1.0 + audioHigh * 3.0));
         float noiseValue = fbm(pos);
 
         int ns = int(noiseStyle);

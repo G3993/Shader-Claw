@@ -110,7 +110,7 @@ vec2 toCenter(vec2 pos) {
 void main(void) {
    vec2 p = (gl_FragCoord.xy / RENDERSIZE.x) * 2.0 - vec2(1.0, RENDERSIZE.y / RENDERSIZE.x);
    p *= zoom;
-   float t = TIME * speed;
+   float t = TIME * speed * (1.0 + audioHigh * 2.0);
 
    // First cluster: follows mouse (or primary hand via hand-as-mouse)
    vec3 d = laserCluster(p - toCenter(mousePos), t);
@@ -122,7 +122,7 @@ void main(void) {
    }
 
    // Pinch boost: holding pinch ramps intensity up over time
-   float boost = 1.0 + pinchHold * 3.0;
+   float boost = 1.0 + pinchHold * 3.0 + audioBass * 5.0;
    d *= intensity * boost;
 
    gl_FragColor = vec4(d, 1.0);

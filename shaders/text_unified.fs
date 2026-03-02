@@ -88,16 +88,21 @@ vec4 effectJames(vec2 uv) {
     float alpha = transparentBg ? 0.0 : 1.0;
     col += vec3(0.02, 0.01, 0.03) * (uv.y * 0.3 + 0.05 * sin(uv.x * 3.0 + TIME * 0.5));
 
-    // Grid layout: compute how many columns fit, then stack rows
+    // Single-line layout: all chars on one row, scale down if wider than screen
     float charW = 0.09 * textScale;
     float charH = charW * 1.5;
     float gap = charW * 0.25;
-    float rowGap = charH * 0.3;
-    float cols = max(1.0, floor((0.9 + gap) / (charW + gap)));
-    int numCols = int(cols);
-    int numRows = (numChars + numCols - 1) / numCols;
-    float totalH = float(numRows) * charH + float(numRows - 1) * rowGap;
-    float startY = 0.5 + totalH * 0.5 - charH; // top row, top-down
+    float totalW = float(numChars) * charW + float(numChars - 1) * gap;
+    float maxW = 0.9; // available width in normalized coords
+    if (totalW > maxW) {
+        float sc = maxW / totalW;
+        charW *= sc;
+        charH *= sc;
+        gap *= sc;
+        totalW = maxW;
+    }
+    float startX = 0.5 - totalW * 0.5;
+    float startY = 0.5 - charH * 0.5;
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
 
     float textMask = 0.0;
@@ -109,21 +114,13 @@ vec4 effectJames(vec2 uv) {
         int ch = getChar(i);
         if (ch == 26) continue;
 
-        int row = i / numCols;
-        int colIdx = i - row * numCols;
-        // Center partial last row
-        int charsInRow = numChars - row * numCols;
-        if (charsInRow > numCols) charsInRow = numCols;
-        float rowW = float(charsInRow) * charW + float(charsInRow - 1) * gap;
-        float rowStartX = 0.5 - rowW * 0.5;
-
         float phase = float(i) * 1.3 + TIME * speed * cycleSpeed;
         int style = int(mod(floor(phase), 18.0));
         float bp = float(i) * 0.8 + TIME * speed * 2.5;
         float yOff = sin(bp) * 0.015 * bounce;
         float sp = 1.0 + sin(bp + 1.0) * 0.05 * bounce;
-        float cx = rowStartX + float(colIdx) * (charW + gap);
-        float cy = startY - float(row) * (charH + rowGap) + yOff;
+        float cx = startX + float(i) * (charW + gap);
+        float cy = startY + yOff;
         vec2 cellUV = vec2((p.x - cx) / (charW * sp), (p.y - cy) / (charH * sp));
 
         if (cellUV.x < -0.1 || cellUV.x > 1.1 || cellUV.y < -0.1 || cellUV.y > 1.1) continue;
@@ -309,19 +306,21 @@ vec4 effectDigifade(vec2 uv, int sub) {
     float t = TIME * speed * sweepSpeed;
     vec2 p = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
 
-    // Responsive grid: fit chars into rows that fill the screen
-    // Each char cell is 5:7 aspect ratio
-    float maxCols = max(1.0, floor(0.9 * aspect / (textScale * (5.0/7.0) * 0.18)));
-    int numCols = int(min(maxCols, float(numChars)));
-    int numRows = (numChars + numCols - 1) / numCols;
-    if (numRows > 6) { numCols = (numChars + 5) / 6; numRows = (numChars + numCols - 1) / numCols; }
-
-    float cH = min(0.18 * textScale, 0.85 / float(numRows));
+    // Single-line layout: all chars on one row, scale down if wider than screen
+    float cH = 0.18 * textScale;
     float cW = cH * (5.0/7.0);
     float gW = cW * 0.2;
-    float rowGap = cH * 0.2;
-    float totalH = float(numRows) * cH + float(numRows - 1) * rowGap;
-    float baseY = 0.5 + totalH * 0.5 - cH;
+    float rowW = float(numChars) * cW + float(numChars - 1) * gW;
+    float maxW = 0.9;
+    if (rowW > maxW) {
+        float sc = maxW / rowW;
+        cH *= sc;
+        cW *= sc;
+        gW *= sc;
+        rowW = maxW;
+    }
+    float startX = 0.5 - rowW * 0.5;
+    float startY = 0.5 - cH * 0.5;
 
     float si = floor(uv.y * sliceCount);
     float n1 = hash(si + floor(t*2.0));
@@ -329,16 +328,7 @@ vec4 effectDigifade(vec2 uv, int sub) {
 
     float textHit = 0.0;
 
-    for (int row = 0; row < 6; row++) {
-        if (row >= numRows) break;
-        // How many chars in this row
-        int charsInRow = numChars - row * numCols;
-        if (charsInRow > numCols) charsInRow = numCols;
-
-        float rowW = float(charsInRow) * cW + float(charsInRow - 1) * gW;
-        float startX = 0.5 - rowW * 0.5;
-        float startY = baseY - float(row) * (cH + rowGap);
-
+    {
         float sw = sin(t*0.7)*0.5+0.5;
         float ps = smoothstep(sw-0.15, sw+0.1, (p.x-startX)/max(rowW, 0.001));
 
@@ -353,14 +343,11 @@ vec4 effectDigifade(vec2 uv, int sub) {
             float csF = rx / cs;
             int slot = int(floor(csF));
             float clx = fract(csF), cf = cW/cs;
-            if (clx < cf && slot >= 0 && slot < charsInRow) {
-                int globalIdx = row * numCols + slot;
-                if (globalIdx < numChars) {
-                    float gc = (clx/cf)*5.0, gr = (ry/cH)*7.0;
-                    if (gc >= 0.0 && gc < 5.0 && gr >= 0.0 && gr < 7.0) {
-                        int ch = getChar(globalIdx);
-                        if (ch >= 0 && ch <= 25) textHit = max(textHit, charPixel(ch, gc, gr));
-                    }
+            if (clx < cf && slot >= 0 && slot < numChars) {
+                float gc = (clx/cf)*5.0, gr = (ry/cH)*7.0;
+                if (gc >= 0.0 && gc < 5.0 && gr >= 0.0 && gr < 7.0) {
+                    int ch = getChar(slot);
+                    if (ch >= 0 && ch <= 25) textHit = max(textHit, charPixel(ch, gc, gr));
                 }
             }
         }

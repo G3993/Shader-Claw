@@ -45,7 +45,7 @@ float fbm(vec2 p, int octaves) {
 
 void main() {
     vec2 uv = gl_FragCoord.xy / RENDERSIZE.xy;
-    float t = TIME * speed;
+    float t = TIME * speed * (1.0 + audioBass * 2.0);
 
     // Wind direction vector
     vec2 windDir;
@@ -60,7 +60,7 @@ void main() {
     // Coordinate space with wind movement
     vec2 p = uv * scale;
     p += windDir * t * 0.6;
-    p += perpDir * sin(t * 0.3) * drift * 0.4;
+    p += perpDir * sin(t * 0.3) * drift * 0.4 * (1.0 + audioMid * 3.0);
 
     // Three layered gradient fields moving at different rates
     float n1 = fbm(p * 0.8 + vec2(t * 0.1, 0.0), 3);

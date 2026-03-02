@@ -61,9 +61,9 @@ float map(vec3 p) {
     float t = TIME * velocita;
     p.xy *= rot(t * 0.5 + p.z * 0.2);
     p.xz *= rot(t * 0.3);
-    float sfera = length(p) - dimensione;
+    float sfera = length(p) - dimensione * (1.0 + audioLevel * 0.5);
     float dist = sin(p.x * 2.0 + t) * sin(p.y * 2.0 + t) * sin(p.z * 2.0 + t);
-    return sfera + dist * intensita_deformazione;
+    return sfera + dist * intensita_deformazione * (1.0 + audioBass * 3.0);
 }
 
 void main() {
