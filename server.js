@@ -12,7 +12,7 @@ import { WebSocketServer } from "ws";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { spawn } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, writeFileSync, renameSync } from "fs";
 import grandi from "grandi";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +20,11 @@ const __dirname = dirname(__filename);
 const PORT = parseInt(process.env.PORT || process.env.SHADERCLAW_PORT || "7777", 10);
 
 const log = (...args) => process.stderr.write(`[ShaderClaw] ${args.join(" ")}\n`);
+
+// Optional sharp for JPEG encoding (mirror preview)
+let _sharp = null;
+try { _sharp = (await import("sharp")).default; log("sharp loaded — JPEG mirror preview enabled"); }
+catch { log("sharp not available — mirror preview disabled (npm install sharp to enable)"); }
 
 // v2 layer IDs
 const LAYER_IDS = ['background', 'media', '3d', 'av', 'effects', 'text', 'overlay'];
@@ -298,6 +303,32 @@ function ndiStopSend() {
 }
 
 let _ndiFrameCount = 0;
+let _latestFrameRaw = null; // { pixels: Buffer(RGBA), width, height }
+
+// Shared memory frame output — write raw frames to tmpfs for Scope to read
+// File format: [width u32 LE][height u32 LE][frameCounter u32 LE][pad u32][RGBA pixels]
+const SHM_FRAME_PATH = process.env.SHM_FRAME_PATH || "/ram_models/shaderclaw_frame";
+const SHM_FRAME_TMP = SHM_FRAME_PATH + ".tmp";
+let _shmFrameCounter = 0;
+let _shmHeader = Buffer.alloc(16);
+
+function shmWriteFrame(pixels, width, height) {
+  try {
+    _shmFrameCounter++;
+    _shmHeader.writeUInt32LE(width, 0);
+    _shmHeader.writeUInt32LE(height, 4);
+    _shmHeader.writeUInt32LE(_shmFrameCounter, 8);
+    _shmHeader.writeUInt32LE(0, 12);
+    // Write header + pixels to temp file, then atomic rename
+    const buf = Buffer.concat([_shmHeader, pixels]);
+    writeFileSync(SHM_FRAME_TMP, buf);
+    renameSync(SHM_FRAME_TMP, SHM_FRAME_PATH);
+    if (_shmFrameCounter === 1) log(`SHM frame output: ${SHM_FRAME_PATH}`);
+  } catch (e) {
+    if (_shmFrameCounter <= 1) log(`SHM write failed (expected if not on pod): ${e.message}`);
+  }
+}
+
 function ndiHandleCanvasFrame(data) {
   if (!ndiSender || !ndiSendActive) return;
   if (++_ndiFrameCount % 30 === 1) log(`NDI send: frame ${_ndiFrameCount}, ${data.length} bytes`);
@@ -305,6 +336,15 @@ function ndiHandleCanvasFrame(data) {
   const width = data.readUInt32LE(1);
   const height = data.readUInt32LE(5);
   const pixels = data.slice(9);
+
+  // Store latest raw frame for /api/frame (RGBA pixels + dimensions)
+  _latestFrameRaw = { pixels: Buffer.from(pixels), width, height };
+
+  // Write to shared memory for Scope to read (every frame)
+  shmWriteFrame(pixels, width, height);
+
+  // Push JPEG preview to mirror clients (~every 2nd frame)
+  if (_ndiFrameCount % 2 === 0) pushMirrorPreview();
 
   try {
     ndiSender.video({
@@ -352,6 +392,37 @@ const httpServer = createServer(async (req, res) => {
   let urlPath = req.url.split("?")[0];
   if (urlPath === "/") urlPath = "/index.html";
 
+  // CORS preflight for mirror endpoints
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    });
+    res.end();
+    return;
+  }
+
+  // Latest canvas frame as raw RGBA
+  if (urlPath === "/api/frame" && req.method === "GET") {
+    if (!_latestFrameRaw) {
+      res.writeHead(503);
+      res.end("no frame");
+      return;
+    }
+    const { pixels, width, height } = _latestFrameRaw;
+    res.writeHead(200, {
+      "Content-Type": "application/octet-stream",
+      "X-Width": width,
+      "X-Height": height,
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Expose-Headers": "X-Width, X-Height",
+    });
+    res.end(pixels);
+    return;
+  }
+
   // Remote control API — POST /api/rc { action, params }
   if (urlPath === "/api/rc" && req.method === "POST") {
     let body = "";
@@ -368,6 +439,84 @@ const httpServer = createServer(async (req, res) => {
         res.end(JSON.stringify({ ok: false, error: e.message }));
       }
     });
+    return;
+  }
+
+  // Mirror status (replaces pod-server.js /api/mirror/status)
+  if (urlPath === "/api/mirror/status" && req.method === "GET") {
+    const info = { connected: bridge.connected, gpu: "headless" };
+    if (bridge.connected) {
+      try {
+        const state = await bridge.send("get_state", {}, 3000);
+        if (state) info.shader = "active";
+      } catch {}
+    }
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
+    });
+    res.end(JSON.stringify(info));
+    return;
+  }
+
+  // Single JPEG frame (mirror preview)
+  if (urlPath === "/api/mirror/frame" && req.method === "GET") {
+    if (!_latestFrameRaw || !_sharp) {
+      res.writeHead(503);
+      res.end("no frame");
+      return;
+    }
+    try {
+      const { pixels, width, height } = _latestFrameRaw;
+      const jpeg = await _sharp(pixels, { raw: { width, height, channels: 4 } })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+      res.writeHead(200, {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(jpeg);
+    } catch (e) {
+      res.writeHead(500);
+      res.end(e.message);
+    }
+    return;
+  }
+
+  // MJPEG stream (mirror preview)
+  if (urlPath === "/api/mirror/frame/stream" && req.method === "GET") {
+    if (!_sharp) {
+      res.writeHead(503);
+      res.end("sharp not available");
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": "multipart/x-mixed-replace; boundary=frame",
+      "Cache-Control": "no-store",
+      "Connection": "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+    });
+    let busy = false;
+    const interval = setInterval(async () => {
+      if (busy || !_latestFrameRaw) return;
+      busy = true;
+      try {
+        const { pixels, width, height } = _latestFrameRaw;
+        const jpeg = await _sharp(pixels, { raw: { width, height, channels: 4 } })
+          .jpeg({ quality: 70 })
+          .toBuffer();
+        res.write(`--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ${jpeg.length}\r\n\r\n`);
+        res.write(jpeg);
+        res.write("\r\n");
+      } catch {
+        clearInterval(interval);
+        res.end();
+      }
+      busy = false;
+    }, 33);
+    req.on("close", () => clearInterval(interval));
     return;
   }
 
@@ -399,7 +548,7 @@ const httpServer = createServer(async (req, res) => {
 // WebSocket Server — attach to HTTP server
 // ============================================================
 
-const wss = new WebSocketServer({ server: httpServer });
+const wss = new WebSocketServer({ noServer: true });
 
 wss.on("connection", (ws) => {
   bridge.attach(ws);
@@ -422,6 +571,84 @@ wss.on("connection", (ws) => {
     }
   }, 500);
 });
+
+// ============================================================
+// Mirror WebSocket Server — remote control clients connect here
+// ============================================================
+
+const mirrorWss = new WebSocketServer({ noServer: true });
+
+// Route WS upgrades: /mirror → mirrorWss, everything else → wss (browser bridge)
+httpServer.on("upgrade", (req, socket, head) => {
+  const pathname = new URL(req.url, "http://localhost").pathname;
+  if (pathname === "/mirror") {
+    mirrorWss.handleUpgrade(req, socket, head, (ws) => {
+      mirrorWss.emit("connection", ws, req);
+    });
+  } else {
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit("connection", ws, req);
+    });
+  }
+});
+const mirrorClients = new Set();
+
+mirrorWss.on("connection", (ws) => {
+  mirrorClients.add(ws);
+  log(`Mirror client connected (${mirrorClients.size} total)`);
+
+  ws.on("message", async (data, isBinary) => {
+    if (isBinary) return; // mirror clients don't send binary
+    try {
+      const { id, action, params = {} } = JSON.parse(data.toString());
+      if (!action) return;
+
+      let result = null;
+      let error = null;
+
+      try {
+        // Forward to headless Chrome via bridge
+        result = await bridge.send(action, params, 10000);
+      } catch (e) {
+        error = e.message;
+      }
+
+      ws.send(JSON.stringify({ id, result, error }));
+    } catch (e) {
+      log("Mirror message error:", e.message);
+    }
+  });
+
+  ws.on("close", () => {
+    mirrorClients.delete(ws);
+    log(`Mirror client disconnected (${mirrorClients.size} total)`);
+  });
+
+  ws.on("error", (err) => {
+    log("Mirror WS error:", err.message);
+    mirrorClients.delete(ws);
+  });
+});
+
+// Push JPEG preview frames to mirror clients when canvas frames arrive
+let _mirrorJpegBusy = false;
+function pushMirrorPreview() {
+  if (_mirrorJpegBusy || !_sharp || !_latestFrameRaw || mirrorClients.size === 0) return;
+  _mirrorJpegBusy = true;
+  const { pixels, width, height } = _latestFrameRaw;
+  _sharp(Buffer.from(pixels), { raw: { width, height, channels: 4 } })
+    .jpeg({ quality: 70 })
+    .toBuffer()
+    .then((jpeg) => {
+      for (const client of mirrorClients) {
+        if (client.readyState === 1) {
+          try { client.send(jpeg); } catch {}
+        }
+      }
+    })
+    .catch(() => {})
+    .finally(() => { _mirrorJpegBusy = false; });
+}
 
 // ============================================================
 // Controllability Scoring
@@ -1539,10 +1766,14 @@ async function main() {
     throw err;
   });
 
-  // Start MCP server on stdio
-  const transport = new StdioServerTransport();
-  await mcp.connect(transport);
-  log("MCP server connected on stdio");
+  // Start MCP server on stdio (skip if NO_MCP=1, e.g. headless pod mode)
+  if (!process.env.NO_MCP) {
+    const transport = new StdioServerTransport();
+    await mcp.connect(transport);
+    log("MCP server connected on stdio");
+  } else {
+    log("MCP disabled (NO_MCP=1) — HTTP + WS only");
+  }
 }
 
 main().catch((err) => {

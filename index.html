@@ -2444,6 +2444,21 @@ body {
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Download</span>
         </button>
+        <button class="export-tab-tile" data-action="gpu-pod" id="gpu-pod-tile">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="11" cy="6" r="1" fill="currentColor"/><rect x="6" y="13" width="12" height="2" rx="1"/><rect x="6" y="17" width="8" height="2" rx="1"/></svg>
+          <span>GPU Pod</span>
+        </button>
+      </div>
+      <!-- Remote GPU Pod connection -->
+      <div id="gpu-pod-panel" style="display:none;padding:8px 12px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="text" id="gpu-pod-url" placeholder="pod-ip:8002"
+            style="flex:1;font-size:10px;background:var(--surface,#0a0a0a);color:var(--text,#fff);border:1px solid var(--border,#222);border-radius:3px;padding:4px 6px;font-family:inherit;min-width:0" />
+          <button id="gpu-pod-connect-btn" style="font-size:9px;padding:3px 8px;border-radius:3px;border:1px solid var(--border,#222);background:rgba(255,255,255,0.04);color:var(--text-dim,#888);cursor:pointer;font-family:inherit">Connect</button>
+          <span id="gpu-pod-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text-dim,#888);flex-shrink:0"></span>
+        </div>
+        <div id="gpu-pod-info" style="font-size:9px;color:var(--text-dim,#888);margin-top:4px;display:none"></div>
+        <img id="gpu-pod-preview" style="display:none;width:100%;border-radius:4px;margin-top:6px;border:1px solid var(--border,#222);background:#000" />
       </div>
     </div>
 
@@ -6399,6 +6414,8 @@ function stopNdiSend() {
             setVarFontWeight(vals.fontWeight);
           }
           autoBindTextures(layerId);
+          // Mirror param changes to GPU pod
+          if (window._gpuPod && window._gpuPod.isConnected()) window._gpuPod.mirrorParams(vals);
         });
         // Mark parameters with automatic reactivity badges (audio/mouse/hand)
         if (layer._isfSource) markReactiveParams(paramsContainer, layer._isfSource, paramsInputs);
@@ -6491,6 +6508,10 @@ function stopNdiSend() {
       lastErrors = null;
       errorBar.textContent = '';
       errorBar.classList.remove('show');
+      // Mirror to remote GPU pod
+      if (window._gpuPod && window._gpuPod.isConnected()) {
+        window._gpuPod.mirrorShader(focusedLayerId, source);
+      }
     } else {
       lastErrors = result.errors;
       errorBar.textContent = result.errors;
@@ -6534,6 +6555,8 @@ function stopNdiSend() {
           layer._pendingCompile = { handle, source: src, parsed, headerLineCount, file };
           // Update editor immediately so user can see new source
           if (layerId === focusedLayerId) editor.setValue(src);
+          // Mirror to GPU pod
+          if (window._gpuPod && window._gpuPod.isConnected()) window._gpuPod.mirrorShader(layerId, src);
           return { ok: true, errors: null }; // compilation in progress
         }
         // Fallback if startAsyncCompile failed (context lost) — sync path below
@@ -6549,6 +6572,8 @@ function stopNdiSend() {
         errorBar.textContent = '';
         errorBar.classList.remove('show');
         lastErrors = null;
+        // Mirror to GPU pod
+        if (window._gpuPod && window._gpuPod.isConnected()) window._gpuPod.mirrorShader(layerId, src);
       }
       return result;
     } catch (e) {
@@ -6650,6 +6675,7 @@ function stopNdiSend() {
       layer.inputValues[name] = value;
       if (layer.id === 'scene') sceneRenderer.inputValues = layer.inputValues;
       window.shaderClaw.updateControlUI(name, value, layer.id);
+      if (window._gpuPod && window._gpuPod.isConnected()) window._gpuPod.mirrorParams({ [name]: value });
       return { ok: true };
     },
 
@@ -6690,6 +6716,63 @@ function stopNdiSend() {
           });
         }
         break;
+      }
+    },
+
+    setAudio: (levels) => {
+      if ('level' in levels) audioLevel = levels.level;
+      if ('bass' in levels)  audioBass  = levels.bass;
+      if ('mid' in levels)   audioMid   = levels.mid;
+      if ('high' in levels)  audioHigh  = levels.high;
+    },
+
+    setMouse: (pos) => {
+      if (!isfRenderer) return;
+      if ('x' in pos) isfRenderer.mousePos[0] = pos.x;
+      if ('y' in pos) isfRenderer.mousePos[1] = pos.y;
+      if ('down' in pos) isfRenderer.mouseDown = pos.down;
+    },
+
+    // Gather full serializable state for remote mirroring
+    getState: () => {
+      const state = {
+        mouse: { x: isfRenderer.mousePos[0], y: isfRenderer.mousePos[1], down: isfRenderer.mouseDown },
+        audio: { level: audioLevel, bass: audioBass, mid: audioMid, high: audioHigh },
+        layers: {},
+      };
+      layers.forEach(l => {
+        const vals = {};
+        for (const [k, v] of Object.entries(l.inputValues)) {
+          if (k[0] === '_') continue;
+          const t = typeof v;
+          if (t === 'number' || t === 'boolean' || t === 'string' || Array.isArray(v)) vals[k] = v;
+        }
+        state.layers[l.id] = {
+          inputValues: vals,
+          visible: l.visible,
+          opacity: l.opacity,
+          blendMode: l.blendMode,
+          transparentBg: l.transparentBg,
+        };
+      });
+      return state;
+    },
+
+    // Bulk-apply layer state from remote mirror (no mirror callbacks)
+    applyState: (layerStates) => {
+      for (const [layerId, data] of Object.entries(layerStates)) {
+        const layer = layers.find(l => l.id === layerId);
+        if (!layer) continue;
+        if (data.inputValues) {
+          Object.assign(layer.inputValues, data.inputValues);
+          if (layer.id === 'scene' && typeof sceneRenderer !== 'undefined') {
+            sceneRenderer.inputValues = layer.inputValues;
+          }
+        }
+        if ('visible' in data) layer.visible = data.visible;
+        if ('opacity' in data) layer.opacity = data.opacity;
+        if ('blendMode' in data) layer.blendMode = data.blendMode;
+        if ('transparentBg' in data) layer.transparentBg = data.transparentBg;
       }
     },
 
@@ -8877,6 +8960,10 @@ function stopNdiSend() {
       a.download = 'shader-' + Date.now() + '.fs';
       a.click();
       URL.revokeObjectURL(a.href);
+    } else if (action === 'gpu-pod') {
+      // Toggle GPU Pod panel visibility
+      const panel = document.getElementById('gpu-pod-panel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     }
   }
 
@@ -10769,6 +10856,13 @@ function stopNdiSend() {
 
     // 7. NDI send runs via its own requestAnimationFrame loop (Worker-based)
 
+    // 8. Mirror full state to GPU pod (~5Hz)
+    try {
+      if (window._gpuPod && window._gpuPod.isConnected() && (_compFrameCount % 12 === 0)) {
+        window._gpuPod.mirrorState();
+      }
+    } catch (e) { /* never kill the render loop */ }
+
     requestAnimationFrame(compositionLoop);
   }
 
@@ -11105,6 +11199,31 @@ function stopNdiSend() {
               break;
             }
 
+            case 'set_mouse': {
+              shaderClaw.setMouse(params);
+              result = { ok: true };
+              break;
+            }
+
+            case 'set_audio': {
+              shaderClaw.setAudio(params);
+              result = { ok: true };
+              break;
+            }
+
+            case 'apply_state': {
+              if (params.mouse) shaderClaw.setMouse(params.mouse);
+              if (params.audio) shaderClaw.setAudio(params.audio);
+              if (params.layers) shaderClaw.applyState(params.layers);
+              result = { ok: true };
+              break;
+            }
+
+            case 'get_state': {
+              result = shaderClaw.getState();
+              break;
+            }
+
             default:
               error = `Unknown action: ${action}`;
           }
@@ -11142,6 +11261,197 @@ function stopNdiSend() {
     bar.classList.add('show');
   }
 });
+
+// ============================================================
+// GPU Pod Mirror — WS-based shader/param/audio mirroring
+// ============================================================
+(function() {
+  let mirrorWs = null;
+  let gpuPodConnected = false;
+  let syncTimer = null;
+  let mirrorNextId = 1;
+  let reconnectTimer = null;
+  let savedHost = localStorage.getItem('sc-remote-url') || '';
+
+  const urlInput = document.getElementById('gpu-pod-url');
+  const connectBtn = document.getElementById('gpu-pod-connect-btn');
+  const dot = document.getElementById('gpu-pod-dot');
+  const infoEl = document.getElementById('gpu-pod-info');
+  const previewImg = document.getElementById('gpu-pod-preview');
+  const tile = document.getElementById('gpu-pod-tile');
+
+  if (savedHost) urlInput.value = savedHost;
+
+  function setStatus(status, info) {
+    gpuPodConnected = status === 'connected';
+    dot.style.background = status === 'connected' ? 'var(--green,#0f0)' :
+                           status === 'error' ? 'var(--accent,#f33)' :
+                           status === 'connecting' ? 'var(--yellow,#ff0)' : 'var(--text-dim,#888)';
+    dot.style.boxShadow = status === 'connected' ? '0 0 4px var(--green,#0f0)' : 'none';
+    connectBtn.textContent = gpuPodConnected ? 'Disconnect' : 'Connect';
+    if (tile) tile.style.borderColor = gpuPodConnected ? 'var(--green,#0f0)' : '';
+    if (gpuPodConnected) {
+      infoEl.style.display = 'block';
+      infoEl.textContent = info || 'Connected';
+      previewImg.style.display = 'block';
+    } else {
+      infoEl.style.display = 'none';
+      previewImg.style.display = 'none';
+    }
+  }
+
+  // Send a mirror command (fire-and-forget)
+  function mirrorSend(action, params) {
+    if (!mirrorWs || mirrorWs.readyState !== WebSocket.OPEN) return;
+    mirrorWs.send(JSON.stringify({ id: mirrorNextId++, action, params }));
+  }
+
+  function connect(host) {
+    if (!host) return;
+    // Normalize: strip protocol, trailing slashes
+    host = host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    savedHost = host;
+    localStorage.setItem('sc-remote-url', host);
+    setStatus('connecting');
+
+    if (mirrorWs) { try { mirrorWs.close(); } catch {} }
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+
+    const wsUrl = `ws://${host}/mirror`;
+    console.log('[GPU Pod] connecting to', wsUrl);
+    mirrorWs = new WebSocket(wsUrl);
+    mirrorWs.binaryType = 'arraybuffer';
+
+    mirrorWs.onopen = () => {
+      console.log('[GPU Pod] mirror WS connected');
+      setStatus('connected', 'WS connected');
+      // Confirm bridge is alive
+      mirrorSend('get_state', {});
+      // Initial full state sync
+      if (window.shaderClaw) {
+        const state = window.shaderClaw.getState();
+        if (state) mirrorSend('apply_state', state);
+        // Also push current shader source for each layer
+        const src = window.shaderClaw.getSource();
+        const layerId = window.shaderClaw.getFocusedLayer();
+        if (src) mirrorSend('load_shader', { layerId, code: src });
+      }
+      startSync();
+    };
+
+    mirrorWs.onmessage = (evt) => {
+      // Binary = JPEG preview frame from server
+      if (evt.data instanceof ArrayBuffer) {
+        const blob = new Blob([evt.data], { type: 'image/jpeg' });
+        const url = URL.createObjectURL(blob);
+        const old = previewImg._blobUrl;
+        previewImg.src = url;
+        previewImg._blobUrl = url;
+        if (old) URL.revokeObjectURL(old);
+        return;
+      }
+      // JSON responses (mostly ignored for fire-and-forget)
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.error) console.warn('[GPU Pod] mirror error:', msg.error);
+      } catch {}
+    };
+
+    mirrorWs.onclose = () => {
+      console.log('[GPU Pod] mirror WS closed');
+      gpuPodConnected = false;
+      stopSync();
+      setStatus('disconnected');
+      // Auto-reconnect if we had a saved host
+      if (savedHost) {
+        reconnectTimer = setTimeout(() => connect(savedHost), 3000);
+      }
+    };
+
+    mirrorWs.onerror = () => {
+      setStatus('error');
+    };
+  }
+
+  function disconnect() {
+    savedHost = '';
+    localStorage.removeItem('sc-remote-url');
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if (mirrorWs) { try { mirrorWs.close(); } catch {} mirrorWs = null; }
+    gpuPodConnected = false;
+    stopSync();
+    setStatus('disconnected');
+    if (previewImg._blobUrl) { URL.revokeObjectURL(previewImg._blobUrl); previewImg._blobUrl = null; }
+  }
+
+  // State sync at ~5Hz (every 200ms)
+  function startSync() {
+    stopSync();
+    syncTimer = setInterval(() => {
+      if (!gpuPodConnected || !window.shaderClaw) return;
+      const state = window.shaderClaw.getState();
+      if (state) mirrorSend('apply_state', state);
+    }, 200);
+  }
+
+  function stopSync() {
+    if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+  }
+
+  // Fallback: if no binary frames arrive after 5s, start HTTP polling
+  let previewFallbackTimer = null;
+  let previewBusy = false;
+  function startPreviewFallback() {
+    if (previewFallbackTimer) return;
+    previewFallbackTimer = setInterval(async () => {
+      if (!gpuPodConnected || previewBusy || !savedHost) return;
+      previewBusy = true;
+      try {
+        const res = await fetch(`http://${savedHost}/api/mirror/frame?t=${Date.now()}`, {
+          signal: AbortSignal.timeout(2000),
+          cache: 'no-store',
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const old = previewImg._blobUrl;
+        previewImg.src = url;
+        previewImg._blobUrl = url;
+        if (old) URL.revokeObjectURL(old);
+      } catch {}
+      previewBusy = false;
+    }, 100);
+  }
+  function stopPreviewFallback() {
+    if (previewFallbackTimer) { clearInterval(previewFallbackTimer); previewFallbackTimer = null; }
+    previewBusy = false;
+  }
+
+  // Public mirror functions (same interface, now WS-backed)
+  window._gpuPod = {
+    mirrorShader(name, source) { mirrorSend('load_shader', source ? { layerId: name, code: source } : { layerId: name }); },
+    mirrorParams(params) {
+      for (const [k, v] of Object.entries(params)) {
+        mirrorSend('set_parameter', { name: k, value: v });
+      }
+    },
+    mirrorAudio(levels) { mirrorSend('set_audio', levels); },
+    mirrorMouse(pos) { mirrorSend('set_mouse', pos); },
+    mirrorState() {
+      const state = window.shaderClaw && window.shaderClaw.getState();
+      if (state) mirrorSend('apply_state', state);
+    },
+    isConnected() { return gpuPodConnected; },
+  };
+
+  // Wire UI
+  connectBtn.addEventListener('click', () => {
+    if (gpuPodConnected) disconnect();
+    else connect(urlInput.value.trim());
+  });
+  urlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); connect(urlInput.value.trim()); }
+  });
+})();
 
 // Release WebGL contexts on page unload to prevent browser context exhaustion
 window.addEventListener('beforeunload', () => {

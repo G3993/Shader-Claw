@@ -20,6 +20,7 @@ import { generateControls, updateControlUI } from './ui/params.js';
 import { initEditor, setEditorValue, getEditorValue, getEditor } from './ui/editor.js';
 import { initCanvasControls, showError } from './ui/canvas-controls.js';
 import { initShaderBrowser, loadManifest, getManifest, openShaderBrowser } from './ui/modals.js';
+import { mirrorShaderLoad, mirrorParams, mirrorAudio, isRemoteConnected } from './remote-mirror.js';
 
 // === Globals ===
 
@@ -99,10 +100,14 @@ function compile(source) {
   if (result.ok) {
     lastErrors = null;
     showError(errorBar, null);
+    // Mirror to remote GPU pod
+    mirrorShaderLoad(layerId, source);
     // Regenerate parameter controls
     const layer = getLayer(layerId);
     generateControls(layer.inputs, detailPanel, (values) => {
       Object.assign(layer.inputValues, values);
+      // Mirror param changes to remote
+      mirrorParams(values);
     }, {
       gl: isfRenderer.gl,
       onBgSource: (name, source) => {
@@ -166,12 +171,21 @@ on('layer:select', ({ layerId }) => {
 // === Composition Render Loop ===
 
 let _rafId = null;
+let _lastAudioMirror = 0;
 
 function compositionLoop() {
   _rafId = null;
   if (!compositionPlaying || _contextLost) return;
 
   renderComposition(isfRenderer, sceneRenderer, mediaPipeMgr, tempCompositeFBO);
+
+  // Mirror audio to remote pod (~5Hz, not every frame)
+  const now = performance.now();
+  if (isRemoteConnected() && now - _lastAudioMirror > 200) {
+    _lastAudioMirror = now;
+    const a = state.audio;
+    mirrorAudio({ level: a.level, bass: a.bass, mid: a.mid, high: a.high });
+  }
 
   // Mouse tracking
   const dx = isfRenderer.mousePos[0] - isfRenderer._lastMousePos[0];
@@ -375,6 +389,7 @@ function handleMcpAction(msg, respond) {
       const layer = getLayer(state.selectedLayerId);
       layer.inputValues[params.name] = params.value;
       updateControlUI(detailPanel, params.name, params.value);
+      mirrorParams({ [params.name]: params.value });
       respond({ ok: true });
       break;
     }
@@ -571,6 +586,7 @@ window.shaderClaw = {
     const layer = getLayer(state.selectedLayerId);
     layer.inputValues[name] = value;
     updateControlUI(detailPanel, name, value);
+    mirrorParams({ [name]: value });
     return { ok: true };
   },
   screenshot: () => glCanvas.toDataURL('image/png'),

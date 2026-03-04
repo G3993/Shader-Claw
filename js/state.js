@@ -53,6 +53,7 @@ function createLayer(id) {
 //   'media:added'          { entry }
 //   'media:removed'        { id }
 //   'audio:levels'         { level, bass, mid, high }
+//   'remote:status'        { status, info }  — 'connected'|'disconnected'|'error'|'connecting'
 
 const listeners = {};
 
@@ -94,6 +95,12 @@ const state = {
     fftGLTexture: null, fftThreeTexture: null,
     level: 0, bass: 0, mid: 0, high: 0,
     activeEntry: null,
+  },
+
+  // Remote GPU pod
+  remotePod: {
+    url: localStorage.getItem('sc-remote-url') || '',
+    connected: false,
   },
 };
 

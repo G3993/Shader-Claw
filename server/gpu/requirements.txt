@@ -1,0 +1,6 @@
+moderngl>=5.8
+numpy
+Pillow
+fastapi
+uvicorn[standard]
+pydantic

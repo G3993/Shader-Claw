@@ -2,6 +2,7 @@
 // Brand, destination pills, aspect ratio, 7-layer stack, detail panel, output section
 
 import { state, LAYER_IDS, BLEND_MODES, on, emit, getLayer, selectLayer, setLayerVisibility, setLayerOpacity, setLayerBlend } from '../state.js';
+import { connectRemote, disconnectRemote, isRemoteConnected, setStatusCallback } from '../remote-mirror.js';
 
 const LAYER_LABELS = {
   background: 'Background',
@@ -179,6 +180,13 @@ export function initSidebar(sidebarEl) {
       <span style="flex:1;font-size:10px;color:var(--text-dim)">Record</span>
       <button class="output-btn" id="rec-btn">REC</button>
     </div>
+    <div class="output-row" id="remote-pod-row">
+      <input type="text" id="remote-url" placeholder="GPU pod IP:port"
+        style="flex:1;font-size:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:2px 4px;width:0;min-width:0"
+        value="${state.remotePod.url}" />
+      <button class="output-btn" id="remote-connect-btn">${state.remotePod.connected ? 'Off' : 'Pod'}</button>
+      <span class="status-dot" id="remote-status"></span>
+    </div>
     <div class="export-row">
       <button class="output-btn" id="save-btn">Save</button>
       <button class="output-btn" id="shot-btn">Shot</button>
@@ -186,6 +194,35 @@ export function initSidebar(sidebarEl) {
     </div>
   `;
   scroll.appendChild(outputSection);
+
+  // Remote Pod connect/disconnect
+  const remoteUrlInput = outputSection.querySelector('#remote-url');
+  const remoteBtn = outputSection.querySelector('#remote-connect-btn');
+  const remoteDot = outputSection.querySelector('#remote-status');
+
+  setStatusCallback((status, info) => {
+    state.remotePod.connected = status === 'connected';
+    remoteDot.className = 'status-dot' + (status === 'connected' ? ' active' : status === 'error' ? ' error' : '');
+    remoteBtn.textContent = status === 'connected' ? 'Off' : 'Pod';
+    emit('remote:status', { status, info });
+  });
+
+  remoteBtn.addEventListener('click', () => {
+    if (isRemoteConnected()) {
+      disconnectRemote();
+    } else {
+      const url = remoteUrlInput.value.trim();
+      if (url) connectRemote(url);
+    }
+  });
+
+  remoteUrlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const url = remoteUrlInput.value.trim();
+      if (url) connectRemote(url);
+    }
+  });
 
   // Wire layer selection updates
   on('layer:select', ({ layerId }) => {
